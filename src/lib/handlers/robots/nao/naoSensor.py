@@ -139,7 +139,10 @@ class naoSensorHandler:
 
             if self.faceProxy is None:
                 self.faceProxy = self.naoInitHandler.createProxy('ALFaceDetection')
+            if self.memProxy is None:
+                self.memProxy = self.naoInitHandler.createProxy('ALMemory')
 
+                self.memProxy.enableRecognition(False)
                 subs = [x[0] for x in self.faceProxy.getSubscribersInfo()]
                 # Close any previous subscriptions that might have been hanging open
                 if "ltlmop_sensorhandler" in subs:
