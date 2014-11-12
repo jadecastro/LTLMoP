@@ -6,6 +6,7 @@ naoSensors.py - Sensor handler for the Aldebaran Nao
 """
 
 import lib.handlers.handlerTemplates as handlerTemplates
+import logging
 
 class NaoSensorHandler(handlerTemplates.SensorHandler):
     def __init__(self, executor, shared_data):
@@ -19,7 +20,7 @@ class NaoSensorHandler(handlerTemplates.SensorHandler):
         self.memProxy = None
         self.sttProxy = None
         self.ldmProxy = None
-
+        
     ###################################
     ### Available sensor functions: ###
     ###################################
@@ -165,4 +166,3 @@ class NaoSensorHandler(handlerTemplates.SensorHandler):
             return True
         else:
             return bool(self.memProxy.getData('FrontTactilTouched',0))
-
