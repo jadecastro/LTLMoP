@@ -1,0 +1,150 @@
+[INPUT]
+rob1_T_rc
+rob1_B_rc
+rob1_L_rc
+rob1_R_rc
+rob1_D_rc
+rob2_T_rc
+rob2_B_rc
+rob2_L_rc
+rob2_R_rc
+rob2_D_rc
+rob1_pickup_ac
+rob2_pickup_ac
+garbage
+
+[OUTPUT]
+rob1_T
+rob1_B
+rob1_L
+rob1_R
+rob1_D
+rob2_T
+rob2_B
+rob2_L
+rob2_R
+rob2_D
+rob1_pickup
+rob2_pickup
+m_rob1_T
+m_rob2_T
+m_rob1_B
+m_rob2_B
+
+[ENV_TRANS]
+#restricts completion
+| ! & rob1_T_rc rob1_T rob1_T_rc'
+| ! & rob1_B_rc rob1_B rob1_B_rc'
+| ! & rob1_L_rc rob1_L rob1_L_rc'
+| ! & rob1_R_rc rob1_R rob1_R_rc'
+| ! & rob1_D_rc rob1_D rob1_D_rc'
+| ! & rob1_T_rc rob1_L | rob1_T_rc' rob1_L_rc'
+| ! & rob1_T_rc rob1_R | rob1_T_rc' rob1_R_rc'
+| ! & rob1_B_rc rob1_L | rob1_B_rc' rob1_L_rc'
+| ! & rob1_B_rc rob1_D | rob1_B_rc' rob1_D_rc'
+| ! & rob1_L_rc rob1_T | rob1_L_rc' rob1_T_rc'
+| ! & rob1_L_rc rob1_B | rob1_L_rc' rob1_B_rc'
+| ! & rob1_R_rc rob1_T | rob1_R_rc' rob1_T_rc'
+| ! & rob1_R_rc rob1_D | rob1_R_rc' rob1_D_rc'
+| ! & rob1_D_rc rob1_R | rob1_D_rc' rob1_R_rc'
+| ! & rob1_D_rc rob1_B | rob1_D_rc' rob1_B_rc'
+| ! rob1_T_rc' ! | | | rob1_B_rc' rob1_L_rc' rob1_R_rc' rob1_D_rc'
+| ! rob1_B_rc' ! | | | rob1_T_rc' rob1_L_rc' rob1_R_rc' rob1_D_rc'
+| ! rob1_L_rc' ! | | | rob1_T_rc' rob1_B_rc' rob1_R_rc' rob1_D_rc'
+| ! rob1_R_rc' ! | | | rob1_T_rc' rob1_B_rc' rob1_L_rc' rob1_D_rc'
+| ! rob1_D_rc' ! | | | rob1_T_rc' rob1_B_rc' rob1_L_rc' rob1_R_rc'
+| | | | rob1_T_rc' rob1_B_rc' rob1_L_rc' rob1_R_rc' rob1_D_rc'
+| ! & rob1_pickup_ac rob1_pickup rob1_pickup_ac'
+| ! & ! rob1_pickup_ac ! rob1_pickup ! rob1_pickup_ac'
+| ! & rob2_T_rc rob2_T rob2_T_rc'
+| ! & rob2_B_rc rob2_B rob2_B_rc'
+| ! & rob2_L_rc rob2_L rob2_L_rc'
+| ! & rob2_R_rc rob2_R rob2_R_rc'
+| ! & rob2_D_rc rob2_D rob2_D_rc'
+| ! & rob2_T_rc rob2_L | rob2_T_rc' rob2_L_rc'
+| ! & rob2_T_rc rob2_R | rob2_T_rc' rob2_R_rc'
+| ! & rob2_B_rc rob2_L | rob2_B_rc' rob2_L_rc'
+| ! & rob2_B_rc rob2_D | rob2_B_rc' rob2_D_rc'
+| ! & rob2_L_rc rob2_T | rob2_L_rc' rob2_T_rc'
+| ! & rob2_L_rc rob2_B | rob2_L_rc' rob2_B_rc'
+| ! & rob2_R_rc rob2_T | rob2_R_rc' rob2_T_rc'
+| ! & rob2_R_rc rob2_D | rob2_R_rc' rob2_D_rc'
+| ! & rob2_D_rc rob2_R | rob2_D_rc' rob2_R_rc'
+| ! & rob2_D_rc rob2_B | rob2_D_rc' rob2_B_rc'
+| ! rob2_T_rc' ! | | | rob2_B_rc' rob2_L_rc' rob2_R_rc' rob2_D_rc'
+| ! rob2_B_rc' ! | | | rob2_T_rc' rob2_L_rc' rob2_R_rc' rob2_D_rc'
+| ! rob2_L_rc' ! | | | rob2_T_rc' rob2_B_rc' rob2_R_rc' rob2_D_rc'
+| ! rob2_R_rc' ! | | | rob2_T_rc' rob2_B_rc' rob2_L_rc' rob2_D_rc'
+| ! rob2_D_rc' ! | | | rob2_T_rc' rob2_B_rc' rob2_L_rc' rob2_R_rc'
+| | | | rob2_T_rc' rob2_B_rc' rob2_L_rc' rob2_R_rc' rob2_D_rc'
+| ! & rob2_pickup_ac rob2_pickup rob2_pickup_ac'
+| ! & ! rob2_pickup_ac ! rob2_pickup ! rob2_pickup_ac'
+
+[ENV_INIT]
+& & & & & & & & & & & rob1_T_rc ! rob1_B_rc ! rob1_L_rc ! rob1_R_rc ! rob1_D_rc ! rob1_pickup_ac ! rob2_T_rc rob2_B_rc ! rob2_L_rc ! rob2_R_rc ! rob2_D_rc ! rob2_pickup_ac
+
+[SYS_TRANS]
+#ROBOT 1
+| ! rob1_T_rc' | | rob1_T' rob1_L' rob1_R'
+| ! rob1_B_rc' | | rob1_B' rob1_L' rob1_D'
+| ! rob1_L_rc' | | rob1_L' rob1_T' rob1_B'
+| ! rob1_R_rc' | | rob1_R' rob1_T' rob1_D'
+| ! rob1_D_rc' | | rob1_D' rob1_R' rob1_B'
+| ! rob1_T' ! | | | rob1_B' rob1_L' rob1_R' rob1_D'
+| ! rob1_B' ! | | | rob1_T' rob1_L' rob1_R' rob1_D'
+| ! rob1_L' ! | | | rob1_T' rob1_B' rob1_R' rob1_D'
+| ! rob1_R' ! | | | rob1_T' rob1_B' rob1_L' rob1_D'
+| ! rob1_D' ! | | | rob1_T' rob1_B' rob1_L' rob1_R'
+| | | | rob1_T' rob1_B' rob1_L' rob1_R' rob1_D'
+| ! & rob1_pickup' ! rob1_pickup_ac' | ! rob1_T_rc' rob1_T'
+| ! & rob1_pickup' ! rob1_pickup_ac' | ! rob1_B_rc' rob1_B'
+| ! & rob1_pickup' ! rob1_pickup_ac' | ! rob1_L_rc' rob1_L'
+| ! & rob1_pickup' ! rob1_pickup_ac' | ! rob1_R_rc' rob1_R'
+| ! & rob1_pickup' ! rob1_pickup_ac' | ! rob1_D_rc' rob1_D'
+| ! rob1_T_rc' m_rob1_T'
+| ! ! | rob1_T_rc' rob1_L_rc' ! m_rob1_T'
+| ! rob1_B_rc' m_rob1_B'
+| ! ! | rob1_B_rc' rob1_L_rc' ! m_rob1_B'
+#ROBOT 2
+| ! rob2_T_rc' | | rob2_T' rob2_L' rob2_R'
+| ! rob2_B_rc' | | rob2_B' rob2_L' rob2_D'
+| ! rob2_L_rc' | | rob2_L' rob2_T' rob2_B'
+| ! rob2_R_rc' | | rob2_R' rob2_T' rob2_D'
+| ! rob2_D_rc' | | rob2_D' rob2_R' rob2_B'
+| ! rob2_T' ! | | | rob2_B' rob2_L' rob2_R' rob2_D'
+| ! rob2_B' ! | | | rob2_T' rob2_L' rob2_R' rob2_D'
+| ! rob2_L' ! | | | rob2_T' rob2_B' rob2_R' rob2_D'
+| ! rob2_R' ! | | | rob2_T' rob2_B' rob2_L' rob2_D'
+| ! rob2_D' ! | | | rob2_T' rob2_B' rob2_L' rob2_R'
+| | | | rob2_T' rob2_B' rob2_L' rob2_R' rob2_D'
+| ! & rob2_pickup' ! rob2_pickup_ac' | ! rob2_T_rc' rob2_T'
+| ! & rob2_pickup' ! rob2_pickup_ac' | ! rob2_B_rc' rob2_B'
+| ! & rob2_pickup' ! rob2_pickup_ac' | ! rob2_L_rc' rob2_L'
+| ! & rob2_pickup' ! rob2_pickup_ac' | ! rob2_R_rc' rob2_R'
+| ! & rob2_pickup' ! rob2_pickup_ac' | ! rob2_D_rc' rob2_D'
+| ! rob2_T_rc' m_rob2_T'
+| ! ! | rob2_T_rc' rob2_L_rc' ! m_rob2_T'
+| ! rob2_B_rc' m_rob2_B'
+| ! ! | rob2_B_rc' rob2_L_rc' ! m_rob2_B'
+# coordination
+| & ! rob1_D_rc' ! rob2_D_rc' & rob1_D_rc' rob2_D_rc'
+| ! & & m_rob1_T rob1_L_rc rob2_B_rc ! rob2_L'
+| ! & & m_rob1_B rob1_L_rc rob2_T_rc ! rob1_L'
+| ! & & m_rob2_T rob2_L_rc rob1_B_rc ! rob1_L'
+| ! & & m_rob2_B rob2_L_rc rob1_T_rc ! rob2_L'
+| ! & garbage rob1_B_rc rob1_pickup'
+| ! & & garbage rob2_B_rc ! rob1_pickup' rob1_pickup'
+
+[SYS_INIT]
+& & & & & & & & & & & & & & & rob1_T ! rob1_B ! rob1_L ! rob1_R ! rob1_D ! rob1_pickup m_rob1_T ! m_rob1_B ! rob2_T rob2_B ! rob2_L ! rob2_R ! rob2_D ! rob2_pickup ! m_rob2_T m_rob2_B
+
+[ENV_LIVENESS]
+#fairness on completion
+& & & | | | | | | | | | & rob1_T rob1_T_rc' & rob1_B rob1_B_rc' & rob1_L rob1_L_rc' & rob1_R rob1_R_rc' & rob1_D rob1_D_rc' & rob1_T ! rob1_T' & rob1_B ! rob1_B' & rob1_L ! rob1_L' & rob1_R ! rob1_R' & rob1_D ! rob1_D' | | | & rob1_pickup ! rob1_pickup' & ! rob1_pickup rob1_pickup' & rob1_pickup rob1_pickup_ac' & ! rob1_pickup ! rob1_pickup_ac' | | | | | | | | | & rob2_T rob2_T_rc' & rob2_B rob2_B_rc' & rob2_L rob2_L_rc' & rob2_R rob2_R_rc' & rob2_D rob2_D_rc' & rob2_T ! rob2_T' & rob2_B ! rob2_B' & rob2_L ! rob2_L' & rob2_R ! rob2_R' & rob2_D ! rob2_D' | | | & rob2_pickup ! rob2_pickup' & ! rob2_pickup rob2_pickup' & rob2_pickup rob2_pickup_ac' & ! rob2_pickup ! rob2_pickup_ac'
+
+[SYS_LIVENESS]
+rob1_T_rc
+rob2_T_rc
+rob1_B_rc
+rob2_B_rc
+
