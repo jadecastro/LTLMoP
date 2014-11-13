@@ -160,7 +160,7 @@ class Project:
             data['SPECIFICATION']['RegionMapping'] = [rname + " = " + ', '.join(rlist) for
                                                       rname, rlist in self.regionMapping.iteritems()]
 
-        data['SETTINGS'] = {"Sensors": [p + ", " + str(int(p in self.enabled_sensors)) for p in self.all_sensors if not (p.endswith('_rc') or p.endswith('_ac'))],  #TODO: don't need this later
+        data['SETTINGS'] = {"Sensors": [p + ", " + str(int(p in self.enabled_sensors)) for p in self.all_sensors],
                             "Actions": [p + ", " + str(int(p in self.enabled_actuators)) for p in self.all_actuators],
                             "Customs": self.all_customs}
 
@@ -205,29 +205,9 @@ class Project:
         self.regionMapping = self.loadRegionMapping()
         self.rfi = self.loadRegionFile()
         self.determineEnabledPropositions()
-        
-        ## creates lists of regions and actuators completed if we are using fastslow
-        if self.compile_options['fastslow']:
-            # for region completion sensors
-            self.rfi.regionsCompleted = self.populateCompletedPropositions([str(x.name) for x in self.rfi.regions if not "boundary" in x.name])
-            self.all_sensors.extend(self.rfi.regionsCompleted)
-            self.enabled_sensors.extend(self.rfi.regionsCompleted)
-            
-            # for actuator completion sensors
-            #self.enabled_actuatorsCompleted = self.populateCompletedPropositions(self.enabled_actuators,"_ac")
-            #self.all_sensors.extend(self.enabled_actuatorsCompleted)
-            #self.enabled_sensors.extend(self.enabled_actuatorsCompleted)
 
         return True
-        
-    def populateCompletedPropositions(self, propList, suffix = '_rc'):
-        """
-        Takes in a list of proposition and populates a list that has the same length with each element added 
-        a suffix after
-        """
-        completedPropList = [x+suffix for x in propList]
-        return completedPropList
-        
+
     def determineEnabledPropositions(self):
         """
         Populate lists ``all_sensors``, ``enabled_sensors``, etc.
@@ -266,7 +246,7 @@ class Project:
         """ Returns the full path of the file that should contain the strategy
             for this specification. """
 
-        return self.getFilenamePrefix() + ('.add' if (self.compile_options["symbolic"] and self.compile_options["synthesizer"].lower() == 'jtlv') else '.bdd' if (self.compile_options["symbolic"] and self.compile_options["synthesizer"].lower() == 'slugs') else '.aut')
+        return self.getFilenamePrefix() + ('.bdd' if self.compile_options["symbolic"] else '.aut')
 
 
 
