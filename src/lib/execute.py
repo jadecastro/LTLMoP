@@ -47,6 +47,9 @@ from resynthesis import ExecutorResynthesisExtensions
 from executeStrategy import ExecutorStrategyExtensions
 import globalConfig, logging
 
+import LTLParser.LTLcheck
+import logging
+import LTLParser.LTLFormula
 
 ####################
 # HELPER FUNCTIONS #
@@ -99,6 +102,10 @@ class LTLMoPExecutor(ExecutorStrategyExtensions,ExecutorResynthesisExtensions, o
 
         self.current_outputs = {}     # keep track on current outputs values (for actuations)
 
+        ######## RUNTIME MONIOTRING #################
+        self.runtimeMonitoring = False
+        #############################################
+
     def postEvent(self, eventType, eventData=None):
         """ Send a notice that an event occurred, if anyone wants it """
 
@@ -128,10 +135,28 @@ class LTLMoPExecutor(ExecutorStrategyExtensions,ExecutorResynthesisExtensions, o
         This function loads the the .aut/.bdd file named filename and returns the strategy object.
         filename (string): name of the file with path included
         """
-        region_domain = strategy.Domain("region",  self.proj.rfi.regions, strategy.Domain.B0_IS_MSB)
+        #region_domain = strategy.Domain("region",  self.proj.rfi.regions, strategy.Domain.B0_IS_MSB)
+        enabled_sensors = self.proj.enabled_sensors
+
+        regionSensorList = [x for x in self.proj.enabled_sensors if x.endswith('_rc')]
+        self.proj.enabled_sensors =  [x for x in self.proj.enabled_sensors if not x.endswith('_rc')]
+
+        for robot in self.hsub.executing_config.robots:
+            for x in regionSensorList:
+                self.proj.enabled_sensors.append(robot.name+'_' + x)
+
+        self.region_domain = [x.replace('_rc','') for x in self.proj.enabled_sensors if x.endswith('_rc')]
+
+        #if self.proj.compile_options['fastslow']:
+        #    regionCompleted_domain = [strategy.Domain("regionCompleted", self.proj.rfi.regions, strategy.Domain.B0_IS_MSB)]
+        #    enabled_sensors = [x for x in self.proj.enabled_sensors if not x.endswith('_rc')]
+        #else:
+        #    regionCompleted_domain = []
+        logging.debug(self.proj.enabled_sensors)
+        logging.debug(self.proj.enabled_actuators + self.proj.all_customs +  self.region_domain)
         strat = strategy.createStrategyFromFile(filename,
-                                                self.proj.enabled_sensors,
-                                                self.proj.enabled_actuators + self.proj.all_customs +  [region_domain])
+                                                self.proj.enabled_sensors, # + regionCompleted_domain ,
+                                                self.proj.enabled_actuators + self.proj.all_customs +  self.region_domain)
 
         return strat
 
@@ -140,14 +165,17 @@ class LTLMoPExecutor(ExecutorStrategyExtensions,ExecutorResynthesisExtensions, o
         if rfi is None:
             rfi = self.proj.rfi
 
-        pose = self.hsub.coordmap_lab2map(self.hsub.getPose())
+        region = {}
+        for robot_name, pose in self.hsub.getPoseMultiRobot().iteritems():
 
-        region = next((i for i, r in enumerate(rfi.regions) if r.name.lower() != "boundary" and \
-                        r.objectContainsPoint(*pose)), None)
+            pose = self.hsub.coordmap_lab2map(pose)
 
-        if region is None:
-            logging.warning("Pose of {} not inside any region!".format(pose))
+            region[robot_name] = next((i for i, r in enumerate(rfi.regions) if r.name.lower() != "boundary" and \
+                            r.objectContainsPoint(*pose)), None)
 
+            if region[robot_name] is None:
+                logging.warning("Pose of {} not inside any region!".format(pose))
+        logging.debug(region)
         return region
 
     def shutdown(self):
@@ -263,14 +291,34 @@ class LTLMoPExecutor(ExecutorStrategyExtensions,ExecutorResynthesisExtensions, o
 
         ## Region
         # FIXME: make getcurrentregion return object instead of number, also fix the isNone check
-        init_region = self.proj.rfi.regions[self._getCurrentRegionFromPose()]
-        if init_region is None:
-            logging.error("Initial pose not inside any region!")
-            sys.exit(-1)
+        init_prop_assignments = {}
+        for robot in self.hsub.executing_config.robots:
+            logging.debug(self.proj.rfi)
+            logging.debug(self.proj)
+            logging.debug(self.proj.loadRegionFile(decomposed=True))
+            init_region = self.proj.rfi.regions[self._getCurrentRegionFromPose()[robot.name]]
 
-        logging.info("Starting from initial region: " + init_region.name)
-        init_prop_assignments = {"region": init_region}
+            if init_region is None:
+                logging.error("Initial pose not inside any region!")
+                sys.exit(-1)
 
+            for x in self.proj.enabled_sensors:
+                if x.startswith(robot.name):
+                    if x.replace(robot.name+"_","").replace("_rc","") == init_region.name:
+                        init_prop_assignments.update({x:True})
+                    else:
+                        init_prop_assignments.update({x:False})
+
+
+            logging.info("Starting from initial region: " + init_region.name + ' for ' + robot.name)
+        # include initial regions in picking states
+        """
+        if self.proj.compile_options['fastslow']:
+            init_prop_assignments = {"regionCompleted": init_region}
+            # TODO: check init_region format
+        else:
+            init_prop_assignments = {"region": init_region}
+        """
         # initialize all sensor and actuator methods
         logging.info("Initializing sensor and actuator methods...")
         self.hsub.initializeAllMethods()
@@ -285,8 +333,32 @@ class LTLMoPExecutor(ExecutorStrategyExtensions,ExecutorResynthesisExtensions, o
         init_prop_assignments.update(self.current_outputs)
 
         ## inputs
-        init_prop_assignments.update(self.hsub.getSensorValue(self.proj.enabled_sensors))
+        """
+        if self.proj.compile_options['fastslow']:
+            init_prop_assignments.update(self.hsub.getSensorValue([x for x in self.proj.enabled_sensors \
+                    if not (x.endswith('_rc') or x.endswith('_ac'))]))
 
+            # update the completion props
+            for prop_name in self.proj.enabled_sensors:
+                if prop_name.endswith('_ac'):
+                    init_prop_assignments.update({prop_name:self.current_outputs[prop_name.replace('_ac','')]})
+        else:
+        """
+        logging.debug(self.proj.enabled_sensors)
+        #init_prop_assignments.update(self.hsub.getSensorValue(self.proj.enabled_sensors))
+        ###############################
+        #### new from Jim  ############
+        ##############################
+        init_prop_assignments.update(self.hsub.getSensorValue([x for x in self.proj.enabled_sensors \
+                    if not (x.endswith('_ac'))]))
+
+        # update the completion props
+        for prop_name in self.proj.enabled_sensors:
+            if prop_name.endswith('_ac'):
+                init_prop_assignments.update({prop_name:self.current_outputs[prop_name.replace('_ac','')]})
+        ###############################
+
+        logging.debug(init_prop_assignments)
         #search for initial state in the strategy
         init_state = new_strategy.searchForOneState(init_prop_assignments)
 
@@ -296,8 +368,14 @@ class LTLMoPExecutor(ExecutorStrategyExtensions,ExecutorResynthesisExtensions, o
         else:
             logging.info("Starting from state %s." % init_state.state_id)
 
+        if self.runtimeMonitoring:
+            ### RUNTIME MONITORING ###
+            self.LTLViolationCheck = LTLParser.LTLcheck.LTL_Check(spec_file.replace('.spec','_envTrans.ltl'))
+            ########   ##################
+
         self.strategy = new_strategy
         self.strategy.current_state = init_state
+        self.last_sensor_state = self.strategy.current_state.getInputs()
 
     def run(self):
         ### Get everything moving
@@ -309,7 +387,7 @@ class LTLMoPExecutor(ExecutorStrategyExtensions,ExecutorResynthesisExtensions, o
         while self.alive.isSet():
             # Idle if we're not running
             if not self.runStrategy.isSet():
-                self.hsub.setVelocity(0,0)
+                self.hsub.setVelocityMultiRobot(0,0)
 
                 # wait for either the FSA to unpause or for termination
                 while (not self.runStrategy.wait(0.1)) and self.alive.isSet():
@@ -323,10 +401,24 @@ class LTLMoPExecutor(ExecutorStrategyExtensions,ExecutorResynthesisExtensions, o
             self.prev_z = self.strategy.current_state.goal_id
 
             tic = self.timer_func()
-            self.runStrategyIteration()
+            if not self.proj.compile_options['fastslow']:
+                self.runStrategyIteration()
+            else:
+                self.runStrategyIterationInstanteousAction()
             toc = self.timer_func()
 
-            #self.checkForInternalFlags()
+            ### RUNTIME MONITORING ###
+            if self.runtimeMonitoring:
+                # Take a snapshot of our current sensor readings
+                sensor_state = self.hsub.getSensorValue(self.proj.enabled_sensors)
+                logging.info(sensor_state)
+
+                # Check for environment violation - change the env_assumption_hold to int again
+
+                env_assumption_hold = self.LTLViolationCheck.checkViolation(self.strategy.current_state, sensor_state)
+                #self.checkForInternalFlags()
+
+            #######################################
 
             # Rate limiting of execution and GUI update
             while (toc - tic) < 0.05:
@@ -338,8 +430,11 @@ class LTLMoPExecutor(ExecutorStrategyExtensions,ExecutorResynthesisExtensions, o
             # if show_gui and (timer_func() - last_gui_update_time > 0.05)
             avg_freq = 0.9 * avg_freq + 0.1 * 1 / (toc - tic) # IIR filter
             self.postEvent("FREQ", int(math.ceil(avg_freq)))
-            pose = self.hsub.getPose(cached=True)[0:2]
-            self.postEvent("POSE", tuple(map(int, self.hsub.coordmap_lab2map(pose))))
+            poseAllRobots = self.hsub.getPoseMultiRobot(cached=True) #[0:2]
+            #self.postEvent("POSE", tuple(map(int, self.hsub.coordmap_lab2map(pose))))
+            for robot_name, pose in poseAllRobots.iteritems():
+                poseAllRobots[robot_name] = self.hsub.coordmap_lab2map(pose[0:2])
+            self.postEvent("POSE", poseAllRobots)
 
             last_gui_update_time = self.timer_func()
 
