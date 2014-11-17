@@ -127,13 +127,13 @@ m_rob2_B
 | ! rob2_B_rc' m_rob2_B'
 | ! ! | rob2_B_rc' rob2_L_rc' ! m_rob2_B'
 # coordination
-| & ! rob1_D_rc' ! rob2_D_rc' & rob1_D_rc' rob2_D_rc'
+| & ! rob1_D_rc' ! ! rob2_D_rc' & rob1_D_rc' ! rob2_D_rc'
 | ! & & m_rob1_T rob1_L_rc rob2_B_rc ! rob2_L'
 | ! & & m_rob1_B rob1_L_rc rob2_T_rc ! rob1_L'
 | ! & & m_rob2_T rob2_L_rc rob1_B_rc ! rob1_L'
 | ! & & m_rob2_B rob2_L_rc rob1_T_rc ! rob2_L'
 | ! & garbage rob1_B_rc rob1_pickup'
-| ! & & garbage rob2_B_rc ! rob1_pickup' rob1_pickup'
+| ! & & garbage rob2_B_rc ! rob1_pickup' rob2_pickup'
 
 [SYS_INIT]
 & & & & & & & & & & & & & & & rob1_T ! rob1_B ! rob1_L ! rob1_R ! rob1_D ! rob1_pickup m_rob1_T ! m_rob1_B ! rob2_T rob2_B ! rob2_L ! rob2_R ! rob2_D ! rob2_pickup ! m_rob2_T m_rob2_B
