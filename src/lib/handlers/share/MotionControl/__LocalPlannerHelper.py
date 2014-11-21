@@ -7,6 +7,7 @@ threshold = 10
 robRadiusMaxVel = OrderedDict([('rob2',0.15,0.5), ('rob1',0.15,0.5)])
 #robRadius = OrderedDict([('rob1',0.5), ('rob2',0.5),('rob3',1)])
 robots = robRadiusMaxVel
+pathToMatlabLocalPlanner = '/home/jon/Dropbox/Repos/uav-avoidance/multiquad-sim'
 
 def initializeLocalPlanner(regions, coordmap_map2lab):
     """
@@ -28,13 +29,15 @@ def initializeLocalPlanner(regions, coordmap_map2lab):
     # the size of each robot) destination (1xn array) contains the destination
     # cell for each robot
 
-    session.run('eval(initializeLocalPlanner)')
+    session.run('cd '+pathToMatlabLocalPlanner)
+    session.run('settingsHadas = overwriteSettingsHadas(1);')
+    session.run('simLocalPlanning_initialize();')
 
     #-------------------------------------------------------------------
     # -----PYTHON: robotRadius, MATLAB: robots (scalar) ----------------
     #-------------------------------------------------------------------
     rRadius = []
-    for roboName, propRadius, propMaxVel in robots.iteritems():
+    for roboName, propRadius in robots.iteritems():
         rRadius.append([propRadius])
         rMaxVel.append([propMaxVel])
     robotRadius = np.float_(rRadius)
@@ -84,50 +87,61 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity):
     next_regIndices = {'rob1': 2,'rob2':3,'rob3':3}
     """
 
-    session.run('zAux=[];')
-    session.run('zGoal=[];')
-    session.run('vGoal=[];')
-    for roboName, poseLoc in poseDic.iteritems():
+    for i, poseLoc in enumerate(poseDic.iteritems()):
+        session.run('pose=[];')
+        session.run('zGoalNew=[];')
+        session.run('vGoalNew=[];')
         
         # Set the current pose: PYTHON: pose, MATLAB: zAux  (size d x n)      
-        session.putvalue('zAuxNew',np.float_(poseLoc))
-        session.run('zAux=[zAux zAuxNew];')
+        session.putvalue('pose',np.float_(poseLoc))
+        # session.run('z_glob=[z_glob z_globNew];')
+        session.run('states{'+str(i+1)+'}.position(1:2)=pose(1:2);')
+        session.run('states{'+str(i+1)+'}.position(3)=0;')
+        session.run('states{'+str(i+1)+'}.velocity=z_glob{'+str(i+1)+'}(4:6);') # NB: for now, use Matlab-simulated velocity.  TODO: update with LTLMoP-generated velocity
+        session.run('states{'+str(i+1)+'}.orientation=pose(3);')
+    
         logging.info('Set robotPose completed')
         logging.debug("in python: " + str(np.float_(poseLoc)))
-        logging.debug("in MATLAB: " + str(session.getvalue('zAuxNew')))
+        logging.debug("in MATLAB: " + str(session.getvalue('pose')))
 
         # Set the goal position: PYTHON: goalPosition, MATLAB: zGoal  (size 2 x n)
-        session.putvalue('zGoalNew',np.float_(goalPosition[roboName]))
-        session.run('zGoal=[zGoal zGoalNew];')
+        session.putvalue('zGoalNew',np.float_(goalPosition[i]))
+        session.run('zGoal{'+str(i+1)+'}=zGoalNew;')
+        # session.run('zGoal=[zGoal zGoalNew];')
+
         logging.info('Set goalPosition completed')
-        logging.debug("in python: " + str(np.float_(goalPosition[roboName])))
+        logging.debug("in python: " + str(np.float_(goalPosition[i])))
         logging.debug("in MATLAB: " + str(session.getvalue('zGoalNew')))
 
         # Set the goal velocity: PYTHON: goalVelocity, MATLAB: vGoal  (size 2 x n)
-        session.putvalue('vGoalNew',np.float_(goalVelocity[roboName]))
-        session.run('vGoal=[vGoal vGoalNew];')
+        session.putvalue('vGoalNew',np.float_(goalVelocity[i]))
+        session.run('vGoal{'+str(i+1)+'}=vGoalNew;')
+        # session.run('vGoal=[vGoal vGoalNew];')
+
         logging.info('Set goalVelocity completed')
-        logging.debug("in python: " + str(np.float_(goalVelocity[roboName])))
+        logging.debug("in python: " + str(np.float_(goalVelocity[i])))
         logging.debug("in MATLAB: " + str(session.getvalue('vGoalNew')))
 
-    # Convert everything into n-dim cell arrays
-    session.run('zAux = mat2cell(zAux,size(zAux,1),ones(1,size(zAux,2)));')
-    session.run('zGoal = mat2cell(zGoal,size(zGoal,1),ones(1,size(zGoal,2)));')
-    session.run('vGoal = mat2cell(vGoal,size(vGoal,1),ones(1,size(vGoal,2)));')
+    # # Convert everything into n-dim cell arrays
+    # session.run('state = mat2cell(state,size(state,1),ones(1,size(state,2)));')
+    # session.run('zGoal = mat2cell(zGoal,size(zGoal,1),ones(1,size(zGoal,2)));')
+    # session.run('vGoal = mat2cell(vGoal,size(vGoal,1),ones(1,size(vGoal,2)));')
 
     # Execute one step of the local planner and collect velocity components
-    session.run('eval(executeLocalPlanner)')
+    session.run('[z_glob, R, zGoal] = overwriteStateAndGoal(states, zGoal);')
+    session.run('simLocalPlanning_doStep')
+    session.run('[states_out, inputs_out] = readStateAndCommands(z_glob, R, vUC);')
 
-    session.run('vOut_x = vHColFreeController(:,1);')
-    session.run('vOut_y = vHColFreeController(:,2);')
-    logging.debug('vx = ' + str(session.getvalue('vOut_x')))
-    logging.debug('vy = ' + str(session.getvalue('vOut_y')))
+    session.run('vOut = inputs_out{'+str(i+1)+'}(1);')
+    session.run('wOut = inputs_out{'+str(i+1)+'}(2);')
+    logging.debug('v = ' + str(session.getvalue('vOut')))
+    logging.debug('w = ' + str(session.getvalue('wOut')))
 
-    vx = session.getvalue('vOut_x')
-    vy = session.getvalue('vOut_y')
+    v = session.getvalue('v')
+    w = session.getvalue('w')
 
     # return velocities
-    return vx, vy
+    return v, w
 
 def closeInterface(session):
     """
