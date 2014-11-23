@@ -4,9 +4,9 @@ import logging
 from collections import OrderedDict
 
 threshold = 10
-robRadiusMaxVel = OrderedDict([('rob2',0.15,0.5), ('rob1',0.15,0.5)])
-#robRadius = OrderedDict([('rob1',0.5), ('rob2',0.5),('rob3',1)])
-robots = robRadiusMaxVel
+robRadius = OrderedDict([('rob2',0.15), ('rob1',0.15)])
+robMaxVel = OrderedDict([('rob2',0.5), ('rob1',0.5)])
+robots = [robRadius, robMaxVel]
 pathToMatlabLocalPlanner = '/home/jon/Dropbox/Repos/uav-avoidance/multiquad-sim'
 
 def initializeLocalPlanner(regions, coordmap_map2lab):
@@ -37,18 +37,20 @@ def initializeLocalPlanner(regions, coordmap_map2lab):
     # -----PYTHON: robotRadius, MATLAB: robots (scalar) ----------------
     #-------------------------------------------------------------------
     rRadius = []
-    for roboName, propRadius in robots.iteritems():
+    for roboName, propRadius in robRadius.iteritems():
         rRadius.append([propRadius])
-        rMaxVel.append([propMaxVel])
+        # rMaxVel.append([propMaxVel])
     robotRadius = np.float_(rRadius)
-    robotMaxVel = np.float_(rMaxVel)
+    # robotMaxVel = np.float_(rMaxVel)
 
     session.putvalue('rRob',robotRadius)
-    session.putvalue('vMax',robotMaxVel)
+    # session.putvalue('vMax',robotMaxVel)
 
     logging.info('Set robotRadius completed')
-    logging.debug("in python: " + str(robotRadius) + " , " + str(robotMaxVel))
-    logging.debug("in MATLAB: " + str(session.getvalue('rRob')) + " , " str(session.getvalue('vMax')))
+    # logging.debug("  in python: " + str(robotRadius) + " , " + str(robotMaxVel))
+    logging.debug("  in python: " + str(robotRadius))
+    # logging.debug("  in MATLAB: " + str(session.getvalue('rRob')) + " , " str(session.getvalue('vMax')))
+    logging.debug("  in MATLAB: " + str(session.getvalue('rRob')))
 
     #---------------------------------------------------------------------------------------
     #----- PYTHON: regionVertices, MATLAB: vertices SIZE: cell(#regions)--------------------
@@ -88,57 +90,54 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity):
     """
 
     for i, poseLoc in enumerate(poseDic.iteritems()):
+        roboName = poseLoc[0]
         session.run('pose=[];')
         session.run('zGoalNew=[];')
         session.run('vGoalNew=[];')
         
-        # Set the current pose: PYTHON: pose, MATLAB: zAux  (size d x n)      
-        session.putvalue('pose',np.float_(poseLoc))
-        # session.run('z_glob=[z_glob z_globNew];')
+        # Set the current pose: PYTHON: pose, MATLAB: zAux  (size d x n)    
+        session.putvalue('pose',np.float_(poseLoc[1]))
         session.run('states{'+str(i+1)+'}.position(1:2)=pose(1:2);')
-        session.run('states{'+str(i+1)+'}.position(3)=0;')
+        session.run('states{'+str(i+1)+'}.position(3)=1;')
         session.run('states{'+str(i+1)+'}.velocity=z_glob{'+str(i+1)+'}(4:6);') # NB: for now, use Matlab-simulated velocity.  TODO: update with LTLMoP-generated velocity
         session.run('states{'+str(i+1)+'}.orientation=pose(3);')
     
         logging.info('Set robotPose completed')
-        logging.debug("in python: " + str(np.float_(poseLoc)))
-        logging.debug("in MATLAB: " + str(session.getvalue('pose')))
+        logging.debug("  in python: " + str(np.float_(poseLoc[1])))
+        logging.debug("  in MATLAB: " + str(session.getvalue('pose')))
 
         # Set the goal position: PYTHON: goalPosition, MATLAB: zGoal  (size 2 x n)
-        session.putvalue('zGoalNew',np.float_(goalPosition[i]))
-        session.run('zGoal{'+str(i+1)+'}=zGoalNew;')
-        # session.run('zGoal=[zGoal zGoalNew];')
+        session.putvalue('zGoalNew',np.float_(goalPosition[roboName]))
+        session.run('zGoal{'+str(i+1)+'}(1:2)=zGoalNew(1:2);')
+        session.run('zGoal{'+str(i+1)+'}(3)=1;')
 
         logging.info('Set goalPosition completed')
-        logging.debug("in python: " + str(np.float_(goalPosition[i])))
-        logging.debug("in MATLAB: " + str(session.getvalue('zGoalNew')))
+        logging.debug("  in python: " + str(np.float_(goalPosition[roboName])))
+        logging.debug("  in MATLAB: " + str(session.getvalue('zGoalNew')))
 
         # Set the goal velocity: PYTHON: goalVelocity, MATLAB: vGoal  (size 2 x n)
-        session.putvalue('vGoalNew',np.float_(goalVelocity[i]))
-        session.run('vGoal{'+str(i+1)+'}=vGoalNew;')
-        # session.run('vGoal=[vGoal vGoalNew];')
+        session.putvalue('vGoalNew',np.float_(goalVelocity[roboName]))
+        session.run('vGoal{'+str(i+1)+'}(1:2)=vGoalNew;')
 
         logging.info('Set goalVelocity completed')
-        logging.debug("in python: " + str(np.float_(goalVelocity[i])))
-        logging.debug("in MATLAB: " + str(session.getvalue('vGoalNew')))
-
-    # # Convert everything into n-dim cell arrays
-    # session.run('state = mat2cell(state,size(state,1),ones(1,size(state,2)));')
-    # session.run('zGoal = mat2cell(zGoal,size(zGoal,1),ones(1,size(zGoal,2)));')
-    # session.run('vGoal = mat2cell(vGoal,size(vGoal,1),ones(1,size(vGoal,2)));')
+        logging.debug("  in python: " + str(np.float_(goalVelocity[roboName])))
+        logging.debug("  in MATLAB: " + str(session.getvalue('vGoalNew')))
 
     # Execute one step of the local planner and collect velocity components
     session.run('[z_glob, R, zGoal] = overwriteStateAndGoal(states, zGoal);')
     session.run('simLocalPlanning_doStep')
     session.run('[states_out, inputs_out] = readStateAndCommands(z_glob, R, vUC);')
 
-    session.run('vOut = inputs_out{'+str(i+1)+'}(1);')
-    session.run('wOut = inputs_out{'+str(i+1)+'}(2);')
-    logging.debug('v = ' + str(session.getvalue('vOut')))
-    logging.debug('w = ' + str(session.getvalue('wOut')))
+    v = {}
+    w = {}
+    for i, poseLoc in enumerate(poseDic.iteritems()):
+        session.run('vOut = inputs_out{'+str(i+1)+'}(1);')
+        session.run('wOut = inputs_out{'+str(i+1)+'}(2);')
+        logging.debug('v = ' + str(session.getvalue('vOut')))
+        logging.debug('w = ' + str(session.getvalue('wOut')))
 
-    v = session.getvalue('v')
-    w = session.getvalue('w')
+        v[i] = session.getvalue('vOut')
+        w[i] = session.getvalue('wOut')
 
     # return velocities
     return v, w

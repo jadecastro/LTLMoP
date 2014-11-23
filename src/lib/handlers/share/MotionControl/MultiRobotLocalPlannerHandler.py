@@ -15,11 +15,13 @@ from collections import OrderedDict
 
 import lib.handlers.handlerTemplates as handlerTemplates
 
-class LocalPlannerHandler(handlerTemplates.MotionControlHandler):
+class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
     def __init__(self, executor, shared_data):
         """
         Vector motion planning controller
         """
+
+        self.system_print       = False       # for debugging. print on GUI ( a bunch of stuffs)
         self.previous_next_reg = None
         self.Velocity           = None
         self.currentRegionPoly  = None
@@ -88,8 +90,8 @@ class LocalPlannerHandler(handlerTemplates.MotionControlHandler):
             if not self.previous_next_reg == next_reg:
 
                 if self.system_print == True:
-                    print "Next Region is " + str(self.proj.rfi.regions[next_reg].name)
-                    print "Current Region is " + str(self.proj.rfi.regions[current_reg].name)
+                    print "Next Region is " + str(self.rfi.regions[next_reg].name)
+                    print "Current Region is " + str(self.rfi.regions[current_reg].name)
 
                 #set to zero velocity before tree is generated
                 #self.drive_handler.setVelocity(0, 0)
@@ -100,8 +102,8 @@ class LocalPlannerHandler(handlerTemplates.MotionControlHandler):
                     transFace   = None
                     goalArray[robot_name]   = [[],[]] # list of goal points (midpoints of transition faces)
                     face_normal = [[],[]] # normal of the trnasition faces
-                    for i in range(len(self.proj.rfi.transitions[current_reg][next_reg])):
-                        pointArray_transface = [x for x in self.proj.rfi.transitions[current_reg][next_reg][i]]
+                    for i in range(len(self.rfi.transitions[current_reg][next_reg])):
+                        pointArray_transface = [x for x in self.rfi.transitions[current_reg][next_reg][i]]
                         transFace = asarray(map(self.coordmap_map2lab,pointArray_transface))
                         bundle_x = (transFace[0,0] +transFace[1,0])/2    #mid-point coordinate x
                         bundle_y = (transFace[0,1] +transFace[1,1])/2    #mid-point coordinate y
@@ -110,7 +112,7 @@ class LocalPlannerHandler(handlerTemplates.MotionControlHandler):
                     if transFace is None:
                         print "ERROR: Unable to find transition face between regions %s and %s.  Please check the decomposition (try viewing projectname_decomposed.regions in RegionEditor or a text editor)." % (self.proj.rfi.regions[current_reg].name, self.proj.rfi.regions[next_reg].name)
 
-            goalPosition[robot_name] = goalArray[robot_name][1]  #for now, just choose the first entry.
+            goalPosition[robot_name] = goalArray[robot_name]  #for now, assume there is only one face.
             goalVelocity[robot_name] = [0, 0]  # temporarily setting this to zero
 
             # NOTE: Information about region geometry can be found in self.rfi.regions:
