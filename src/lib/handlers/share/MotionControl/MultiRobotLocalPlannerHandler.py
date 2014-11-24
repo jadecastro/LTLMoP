@@ -12,6 +12,10 @@ import time, math
 import logging
 import __LocalPlannerHelper as LocalPlanner
 from collections import OrderedDict
+from scipy.linalg import norm
+import Polygon, Polygon.IO
+import Polygon.Utils as PolyUtils
+import Polygon.Shapes as PolyShapes
 
 import lib.handlers.handlerTemplates as handlerTemplates
 
@@ -26,6 +30,8 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         self.Velocity           = None
         self.currentRegionPoly  = None
         self.nextRegionPoly     = None
+        self.radius = 0.15
+        self.trans_matrix       = mat([[0,1],[-1,0]])   # transformation matrix for find the normal to the vector
 
         # get the list of robots
         self.robotList = [robot.name for robot in executor.hsub.executing_config.robots]
@@ -44,6 +50,13 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         self.rfi = executor.proj.rfi
         self.coordmap_map2lab = executor.hsub.coordmap_map2lab
         self.last_warning = 0
+
+        # Generate polygon for regions in the map
+        self.map = {}
+        for region in self.rfi.regions:
+            self.map[region.name] = self.createRegionPolygon(region)
+            # for n in range(len(region.holeList)): # no of holes
+            #     self.map[region.name] -= self.createRegionPolygon(region,n)
 
         # setup matlab communication
         self.session = LocalPlanner.initializeLocalPlanner(self.rfi.regions, self.coordmap_map2lab)
@@ -66,6 +79,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         goalArray           = {}
         goalPosition        = {}
         goalVelocity        = {}
+        face_normal         = {}
 
         logging.debug("current_regIndices:" + str(current_regIndices))
         logging.debug("next_regIndices: " + str(next_regIndices))
@@ -93,15 +107,16 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
                     print "Next Region is " + str(self.rfi.regions[next_reg].name)
                     print "Current Region is " + str(self.rfi.regions[current_reg].name)
 
-                #set to zero velocity before tree is generated
-                #self.drive_handler.setVelocity(0, 0)
+                self.currentRegionPoly = self.map[self.rfi.regions[current_reg].name]
+                regionPolyOld = Polygon.Polygon(self.currentRegionPoly)
+
                 if last:
                     transFace = None
                 else:
                     # Determine the mid points on the faces connecting to the next region (one goal point will be picked among all the mid points later in buildTree)
                     transFace   = None
                     goalArray[robot_name]   = [[],[]] # list of goal points (midpoints of transition faces)
-                    face_normal = [[],[]] # normal of the trnasition faces
+                    face_normal[robot_name] = [[],[]] # normal of the trnasition faces
                     for i in range(len(self.rfi.transitions[current_reg][next_reg])):
                         pointArray_transface = [x for x in self.rfi.transitions[current_reg][next_reg][i]]
                         transFace = asarray(map(self.coordmap_map2lab,pointArray_transface))
@@ -109,10 +124,30 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
                         bundle_y = (transFace[0,1] +transFace[1,1])/2    #mid-point coordinate y
                         goalArray[robot_name] = hstack((goalArray[robot_name],vstack((bundle_x,bundle_y))))
 
+                        #find the normal vector to the face
+                        face          = transFace[0,:] - transFace[1,:]
+                        distance_face = norm(face)
+                        normal        = face/distance_face * self.trans_matrix
+                        face_normal[robot_name]   = hstack((face_normal[robot_name],vstack((normal[0,0],normal[0,1]))))
+
                     if transFace is None:
                         print "ERROR: Unable to find transition face between regions %s and %s.  Please check the decomposition (try viewing projectname_decomposed.regions in RegionEditor or a text editor)." % (self.proj.rfi.regions[current_reg].name, self.proj.rfi.regions[next_reg].name)
 
-            goalPosition[robot_name] = goalArray[robot_name]  #for now, assume there is only one face.
+            goalArrayNew = mat(goalArray[robot_name])
+            face_normalNew = mat(face_normal[robot_name])
+
+            i = 0
+            while i < goalArrayNew.shape[1]:
+                q_g_original = goalArrayNew[:,i]
+                q_g = goalArrayNew[:,i]-face_normalNew[:,i]*1.5*self.radius    ##original 2*self.radius
+                #q_g = goalArrayNew[:,i]+(goalArrayNew[:,i]-V[1:,(shape(V)[1]-1)])/norm(goalArrayNew[:,i]-V[1:,(shape(V)[1]-1)])*1.5*self.radius    ##original 2*self.radius
+                if not regionPolyOld.isInside(q_g[0],q_g[1]):
+                    #q_g = goalArrayNew[:,i]-(goalArrayNew[:,i]-V[1:,(shape(V)[1]-1)])/norm(goalArrayNew[:,i]-V[1:,(shape(V)[1]-1)])*1.5*self.radius    ##original 2*self.radius
+                    q_g = goalArrayNew[:,i]-face_normalNew[:,i]*1.5*self.radius    ##original 2*self.radius
+                i += 1
+
+            # goalPosition[robot_name] = goalArray[robot_name]
+            goalPosition[robot_name] = q_g  #for now, assume there is only one face.
             goalVelocity[robot_name] = [0, 0]  # temporarily setting this to zero
 
             # NOTE: Information about region geometry can be found in self.rfi.regions:
@@ -158,3 +193,16 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
 
         #logging.debug("arrived:" + str(arrived))
         return (True in arrived.values()) #arrived[self.executor.hsub.getMainRobot().name]
+
+    def createRegionPolygon(self,region,hole = None):
+        """
+        This function takes in the region points and make it a Polygon.
+        """
+        if hole == None:
+            pointArray = [x for x in region.getPoints()]
+        else:
+            pointArray = [x for x in region.getPoints(hole_id = hole)]
+        pointArray = map(self.coordmap_map2lab, pointArray)
+        regionPoints = [(pt[0],pt[1]) for pt in pointArray]
+        formedPolygon= Polygon.Polygon(regionPoints)
+        return formedPolygon

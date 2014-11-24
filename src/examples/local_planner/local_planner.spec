@@ -43,7 +43,7 @@ D = p6
 L = p5
 R = p4
 T = p3
-others = p2, p8, p9
+others = p1, p8, p9
 
 Spec: # Specification in structured English
 visit T
