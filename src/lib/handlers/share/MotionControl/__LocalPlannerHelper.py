@@ -89,42 +89,53 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity):
     next_regIndices = {'rob1': 2,'rob2':3,'rob3':3}
     """
 
+    session.run('pose=[];')
+    session.run('zGoal_in=[];')
+    session.run('vGoal_in=[];')
     for i, poseLoc in enumerate(poseDic.iteritems()):
         roboName = poseLoc[0]
-        session.run('pose=[];')
-        session.run('zGoalNew=[];')
-        session.run('vGoalNew=[];')
+        # session.run('pose=[];')
+        # session.run('zGoalNew=[];')
+        # session.run('vGoalNew=[];')
         
         # Set the current pose: PYTHON: pose, MATLAB: zAux  (size d x n)    
-        session.putvalue('pose',np.float_(poseLoc[1]))
-        session.run('states{'+str(i+1)+'}.position(1:2)=pose(1:2);')
-        session.run('states{'+str(i+1)+'}.position(3)=1;')
-        session.run('states{'+str(i+1)+'}.velocity=z_glob{'+str(i+1)+'}(4:6);') # NB: for now, use Matlab-simulated velocity.  TODO: update with LTLMoP-generated velocity
-        session.run('states{'+str(i+1)+'}.orientation=pose(3);')
+        session.putvalue('poseNew',np.float_(poseLoc[1]))
+        session.run('pose(:,'+str(i+1)+') = poseNew;')
+        # session.run('states{'+str(i+1)+'}.position(1:2)=pose(1:2);')
+        # session.run('states{'+str(i+1)+'}.position(3)=1;')
+        # session.run('states{'+str(i+1)+'}.velocity=z_glob{'+str(i+1)+'}(4:6);') # NB: for now, use Matlab-simulated velocity.  TODO: update with LTLMoP-generated velocity
+        # session.run('states{'+str(i+1)+'}.orientation=pose(3);')
     
         logging.info('Set robotPose completed')
-        logging.debug("  in python: " + str(np.float_(poseLoc[1])))
-        logging.debug("  in MATLAB: " + str(session.getvalue('pose')))
+        # logging.debug("  in python: " + str(np.float_(poseLoc[1])))
+        # logging.debug("  in MATLAB: " + str(session.getvalue('poseNew')))
 
         # Set the goal position: PYTHON: goalPosition, MATLAB: zGoal  (size 2 x n)
         session.putvalue('zGoalNew',np.float_(goalPosition[roboName]))
-        session.run('zGoal{'+str(i+1)+'}(1:2)=zGoalNew(1:2);')
-        session.run('zGoal{'+str(i+1)+'}(3)=1;')
+        session.run('zGoal_in(:,'+str(i+1)+') = [zGoalNew(1:2);1];')
+        # session.run('zGoal{'+str(i+1)+'}(1:2)=zGoalNew(1:2);')
+        # session.run('zGoal{'+str(i+1)+'}(3)=1;')
+        session.run('hold on')
+        session.run('plot3(zGoalNew(1), zGoalNew(2), 1, \'--ro\', \'MarkerFaceColor\', \'r\');')
 
         logging.info('Set goalPosition completed')
-        logging.debug("  in python: " + str(np.float_(goalPosition[roboName])))
-        logging.debug("  in MATLAB: " + str(session.getvalue('zGoalNew')))
+        # logging.debug("  in python: " + str(np.float_(goalPosition[roboName])))
+        # logging.debug("  in MATLAB: " + str(session.getvalue('zGoalNew')))
 
         # Set the goal velocity: PYTHON: goalVelocity, MATLAB: vGoal  (size 2 x n)
         session.putvalue('vGoalNew',np.float_(goalVelocity[roboName]))
-        session.run('vGoal{'+str(i+1)+'}(1:2)=vGoalNew;')
+        session.run('vGoal_in(:,'+str(i+1)+') = vGoalNew(1:2);')
+        # session.run('vGoal{'+str(i+1)+'}(1:2)=vGoalNew;')
 
         logging.info('Set goalVelocity completed')
-        logging.debug("  in python: " + str(np.float_(goalVelocity[roboName])))
-        logging.debug("  in MATLAB: " + str(session.getvalue('vGoalNew')))
+        # logging.debug("  in python: " + str(np.float_(goalVelocity[roboName])))
+        # logging.debug("  in MATLAB: " + str(session.getvalue('vGoalNew')))
 
     # Execute one step of the local planner and collect velocity components
-    session.run('[z_glob, R, zGoal] = overwriteStateAndGoal(states, zGoal);')
+    # session.run('[z_glob, R, zGoal] = overwriteStateAndGoal(states, zGoal);')
+    # logging.debug("  in MATLAB: " + str(session.getvalue('pose')))
+    # logging.debug("  in MATLAB: " + str(session.getvalue('zGoal_in')))
+    session.run('[z_glob, R, zGoal] = overwriteStateAndGoal(pose, z_glob, zGoal_in);')
     session.run('simLocalPlanning_doStep')
     session.run('[states_out, inputs_out] = readStateAndCommands(z_glob, R, vUC);')
 
