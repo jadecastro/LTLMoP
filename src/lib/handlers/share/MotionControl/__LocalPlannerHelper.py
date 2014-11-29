@@ -135,8 +135,8 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity):
     # session.run('[z_glob, R, zGoal] = overwriteStateAndGoal(states, zGoal);')
     # logging.debug("  in MATLAB: " + str(session.getvalue('pose')))
     # logging.debug("  in MATLAB: " + str(session.getvalue('zGoal_in')))
-    session.run('[z_glob, R, zGoal] = overwriteStateAndGoal(pose, z_glob, zGoal_in);')
-    session.run('simLocalPlanning_doStep')
+    session.run('[z_glob, R, zGoal] = overwriteStateAndGoalNew(pose, z_glob, zGoal_in);')
+    session.run('simLocalPlanning_doStep();')
     session.run('[states_out, inputs_out] = readStateAndCommands(z_glob, R, vUC);')
 
     v = {}

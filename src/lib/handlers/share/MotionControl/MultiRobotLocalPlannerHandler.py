@@ -152,19 +152,28 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
                     face_normalNew = mat(face_normal[robot_name])
 
                     i = 0
+                    goal = 2*[[]]
                     while i < goalArrayNew.shape[1]:
-                        goal = goalArrayNew[:,i]-face_normalNew[:,i]*2*self.radius    ##original 2*self.radius
-                        if regionPolyOld.isInside(goal[0], goal[1]):
-                            goal = goalArrayNew[:,i]+face_normalNew[:,i]*2*self.radius    ##original 2*self.radius
+                        goal1 = goalArrayNew[:,i]-face_normalNew[:,i]*3*self.radius    ##original 2*self.radius
+                        goal2 = goalArrayNew[:,i]+face_normalNew[:,i]*3*self.radius    ##original 2*self.radius
+                        if regionPolyOld.isInside(goal1[0], goal1[1]):
+                            goal[0] = goal2
+                            goal[1] = goal1
+                        else:
+                            goal[0] = goal1
+                            goal[1] = goal2
                         i += 1
+
+                    self.goalPositionList[robot_name] = []
+                    self.goalVelocityList[robot_name] = []
+                    for i in range(len(goal)):
+                        self.goalPositionList[robot_name].append(goal[i])  #for now, assume there is only one face.
+                        self.goalVelocityList[robot_name].append([0, 0])  # temporarily setting this to zero
 
                 else:
                     goal = self.goal[robot_name]
                 
                 self.goal[robot_name] = goal
-                
-                self.goalPositionList[robot_name].append(goal)  #for now, assume there is only one face.
-                self.goalVelocityList[robot_name].append([0, 0])  # temporarily setting this to zero
 
                 # NOTE: Information about region geometry can be found in self.rfi.regions:
                 vertices = mat(map(self.coordmap_map2lab, [x for x in self.rfi.regions[current_reg].getPoints()])).T
@@ -184,28 +193,28 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
                     #return True not leaving until all robots are checked
                 """
 
-            if len(self.goalPosition[robot_name]) > 0:
-                print "norm: ", norm(mat(self.pose[robot_name][:2]) - self.goalPosition[robot_name])
-                print "diff: ", mat(self.pose[robot_name][:2]).T - self.goalPosition[robot_name]
-            print "pose: ", self.pose[robot_name][:2]
+            # if len(self.goalPosition[robot_name]) > 0:
+            #     print "norm: ", norm(mat(self.pose[robot_name][:2]) - self.goalPosition[robot_name])
+            #     print "diff: ", mat(self.pose[robot_name][:2]).T - self.goalPosition[robot_name]
+            # print "pose: ", self.pose[robot_name][:2]
             # print self.goalPosition[robot_name]
             # print all(self.goalPosition[robot_name])
-            print "len: ", len(self.goalPositionList[robot_name]) 
             # print self.goalPosition[robot_name]
-            #print "goal: ", self.goal[robot_name]
+            print "goal: ", self.goal[robot_name]
             print "goalPositionList: ", self.goalPositionList[robot_name]
+            doUpdate = False
             if len(self.goalPosition[robot_name]) > 0:
                 if norm(mat(self.pose[robot_name][:2]).T - self.goalPosition[robot_name]) > 1.5*self.radius or len(self.goalPositionList[robot_name]) == 0:
                     pass
                 else:
-                    print "popping!!"
-                    self.goalPosition[robot_name] = self.goalPositionList[robot_name].pop()
-                    self.goalVelocity[robot_name] = self.goalVelocityList[robot_name].pop()
+                    doUpdate = True
             else: 
-                print "popping!!"
+                doUpdate = True
+            if doUpdate:
+                print "updating goal!!"
                 self.goalPosition[robot_name] = self.goalPositionList[robot_name].pop()
                 self.goalVelocity[robot_name] = self.goalVelocityList[robot_name].pop()
-            print "goalPosition: ", self.goalPosition[robot_name]
+            # print "goalPosition: ", self.goalPosition[robot_name]
 
         # Run algorithm to find a velocity vector (global frame) to take the robot to the next region
         v, w = LocalPlanner.executeLocalPlanner(self.session, self.pose, self.goalPosition, self.goalVelocity)

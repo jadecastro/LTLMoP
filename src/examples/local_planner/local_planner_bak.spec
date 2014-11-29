@@ -37,5 +37,13 @@ garbage, 1
 
 ======== SPECIFICATION ========
 
+RegionMapping: # Mapping between region names and their decomposed counterparts
+B = p7
+D = p6
+L = p5
+R = p4
+T = p3
+others = p1, p8, p9
+
 Spec: # Specification in structured English
 visit T
