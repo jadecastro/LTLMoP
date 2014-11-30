@@ -93,7 +93,6 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         logging.debug("current_regIndices:" + str(current_regIndices))
         logging.debug("next_regIndices: " + str(next_regIndices))
 
-        doUpdate = False
         if not self.previous_next_reg:
             for robot_name, current_reg in current_regIndices.iteritems():
                 self.previous_next_reg[robot_name] = []
@@ -101,6 +100,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         for robot_name, current_reg in current_regIndices.iteritems():
             next_reg = next_regIndices[robot_name]
 
+            doUpdate = False            
             if not self.previous_next_reg[robot_name] == next_reg:
                 # Find our current configuration
                 self.pose.update([(robot_name,self.pose_handler[robot_name].getPose())])
@@ -150,6 +150,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
 
                     goalArrayNew = mat(goalArray[robot_name])
                     face_normalNew = mat(face_normal[robot_name])
+                    doUpdate = True
 
                     i = 0
                     goal = 2*[[]]
