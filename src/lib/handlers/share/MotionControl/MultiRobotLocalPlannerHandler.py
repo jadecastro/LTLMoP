@@ -201,9 +201,8 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
             # print self.goalPosition[robot_name]
             # print all(self.goalPosition[robot_name])
             # print self.goalPosition[robot_name]
-            print "goal: ", self.goal[robot_name]
-            print "goalPositionList: ", self.goalPositionList[robot_name]
-            doUpdate = False
+            # print "goal: ", self.goal[robot_name]
+            # print "goalPositionList: ", self.goalPositionList[robot_name]
             if len(self.goalPosition[robot_name]) > 0:
                 if norm(mat(self.pose[robot_name][:2]).T - self.goalPosition[robot_name]) > 1.5*self.radius or len(self.goalPositionList[robot_name]) == 0:
                     pass

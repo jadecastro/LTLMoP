@@ -2,6 +2,7 @@ import pymatlab
 import numpy as np
 import logging
 from collections import OrderedDict
+from math import sin, cos
 
 threshold = 10
 robRadius = OrderedDict([('rob2',0.15), ('rob1',0.15)])
@@ -30,8 +31,9 @@ def initializeLocalPlanner(regions, coordmap_map2lab):
     # cell for each robot
 
     session.run('cd '+pathToMatlabLocalPlanner)
-    session.run('settingsHadas = overwriteSettingsHadas(1);')
+    session.run('settingsHadas = 1;')
     session.run('simLocalPlanning_initialize();')
+    session.run('view(2);')
 
     #-------------------------------------------------------------------
     # -----PYTHON: robotRadius, MATLAB: robots (scalar) ----------------
@@ -115,8 +117,8 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity):
         session.run('zGoal_in(:,'+str(i+1)+') = [zGoalNew(1:2);1];')
         # session.run('zGoal{'+str(i+1)+'}(1:2)=zGoalNew(1:2);')
         # session.run('zGoal{'+str(i+1)+'}(3)=1;')
-        session.run('hold on')
-        session.run('plot3(zGoalNew(1), zGoalNew(2), 1, \'--ro\', \'MarkerFaceColor\', \'r\');')
+        # session.run('hold on')
+        # session.run('plot3(zGoalNew(1), zGoalNew(2), 1, \'--ro\', \'MarkerFaceColor\', \'r\');')
 
         logging.info('Set goalPosition completed')
         # logging.debug("  in python: " + str(np.float_(goalPosition[roboName])))
@@ -135,6 +137,7 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity):
     # session.run('[z_glob, R, zGoal] = overwriteStateAndGoal(states, zGoal);')
     # logging.debug("  in MATLAB: " + str(session.getvalue('pose')))
     # logging.debug("  in MATLAB: " + str(session.getvalue('zGoal_in')))
+
     session.run('[z_glob, R, zGoal] = overwriteStateAndGoalNew(pose, z_glob, zGoal_in);')
     session.run('simLocalPlanning_doStep();')
     session.run('[states_out, inputs_out] = readStateAndCommands(z_glob, R, vUC);')
@@ -144,8 +147,8 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity):
     for i, poseLoc in enumerate(poseDic.iteritems()):
         session.run('vOut = inputs_out{'+str(i+1)+'}(1);')
         session.run('wOut = inputs_out{'+str(i+1)+'}(2);')
-        logging.debug('v = ' + str(session.getvalue('vOut')))
-        logging.debug('w = ' + str(session.getvalue('wOut')))
+        # logging.debug('v = ' + str(session.getvalue('vOut')))
+        # logging.debug('w = ' + str(session.getvalue('wOut')))
 
         v[i] = session.getvalue('vOut')
         w[i] = session.getvalue('wOut')

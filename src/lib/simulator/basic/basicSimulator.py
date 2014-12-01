@@ -5,7 +5,7 @@ basicSimulator.py -- A simple robot simulator provides pose by integrating given
 ================================================================
 """
 from numpy import array,sqrt,dot
-from math import atan2,log10,ceil
+from math import atan2,log10,ceil,sin,cos
 import time, sys
 import thread
 
@@ -53,8 +53,11 @@ class basicSimulator:
             if self.setVel_called:
                 time_span = (self.timer_func()-self.time)
                 time_span = time_span*10**ceil(log10(0.03/time_span))
-                vel = array(self.curVel)*time_span
-                self.pose[0:2] = self.pose[0:2]+vel
+                vel = self.curVel[0]*array([cos(self.pose[2]), sin(self.pose[2])])
+                deltaCartesian = vel*time_span
+                deltaOrientation = self.curVel[1]*time_span
+                self.pose[0:2] = self.pose[0:2]+deltaCartesian
+                self.pose[2] = self.pose[2]+deltaOrientation
                 self.setVel_called=False
             else:
                 self.pose[0:2] = self.pose[0:2]+array([0.0,0.0])*(self.timer_func()-self.time)

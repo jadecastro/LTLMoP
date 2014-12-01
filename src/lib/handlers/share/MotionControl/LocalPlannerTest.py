@@ -22,7 +22,7 @@ session = pymatlab.session_factory()
 # cell for each robot
 
 session.run('cd /home/jon/Dropbox/Repos/uav-avoidance/multiquad-sim')
-session.run('settingsHadas = overwriteSettingsHadas(1);')
+session.run('settingsHadas = 1;')
 session.run('simLocalPlanning_initialize();')
 
 
@@ -39,7 +39,7 @@ for i in [0, 1]:
     # session.run('states{'+str(i+1)+'}.position(3)=0;')
     session.run('states{'+str(i+1)+'}.velocity=z_glob{'+str(i+1)+'}(4:6);') # NB: for now, use Matlab-simulated velocity.  TODO: update with LTLMoP-generated velocity
     # session.run('states{'+str(i+1)+'}.orientation=pose(3);')
-    session.run('states{'+str(i+1)+'}.orientation=rotationMatrix_2_orientation(R{'+str(i+1)+'});;')
+    session.run('states{'+str(i+1)+'}.orientation=rotationMatrix_2_orientation(R{'+str(i+1)+'});')
 
     session.run('positionOut=states{'+str(i+1)+'}.position;')
     session.run('velocityOut=states{'+str(i+1)+'}.velocity;')
