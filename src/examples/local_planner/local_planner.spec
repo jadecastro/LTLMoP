@@ -33,17 +33,18 @@ Sensors: # List of sensor propositions and their state (enabled = 1, disabled = 
 rob1_pickup_ac, 1
 rob2_pickup_ac, 1
 garbage, 1
+door, 1
 
 
 ======== SPECIFICATION ========
 
 RegionMapping: # Mapping between region names and their decomposed counterparts
-B = p7
-D = p6
-L = p5
-R = p4
-T = p3
-others = p1, p8, p9
+B = p8
+D = p7
+L = p6
+R = p5
+T = p4
+others = p1, p2, p9, p10
 
 Spec: # Specification in structured English
 visit T

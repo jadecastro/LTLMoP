@@ -25,6 +25,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         Vector motion planning controller
         """
 
+        self.forceUpdate = False
         self.goal               = {}
         self.previous_next_reg  = {}
         self.pose               = {}
@@ -210,7 +211,8 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
                     doUpdate = True
             else: 
                 doUpdate = True
-            if doUpdate:
+            if doUpdate or self.forceUpdate:
+                self.forceUpdate = False
                 print "updating goal!!"
                 self.goalPosition[robot_name] = self.goalPositionList[robot_name].pop()
                 self.goalVelocity[robot_name] = self.goalVelocityList[robot_name].pop()
@@ -238,6 +240,9 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
                         logging.info("I think I'm in " + r.name)
                         break
                 self.last_warning = time.time()
+
+        # if norm([v[idx] for idx in range(len(v))]) < 0.01:
+        #     self.forceUpdate = True
 
         #logging.debug("arrived:" + str(arrived))
         return (True in arrived.values()) #arrived[self.executor.hsub.getMainRobot().name]

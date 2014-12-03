@@ -229,11 +229,7 @@ Regions: # Stored as JSON string
                 0.0
             ], 
             [
-                10.0, 
-                0.0
-            ], 
-            [
-                10.0, 
+                7.0, 
                 3.0
             ], 
             [
