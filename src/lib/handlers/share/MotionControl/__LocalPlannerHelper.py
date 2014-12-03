@@ -8,7 +8,8 @@ threshold = 10
 robRadius = OrderedDict([('rob2',0.15), ('rob1',0.15)])
 robMaxVel = OrderedDict([('rob2',0.5), ('rob1',0.5)])
 robots = [robRadius, robMaxVel]
-pathToMatlabLocalPlanner = '/home/jon/Dropbox/Repos/uav-avoidance/multiquad-sim'
+#pathToMatlabLocalPlanner = '/home/jon/Dropbox/Repos/uav-avoidance/multiquad-sim'
+pathToMatlabLocalPlanner = '/Users/jalonso/MIT/drl-projects/uav-avoidance/multiquad-sim'
 
 def initializeLocalPlanner(regions, coordmap_map2lab):
     """
