@@ -8,8 +8,8 @@ threshold = 10
 robRadius = OrderedDict([('rob2',0.15), ('rob1',0.15)])
 robMaxVel = OrderedDict([('rob2',0.5), ('rob1',0.5)])
 robots = [robRadius, robMaxVel]
-#TODO: check OS, as a hack..
-pathToMatlabLocalPlanner = '/home/jon/Dropbox/Repos/uav-avoidance/multiquad-sim'
+#pathToMatlabLocalPlanner = '/home/jon/Dropbox/Repos/uav-avoidance/multiquad-sim'
+pathToMatlabLocalPlanner = '/Users/jalonso/MIT/drl-projects/uav-avoidance/multiquad-sim'
 
 def initializeLocalPlanner(regions, coordmap_map2lab):
     """
@@ -93,14 +93,14 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, doUpdate):
         session.putvalue('poseNew'+str(i+1),np.float_(poseLoc[1]))
         logging.info('Set robotPose completed')
         # logging.debug("  in python: " + str(np.float_(poseLoc[1])))
-        logging.debug("  in MATLAB: " + str(session.getvalue('poseNew'+str(i+1))))
+        #logging.debug("  in MATLAB: " + str(session.getvalue('poseNew'+str(i+1))))
 
         if doUpdate[roboName]:
             # Set the goal position: PYTHON: goalPosition, MATLAB: zGoal  (size 2 x n)
             session.putvalue('zGoalNew'+str(i+1),np.float_(goalPosition[roboName]))
             logging.info('Set goalPosition completed')
             # logging.debug("  in python: " + str(np.float_(goalPosition[roboName])))
-            logging.debug("  in MATLAB: " + str(session.getvalue('zGoalNew'+str(i+1))))
+            #logging.debug("  in MATLAB: " + str(session.getvalue('zGoalNew'+str(i+1))))
 
             # session.putvalue('vGoalNew'+str(i+1),np.float_(goalVelocity[roboName]))
             # logging.info('Set goalVelocity completed')
