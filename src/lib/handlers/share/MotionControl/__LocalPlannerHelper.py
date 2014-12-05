@@ -1,6 +1,7 @@
 import pymatlab
 import numpy as np
 import logging
+import platform
 from collections import OrderedDict
 from math import sin, cos
 
@@ -8,8 +9,12 @@ threshold = 10
 robRadius = OrderedDict([('rob2',0.15), ('rob1',0.15)])
 robMaxVel = OrderedDict([('rob2',0.5), ('rob1',0.5)])
 robots = [robRadius, robMaxVel]
-#pathToMatlabLocalPlanner = '/home/jon/Dropbox/Repos/uav-avoidance/multiquad-sim'
-pathToMatlabLocalPlanner = '/Users/jalonso/MIT/drl-projects/uav-avoidance/multiquad-sim'
+# This is a hack assuming javier uses Mac and Jonathan Windows or Linux
+system = platform.system()
+if system == 'Darwin':
+    pathToMatlabLocalPlanner = '/Users/jalonso/MIT/drl-projects/uav-avoidance/multiquad-sim'
+else:
+    pathToMatlabLocalPlanner = '/home/jon/Dropbox/Repos/uav-avoidance/multiquad-sim'
 
 def initializeLocalPlanner(regions, coordmap_map2lab):
     """
