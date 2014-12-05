@@ -8,6 +8,7 @@ threshold = 10
 robRadius = OrderedDict([('rob2',0.15), ('rob1',0.15)])
 robMaxVel = OrderedDict([('rob2',0.5), ('rob1',0.5)])
 robots = [robRadius, robMaxVel]
+#TODO: check OS, as a hack..
 pathToMatlabLocalPlanner = '/home/jon/Dropbox/Repos/uav-avoidance/multiquad-sim'
 
 def initializeLocalPlanner(regions, coordmap_map2lab):
@@ -23,12 +24,6 @@ def initializeLocalPlanner(regions, coordmap_map2lab):
     ####################################
     ###### run initialization ##########
     ####################################
-    #function [vx, vy]=getvelocity(pose, threshold, vertices,robots,destination)
-    # Takes as input pose (n x d pose of all robots), threshold (how far robots
-    # can coordinate), vertices (vertices of all regions as a cell array), currentrobot (the
-    # index n_i of the current robot), and robots (an n x 1 array that contains
-    # the size of each robot) destination (1xn array) contains the destination
-    # cell for each robot
 
     session.run('cd '+pathToMatlabLocalPlanner)
     session.run('settingsHadas = 1;')
@@ -85,73 +80,44 @@ def initializeLocalPlanner(regions, coordmap_map2lab):
     # return matlab session
     return session
 
-def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity):
+def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, doUpdate):
     """
     pose  = {'rob1':[-1 ,.5],'rob2':[1,1],'rob3':[3.5 , -1]}
     next_regIndices = {'rob1': 2,'rob2':3,'rob3':3}
     """
 
-    session.run('pose=[];')
-    session.run('zGoal_in=[];')
-    session.run('vGoal_in=[];')
     for i, poseLoc in enumerate(poseDic.iteritems()):
         roboName = poseLoc[0]
-        # session.run('pose=[];')
-        # session.run('zGoalNew=[];')
-        # session.run('vGoalNew=[];')
-        
+
         # Set the current pose: PYTHON: pose, MATLAB: zAux  (size d x n)    
-        session.putvalue('poseNew',np.float_(poseLoc[1]))
-        session.run('pose(:,'+str(i+1)+') = poseNew;')
-        # session.run('states{'+str(i+1)+'}.position(1:2)=pose(1:2);')
-        # session.run('states{'+str(i+1)+'}.position(3)=1;')
-        # session.run('states{'+str(i+1)+'}.velocity=z_glob{'+str(i+1)+'}(4:6);') # NB: for now, use Matlab-simulated velocity.  TODO: update with LTLMoP-generated velocity
-        # session.run('states{'+str(i+1)+'}.orientation=pose(3);')
-    
+        session.putvalue('poseNew'+str(i+1),np.float_(poseLoc[1]))
         logging.info('Set robotPose completed')
         # logging.debug("  in python: " + str(np.float_(poseLoc[1])))
-        # logging.debug("  in MATLAB: " + str(session.getvalue('poseNew')))
+        logging.debug("  in MATLAB: " + str(session.getvalue('poseNew'+str(i+1))))
 
-        # Set the goal position: PYTHON: goalPosition, MATLAB: zGoal  (size 2 x n)
-        session.putvalue('zGoalNew',np.float_(goalPosition[roboName]))
-        session.run('zGoal_in(:,'+str(i+1)+') = [zGoalNew(1:2);1];')
-        # session.run('zGoal{'+str(i+1)+'}(1:2)=zGoalNew(1:2);')
-        # session.run('zGoal{'+str(i+1)+'}(3)=1;')
-        # session.run('hold on')
-        # session.run('plot3(zGoalNew(1), zGoalNew(2), 1, \'--ro\', \'MarkerFaceColor\', \'r\');')
+        if doUpdate[roboName]:
+            # Set the goal position: PYTHON: goalPosition, MATLAB: zGoal  (size 2 x n)
+            session.putvalue('zGoalNew'+str(i+1),np.float_(goalPosition[roboName]))
+            logging.info('Set goalPosition completed')
+            # logging.debug("  in python: " + str(np.float_(goalPosition[roboName])))
+            logging.debug("  in MATLAB: " + str(session.getvalue('zGoalNew'+str(i+1))))
 
-        logging.info('Set goalPosition completed')
-        # logging.debug("  in python: " + str(np.float_(goalPosition[roboName])))
-        # logging.debug("  in MATLAB: " + str(session.getvalue('zGoalNew')))
-
-        # Set the goal velocity: PYTHON: goalVelocity, MATLAB: vGoal  (size 2 x n)
-        session.putvalue('vGoalNew',np.float_(goalVelocity[roboName]))
-        session.run('vGoal_in(:,'+str(i+1)+') = vGoalNew(1:2);')
-        # session.run('vGoal{'+str(i+1)+'}(1:2)=vGoalNew;')
-
-        logging.info('Set goalVelocity completed')
-        # logging.debug("  in python: " + str(np.float_(goalVelocity[roboName])))
-        # logging.debug("  in MATLAB: " + str(session.getvalue('vGoalNew')))
+            # session.putvalue('vGoalNew'+str(i+1),np.float_(goalVelocity[roboName]))
+            # logging.info('Set goalVelocity completed')
+            # logging.debug("  in python: " + str(np.float_(goalVelocity[roboName])))
+            # logging.debug("  in MATLAB: " + str(session.getvalue('vGoalNew')))
 
     # Execute one step of the local planner and collect velocity components
-    # session.run('[z_glob, R, zGoal] = overwriteStateAndGoal(states, zGoal);')
-    # logging.debug("  in MATLAB: " + str(session.getvalue('pose')))
-    # logging.debug("  in MATLAB: " + str(session.getvalue('zGoal_in')))
-
-    session.run('[z_glob, R, zGoal] = overwriteStateAndGoalNew(pose, z_glob, zGoal_in);')
-    session.run('simLocalPlanning_doStep();')
-    session.run('[states_out, inputs_out] = readStateAndCommands(z_glob, R, vUC);')
+    session.run('simLocalPlanning_doStep_wrapper();')
 
     v = {}
     w = {}
     for i, poseLoc in enumerate(poseDic.iteritems()):
-        session.run('vOut = inputs_out{'+str(i+1)+'}(1);')
-        session.run('wOut = inputs_out{'+str(i+1)+'}(2);')
         # logging.debug('v = ' + str(session.getvalue('vOut')))
         # logging.debug('w = ' + str(session.getvalue('wOut')))
 
-        v[i] = session.getvalue('vOut')
-        w[i] = session.getvalue('wOut')
+        v[i] = session.getvalue('vOut'+str(i+1))
+        w[i] = session.getvalue('wOut'+str(i+1))
 
     # return velocities
     return v, w
