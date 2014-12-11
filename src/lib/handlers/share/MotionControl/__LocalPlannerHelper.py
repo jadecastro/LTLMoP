@@ -1,16 +1,21 @@
 import pymatlab
 import numpy as np
 import logging
+import platform
 from collections import OrderedDict
 from math import sin, cos
 
 threshold = 10
 robRadius = OrderedDict([('rob2',0.15), ('rob1',0.15)])
 robMaxVel = OrderedDict([('rob2',0.5), ('rob1',0.5)])
-regionNumbers = OrderedDict([('B',1),('L',2),('T',3),('R',4),('D',5)])
+regionNumbers = OrderedDict([('p8',1),('p6',2),('p4',3),('p5',4),('p7',5)])  # Temporarily hard-coding this.. will come from the region file eventually
 robots = [robRadius, robMaxVel]
-pathToMatlabLocalPlanner = '/home/jon/Dropbox/Repos/uav-avoidance/multiquad-sim'
-# pathToMatlabLocalPlanner = '/Users/jalonso/MIT/drl-projects/uav-avoidance/multiquad-sim'
+# This is a hack assuming javier uses Mac and Jonathan Windows or Linux
+system = platform.system()
+if system == 'Darwin':
+    pathToMatlabLocalPlanner = '/Users/jalonso/MIT/drl-projects/uav-avoidance/multiquad-sim'
+else:
+    pathToMatlabLocalPlanner = '/home/jon/Dropbox/Repos/uav-avoidance/multiquad-sim'
 
 def initializeLocalPlanner(regions, coordmap_map2lab):
     """
@@ -102,15 +107,18 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, doUpdate, 
             session.putvalue('zGoalNew'+str(i+1),np.float_(goalPosition[roboName]))
             logging.info('Set goalPosition completed')
 
-            curr_reg = regionNumbers[curr[roboName].name]
-            next_reg = regionNumbers[next[roboName].name]
-
-            currRegNbr = regions[curr_reg].name
-            nextRegNbr = regions[next_reg].name
-            trans = [currRegNbr, nextRegNbr]
-            session.putvalue('id_region_1',np.float_(trans(0)))
-            session.putvalue('id_region_2',np.float_(trans(1)))
+            currRegName = regions[curr[roboName]].name
+            nextRegName = regions[next[roboName]].name
+            # print "current region: ",currRegName
+            # print "next region: ",nextRegName
+            # print regionNumbers
+            currRegNbr = [[]]; nextRegNbr =[[]]
+            currRegNbr[0] = regionNumbers[currRegName]
+            nextRegNbr[0] = regionNumbers[nextRegName]
+            session.putvalue('id_region_1',currRegNbr)
+            session.putvalue('id_region_2',nextRegNbr)
             session.run('allowed_regions('+str(i+1)+',:) = [id_region_1, id_region_2];')
+
             # logging.debug("  in python: " + str(np.float_(goalPosition[roboName])))
             #logging.debug("  in MATLAB: " + str(session.getvalue('zGoalNew'+str(i+1))))
 
@@ -127,6 +135,7 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, doUpdate, 
     for i, poseLoc in enumerate(poseDic.iteritems()):
         # logging.debug('v = ' + str(session.getvalue('vOut')))
         # logging.debug('w = ' + str(session.getvalue('wOut')))
+
         v[i] = session.getvalue('vOut'+str(i+1))
         w[i] = session.getvalue('wOut'+str(i+1))
 
