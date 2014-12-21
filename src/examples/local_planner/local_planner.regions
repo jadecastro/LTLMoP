@@ -3,30 +3,31 @@
 # Note that all values are separated by *tabs*.
 
 Background: # Relative path of background image file
-None
+RegionEditorProjectorTemplate.png
 
 CalibrationPoints: # Vertices to use for map calibration: (vertex_region_name, vertex_index)
-
-Obstacles: # Names of regions to treat as obstacles
+R	3
+L	2
+T	4
 
 Regions: # Stored as JSON string
 [
     {
         "name": "D", 
         "color": [
-            255, 
-            255, 
-            0
+            67, 
+            241, 
+            35
         ], 
         "height": 0.0, 
         "position": [
-            6.65, 
-            3.0
+            465.5, 
+            210.0
         ], 
         "type": "rect", 
         "size": [
-            1.55, 
-            1.0
+            108.5, 
+            70.0
         ]
     }, 
     {
@@ -44,38 +45,38 @@ Regions: # Stored as JSON string
                 0.0
             ], 
             [
-                1.15, 
+                80.5, 
                 0.0
             ], 
             [
-                2.7, 
+                189.0, 
                 0.0
             ], 
             [
-                4.5, 
+                315.0, 
                 0.0
             ], 
             [
-                4.5, 
-                3.0
+                315.0, 
+                210.0
             ], 
             [
-                1.5, 
-                3.0
+                105.0, 
+                210.0
             ], 
             [
-                0, 
-                3.0
+                0.0, 
+                210.0
             ]
         ], 
         "position": [
-            5.5, 
-            4.0
+            385.0, 
+            280.0
         ], 
         "type": "poly", 
         "size": [
-            4.5, 
-            3.0
+            315.0, 
+            210.0
         ]
     }, 
     {
@@ -88,12 +89,12 @@ Regions: # Stored as JSON string
         "height": 0.0, 
         "position": [
             0.0, 
-            3.0
+            210.0
         ], 
         "type": "rect", 
         "size": [
-            1.5, 
-            4.0
+            105.0, 
+            280.0
         ]
     }, 
     {
@@ -111,36 +112,40 @@ Regions: # Stored as JSON string
                 0.0
             ], 
             [
-                10.0, 
+                700.0, 
                 0.0
             ], 
             [
-                10.0, 
-                3.0
+                700.0, 
+                210.0
             ], 
             [
-                10.0, 
-                4.0
+                700.0, 
+                280.0
             ], 
             [
-                10.0, 
-                7.0
+                700.0, 
+                490.0
             ], 
             [
-                10.0, 
-                10.0
+                700.0, 
+                700.0
             ], 
             [
-                0.0, 
-                10.0
-            ],
-            [
-                0.0, 
-                7.0
+                490.0, 
+                700.0
             ], 
             [
                 0.0, 
-                3.0
+                700.0
+            ], 
+            [
+                0.0, 
+                490.0
+            ], 
+            [
+                0.0, 
+                210.0
             ]
         ], 
         "position": [
@@ -149,8 +154,8 @@ Regions: # Stored as JSON string
         ], 
         "type": "poly", 
         "size": [
-            10.0, 
-            10.0
+            700.0, 
+            700.0
         ]
     }, 
     {
@@ -168,28 +173,32 @@ Regions: # Stored as JSON string
                 0.0
             ], 
             [
-                10.0, 
+                700.0, 
                 0.0
             ], 
             [
-                10.0, 
-                3.0
+                700.0, 
+                210.0
             ], 
             [
-                8.2, 
-                3.0
-            ],
-            [
-                6.65, 
-                3.0
-            ],  
-            [
-                1.5, 
-                3.0
+                574.0, 
+                210.0
             ], 
             [
-                0, 
-                3.0
+                465.5, 
+                210.0
+            ], 
+            [
+                385.0, 
+                210.0
+            ], 
+            [
+                105.0, 
+                210.0
+            ], 
+            [
+                0.0, 
+                210.0
             ]
         ], 
         "position": [
@@ -198,8 +207,8 @@ Regions: # Stored as JSON string
         ], 
         "type": "poly", 
         "size": [
-            10.0, 
-            3.0
+            700.0, 
+            210.0
         ]
     }, 
     {
@@ -217,44 +226,46 @@ Regions: # Stored as JSON string
                 0.0
             ], 
             [
-                1.5, 
+                105.0, 
                 0.0
             ], 
             [
-                5.5, 
+                385.0, 
                 0.0
             ], 
             [
-                7.0, 
+                490.0, 
                 0.0
             ], 
             [
-                7.0, 
-                3.0
+                490.0, 
+                210.0
             ], 
             [
-                0, 
-                3.0
+                0.0, 
+                210.0
             ]
         ], 
         "position": [
             0.0, 
-            7.0
+            490.0
         ], 
         "type": "poly", 
         "size": [
-            10.0, 
-            3.0
+            700.0, 
+            210.0
         ]
     }
 ]
 
 Transitions: # Region 1 Name, Region 2 Name, Bidirectional transition faces (face1_x1, face1_y1, face1_x2, face1_y2, face2_x1, ...)
-D	R	8.2	4.0	6.65	4.0
-D	B	8.2	3.0	6.65	3.0
-R	T	5.5	7.0	7.0	7.0
-L	boundary	0.0	3.0	0.0	7.0
-L	B	1.5	3.0	0.0	3.0
-L	T	1.5	7.0	0.0	7.0
-boundary	B	10.0	0.0	10.0	3.0	0.0	3.0	0.0	0.0	0.0	0.0	10.0	0.0
-boundary	T	10.0	10.0	10.0	0.0	10.0	7.0	10.0	10.0
+D	R	465.5	280.0	574.0	280.0
+D	B	574.0	210.0	465.5	210.0
+R	boundary	700.0	490.0	700.0	280.0
+R	T	385.0	490.0	490.0	490.0
+L	boundary	0.0	490.0	0.0	210.0
+L	B	105.0	210.0	0.0	210.0
+L	T	105.0	490.0	0.0	490.0
+boundary	B	0.0	0.0	0.0	210.0	700.0	210.0	700.0	0.0	0.0	0.0	700.0	0.0
+boundary	T	490.0	700.0	0.0	700.0	0.0	490.0	0.0	700.0
+

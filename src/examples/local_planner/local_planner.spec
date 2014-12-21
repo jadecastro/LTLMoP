@@ -39,12 +39,11 @@ door, 1
 ======== SPECIFICATION ========
 
 RegionMapping: # Mapping between region names and their decomposed counterparts
-B = p8
-D = p7
-L = p6
-R = p5
-T = p4
-others = p1, p2, p9, p10
+B = p9
+D = p8
+L = p7
+R = p6
+T = p5
 
 Spec: # Specification in structured English
 visit T

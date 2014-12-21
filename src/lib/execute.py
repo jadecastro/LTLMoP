@@ -104,7 +104,7 @@ class LTLMoPExecutor(ExecutorStrategyExtensions,ExecutorResynthesisExtensions, o
 
         ######## RUNTIME MONIOTRING #################
         self.runtimeMonitoring = False
-        self.usingSlugs = True
+        self.usingSlugs = False
         #############################################
 
     def postEvent(self, eventType, eventData=None):

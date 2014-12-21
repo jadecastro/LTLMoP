@@ -56,37 +56,39 @@ class BipedalDriveHandler(handlerTemplates.DriveHandler):
             exit(-1)
 
     def setVelocity(self, x, y, theta=0):
+        # Note: x, y interpreted here as v, w
         #if not self.silent: print "VEL:%f,%f" % tuple(self.coordmap([x, y]))
         #if not self.silent: print "(drive) velocity = %f,%f" % tuple([x,y]) #???#
 
 
         if not self.silent: print >>sys.__stdout__, 180*atan2(y,x)/pi
         # Find direction of where robot should go
-        th = numpy.arctan2(y,x)-theta
-        while th > pi:
-            th = th-2*pi
-        while th < -pi:
-            th = th+2*pi
-        if not self.silent: print >>sys.__stdout__, "(drive) th = "+str(th) #??#
+        # th = numpy.arctan2(y,x)-theta
+
+        # while th > pi:
+        #     th = th-2*pi
+        # while th < -pi:
+        #     th = th+2*pi
+        # if not self.silent: print >>sys.__stdout__, "(drive) th = "+str(th) #??#
 
         # Set velocities based on where robot should go
         f = self.maxfreq             # Step frequency
         vy = 0                  # Never step sideways
-        if numpy.hypot(x,y) < self.minvel:
+        if x < self.minvel:
             vx = 0              # Don't move
             w = 0
             if not self.silent: print >>sys.__stdout__, "(drive) not moving" #??#
-        elif numpy.fabs(th) > self.angcur:
+        elif numpy.fabs(y) > self.angcur:
             vx = 0              # Turn in place
-            if th > 0:
+            if y > 0:
                 w = self.maxspeed    # Turn left
                 if not self.silent: print >>sys.__stdout__, "(drive) turning left" #??#
             else:
                 w = -self.maxspeed   # Turn right
                 if not self.silent: print >>sys.__stdout__, "(drive) turning right" #??#
-        elif numpy.fabs(th) > self.angfwd:
+        elif numpy.fabs(y) > self.angfwd:
             vx = self.maxspeed       # Walk forward while turning
-            if th > 0:
+            if y > 0:
                 w = self.maxspeed/2  # Turn left
                 if not self.silent: print >>sys.__stdout__, "(drive) curving left" #??#
             else:

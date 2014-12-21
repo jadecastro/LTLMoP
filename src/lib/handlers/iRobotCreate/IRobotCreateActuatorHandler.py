@@ -130,7 +130,7 @@ class _TakeOverMotionController(Thread):
         self.pickUpAttempt = 1
         self.pose = []
         self.close = Event()
-        self.hsub= hsub
+        self.hsub= executor.hsub
 
 
     def run(self,pos_x,pos_y):

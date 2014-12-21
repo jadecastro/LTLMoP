@@ -31,7 +31,7 @@ class HolonomicDriveHandler(handlerTemplates.DriveHandler):
 
     def setVelocity(self, x, y, theta=0):
         x = min(x*self.mul,self.max)
-        y = min(y*self.mul,self.max)
+        y = min(y,4.0)
 
         #print "VEL:%f,%f" % tuple(self.coordmap([x, y]))
         self.loco.sendCommand([x,y])

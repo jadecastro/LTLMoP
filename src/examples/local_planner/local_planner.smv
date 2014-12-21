@@ -11,15 +11,12 @@ MODULE main
 MODULE env -- inputs
     VAR
 		garbage : boolean;
-		p2_rc : boolean;
-		p1_rc : boolean;
+		door : boolean;
 		p6_rc : boolean;
 		p7_rc : boolean;
-		p4_rc : boolean;
 		p5_rc : boolean;
 		p8_rc : boolean;
 		p9_rc : boolean;
-		p10_rc : boolean;
 
 MODULE sys -- outputs
     VAR
@@ -29,12 +26,8 @@ MODULE sys -- outputs
 		m_rob2_T : boolean;
 		m_rob1_B : boolean;
 		m_rob2_B : boolean;
-		p2 : boolean;
-		p1 : boolean;
 		p6 : boolean;
 		p7 : boolean;
-		p4 : boolean;
 		p5 : boolean;
 		p8 : boolean;
 		p9 : boolean;
-		p10 : boolean;
