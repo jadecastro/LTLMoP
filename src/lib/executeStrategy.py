@@ -183,14 +183,12 @@ class ExecutorStrategyExtensions(object):
                 if heading_region_names:
                     heading_region_name = heading_region_names[0].replace(robot.name+"_",'')
                     decomposed_heading_region_names[robot.name] = self.proj.regionMapping[heading_region_name]
-                    self.next_region[robot.name] = self.proj.rfi.regions[self.proj.rfi.indexOfRegionWithName(decomposed_heading_region_names[robot.name][0])]
-                else:
-                    #TODO: This is a hack. bdd is giving no next region...
-                    self.next_region[robot.name] = self.current_region[robot.name]
 
+
+                self.next_region[robot.name] = self.proj.rfi.regions[self.proj.rfi.indexOfRegionWithName(decomposed_heading_region_names[robot.name][0])]
             logging.debug("decomposed_heading_region_names" + str(decomposed_heading_region_names))
             #################################################################################
-            logging.debug("next_states:" + str(next_states))
+
             self.postEvent("INFO", "Currently pursuing goal #{}".format(self.next_state.goal_id))
 
             ##################################################################################
@@ -242,10 +240,6 @@ class ExecutorStrategyExtensions(object):
             #logging.debug(self.current_region)
             #logging.debug(self.next_region)
             self.arrived = self.hsub.gotoRegionMultiRobot(self.current_region, self.next_region)
-        else:
-            pass
-            #TODO: temp fix for BDD
-            #self.hsub.gotoRegionMultiRobot(self.current_region, self.next_region)
 
         # Check for completion of motion
         if self.arrived and self.next_state != self.strategy.current_state:
@@ -255,12 +249,6 @@ class ExecutorStrategyExtensions(object):
                         self.postEvent("INFO", "Crossed border from %s to %s!" % (self.current_region[robot.name].name, self.nextRegionCompleted[robot.name].name))
                         self.postEvent("INFO", "Heading to region %s..." % self.nextRegionCompleted[robot.name].name)
             logging.debug('*****************CHANGING STATES****************************')
-            trueProp = []
-            for prop,value in self.next_state.getAll().iteritems():
-                if value:
-                    trueProp.append(prop)
-            logging.debug(trueProp)
-            logging.debug('************************************************************')
             self.strategy.current_state = self.next_state
             self.last_next_states = []  # reset
 

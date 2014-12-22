@@ -75,7 +75,7 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, doUpdate, 
         poseNew = np.float_(np.hstack([float(1)/scalingPixelsToMeters*poseLoc[1][0:2], poseLoc[1][2]]))
         # poseNew = np.float_(poseLoc[1])
         session.putvalue('poseNew'+str(i+1),poseNew)
-        # logging.debug("  poseNew"+str(i+1)+" (matlab): "+str(session.getvalue('poseNew'+str(i+1))))
+        logging.debug("  poseNew"+str(i+1)+" (matlab): "+str(session.getvalue('poseNew'+str(i+1))))
 
         if doUpdate[roboName]:
             # Set the goal position: PYTHON: goalPosition, MATLAB: zGoal  (size 2 x n)
@@ -96,15 +96,17 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, doUpdate, 
                 if region.name == regions[next[roboName]].name:
                     break
             print currRegNbr, nextRegNbr
-            currNbr[0] = currRegNbr; nextNbr[0] = nextRegNbr
+            currNbr[0] = currRegNbr+1; nextNbr[0] = nextRegNbr+1
             # currRegNbr[0] = regions.name.index(currRegName) #regionNumbers[currRegName]
             # nextRegNbr[0] = regionNumbers[nextRegName]
             session.putvalue('id_region_1',np.float_(currNbr))
             session.putvalue('id_region_2',np.float_(nextNbr))
-            logging.debug("  id_region_1 (matlab): "+str(session.getvalue('id_region_1')))
-            logging.debug("  id_region_2 (matlab): "+str(session.getvalue('id_region_2')))
+            # logging.debug("  id_region_1 (matlab): "+str(session.getvalue('id_region_1')))
+            # logging.debug("  id_region_2 (matlab): "+str(session.getvalue('id_region_2')))
             session.run('allowed_regions('+str(i+1)+',:) = [id_region_1, id_region_2];')
 
+            print 'robot '+str(i)+', curr:'+str(currNbr)
+            print 'robot '+str(i)+', next:'+str(nextNbr)
     # Execute one step of the local planner and collect velocity components
     session.run('simLocalPlanning_doStep_wrapper();')
 
@@ -115,7 +117,7 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, doUpdate, 
         # logging.debug('v = ' + str(session.getvalue('vOut'+str(i+1))))
         # logging.debug('w = ' + str(session.getvalue('wOut'+str(i+1))))
 
-        v[i] = 2*scalingPixelsToMeters*session.getvalue('vOut'+str(i+1))
+        v[i] = 1*scalingPixelsToMeters*session.getvalue('vOut'+str(i+1))
         w[i] = session.getvalue('wOut'+str(i+1))
         deadAgent[i] = session.getvalue('deadlockAgent'+str(i+1))
         # print "Deadlock status (agent "+str(i)+") :"+str(deadAgent[i])

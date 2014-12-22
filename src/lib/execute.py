@@ -104,7 +104,6 @@ class LTLMoPExecutor(ExecutorStrategyExtensions,ExecutorResynthesisExtensions, o
 
         ######## RUNTIME MONIOTRING #################
         self.runtimeMonitoring = False
-        self.usingSlugs = False
         #############################################
 
     def postEvent(self, eventType, eventData=None):
@@ -153,9 +152,6 @@ class LTLMoPExecutor(ExecutorStrategyExtensions,ExecutorResynthesisExtensions, o
         #    enabled_sensors = [x for x in self.proj.enabled_sensors if not x.endswith('_rc')]
         #else:
         #    regionCompleted_domain = []
-        if self.usingSlugs:
-            filename = filename.replace(".bdd",".slugsin").replace(".aut",".slugsin")
-        logging.debug(filename)
         logging.debug(self.proj.enabled_sensors)
         logging.debug(self.proj.enabled_actuators + self.proj.all_customs +  self.region_domain)
         strat = strategy.createStrategyFromFile(filename,

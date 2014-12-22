@@ -170,7 +170,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
                     if last:
                         transFace = None
                     else:
-                        # Determine the mid points on the faces connecting to the next region (one goal point will be picked among all the mid points later in buildTree)
+                        # Determine the mid points on the faces connecting to the next region
                         transFace   = None
                         goalArray[robot_name]   = [[],[]] # list of goal points (midpoints of transition faces)
                         face_normal[robot_name] = [[],[]] # normal of the trnasition faces
@@ -245,8 +245,8 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
             # print self.goalPosition[robot_name]
             # print all(self.goalPosition[robot_name])
             # print self.goalPosition[robot_name]
-            # print "goal: ", self.goal[robot_name]
-            # print "goalPositionList: ", self.goalPositionList[robot_name]
+            # print "list of goals: ", self.goal[robot_name]
+            print "goalPositionList: ", self.goalPositionList[robot_name]
             if len(self.goalPosition[robot_name]) > 0:
                 if norm(mat(self.pose[robot_name][:2]).T - self.goalPosition[robot_name]) > 1.5*self.radius or len(self.goalPositionList[robot_name]) == 0:
                     pass
@@ -257,9 +257,9 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
             if doUpdate[robot_name] or self.forceUpdate:
                 self.forceUpdate = False
                 print "updating goal!!"
-                self.goalPosition[robot_name] = self.goalPositionList[robot_name].pop()
-                self.goalVelocity[robot_name] = self.goalVelocityList[robot_name].pop()
-            # print "goalPosition: ", self.goalPosition[robot_name]
+                self.goalPosition[robot_name] = self.goalPositionList[robot_name].pop(0)
+                self.goalVelocity[robot_name] = self.goalVelocityList[robot_name].pop(0)
+            print "goalPosition: ", self.goalPosition[robot_name]
 
         # Run algorithm to find a velocity vector (global frame) to take the robot to the next region
         v, w = LocalPlanner.executeLocalPlanner(self.session, self.pose, self.goalPosition, self.goalVelocity, \
