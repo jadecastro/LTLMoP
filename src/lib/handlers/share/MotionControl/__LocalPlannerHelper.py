@@ -8,7 +8,7 @@ from math import sin, cos
 threshold = 10
 robRadius = OrderedDict([('rob2',0.15), ('rob1',0.15)])
 robMaxVel = OrderedDict([('rob2',0.5), ('rob1',0.5)])
-regionNumbers = OrderedDict([('p8',1),('p6',2),('p4',3),('p5',4),('p7',5)])  # Hack: Temporarily hard-coding TODO: bring in from the region file.
+# regionNumbers = OrderedDict([('p9',1),('p7',2),('p5',3),('p6',4),('p8',5)])  # Hack: Temporarily hard-coding TODO: bring in from the region file.
 robots = [robRadius, robMaxVel]
 # This is a hack assuming javier uses Mac and Jonathan Windows or Linux
 system = platform.system()
@@ -28,7 +28,6 @@ def initializeLocalPlanner(regions, regionTransitionFaces, obstaclePoints, scali
     session.run('cd '+pathToMatlabLocalPlanner)
     session.run('settingsHadas = 1;')
     session.run('simLocalPlanning_initialize();')
-    session.run('view(2);')
 
     # Set robot parameters for use in the current Matlab session
     rRadius = []
@@ -36,14 +35,15 @@ def initializeLocalPlanner(regions, regionTransitionFaces, obstaclePoints, scali
         rRadius.append([propRadius])
     robotRadius = np.float_(rRadius)
 
-    session.putvalue('rRob',robotRadius)
-    logging.debug("  rRob (matlab): "+str(session.getvalue('rRob')))
+    # session.putvalue('rRob',robotRadius)
+    # logging.debug("  rRob (matlab): "+str(session.getvalue('rRob')))
 
     session.putvalue('limitsMap',limitsMap)
     logging.debug("  limitsMap (matlab): "+str(session.getvalue('limitsMap')))
 
     session.putvalue('regionTransitionFaces',regionTransitionFaces)
     logging.debug("  regionTransitionFaces (matlab): "+str(session.getvalue('regionTransitionFaces')))
+    session.run('sizeOut = size(regionTransitionFaces);')
 
     for i, points in enumerate(obstaclePoints):
         session.putvalue('obstaclePointsNew',points)
@@ -52,7 +52,13 @@ def initializeLocalPlanner(regions, regionTransitionFaces, obstaclePoints, scali
 
     # Set the region/obstacle vertices
     session.run('[obstacle_rel, wallConstraintsXYZ, region_doors] = create_map_3d_from_2d_input(limitsMap, obstaclePoints, regionTransitionFaces);')
+    session.run('initializeAgentParameters();')
+    session.run('view(2);')
+    session.run('parameters.n_dynamicObstacle = 1;')
 
+    print "obstacle_rel: "+str(session.getvalue('obstacle_rel'))
+    print "wallConstraintsXYZ: "+str(session.getvalue('wallConstraintsXYZ'))
+    
     # return matlab session
     return session
 
@@ -61,8 +67,6 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, doUpdate, 
     pose  = {'rob1':[-1 ,.5],'rob2':[1,1],'rob3':[3.5 , -1]}
     next_regIndices = {'rob1': 2,'rob2':3,'rob3':3}
     """
-    regionNumbers
-
     for i, poseLoc in enumerate(poseDic.iteritems()):
         roboName = poseLoc[0]
 
@@ -71,35 +75,35 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, doUpdate, 
         poseNew = np.float_(np.hstack([float(1)/scalingPixelsToMeters*poseLoc[1][0:2], poseLoc[1][2]]))
         # poseNew = np.float_(poseLoc[1])
         session.putvalue('poseNew'+str(i+1),poseNew)
-        logging.info('Set robotPose completed')
-        # logging.debug("  in python: " + str(np.float_(poseLoc[1])))
-        logging.debug("  in MATLAB: " + str(session.getvalue('poseNew'+str(i+1))))
+        # logging.debug("  poseNew"+str(i+1)+" (matlab): "+str(session.getvalue('poseNew'+str(i+1))))
 
         if doUpdate[roboName]:
             # Set the goal position: PYTHON: goalPosition, MATLAB: zGoal  (size 2 x n)
             # session.putvalue('zGoalNew'+str(i+1),float(1)/scalingPixelsToMeters*np.float_(np.array(coordmap_lab2map(goalPosition[roboName]))))
             session.putvalue('zGoalNew'+str(i+1),float(1)/scalingPixelsToMeters*np.float_(goalPosition[roboName]))
-            logging.info('Set goalPosition completed')
+            # logging.debug("  zGoalNew"+str(i+1)+" (matlab): "+str(session.getvalue('zGoalNew'+str(i+1))))
 
             currRegName = regions[curr[roboName]].name
             nextRegName = regions[next[roboName]].name
             print "current region: ",currRegName
             print "next region: ",nextRegName
             # print regionNumbers
-            currRegNbr = [[]]; nextRegNbr =[[]]
-            currRegNbr[0] = regionNumbers[currRegName]
-            nextRegNbr[0] = regionNumbers[nextRegName]
-            session.putvalue('id_region_1',currRegNbr)
-            session.putvalue('id_region_2',nextRegNbr)
+            currNbr = [[]]; nextNbr =[[]]
+            for currRegNbr, region in enumerate(regions):
+                if region.name == regions[curr[roboName]].name:
+                    break
+            for nextRegNbr, region in enumerate(regions):
+                if region.name == regions[next[roboName]].name:
+                    break
+            print currRegNbr, nextRegNbr
+            currNbr[0] = currRegNbr; nextNbr[0] = nextRegNbr
+            # currRegNbr[0] = regions.name.index(currRegName) #regionNumbers[currRegName]
+            # nextRegNbr[0] = regionNumbers[nextRegName]
+            session.putvalue('id_region_1',np.float_(currNbr))
+            session.putvalue('id_region_2',np.float_(nextNbr))
+            logging.debug("  id_region_1 (matlab): "+str(session.getvalue('id_region_1')))
+            logging.debug("  id_region_2 (matlab): "+str(session.getvalue('id_region_2')))
             session.run('allowed_regions('+str(i+1)+',:) = [id_region_1, id_region_2];')
-
-            # logging.debug("  in python: " + str(np.float_(goalPosition[roboName])))
-            #logging.debug("  in MATLAB: " + str(session.getvalue('zGoalNew'+str(i+1))))
-
-            # session.putvalue('vGoalNew'+str(i+1),np.float_(goalVelocity[roboName]))
-            # logging.info('Set goalVelocity completed')
-            # logging.debug("  in python: " + str(np.float_(goalVelocity[roboName])))
-            # logging.debug("  in MATLAB: " + str(session.getvalue('vGoalNew')))
 
     # Execute one step of the local planner and collect velocity components
     session.run('simLocalPlanning_doStep_wrapper();')
@@ -111,7 +115,7 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, doUpdate, 
         # logging.debug('v = ' + str(session.getvalue('vOut'+str(i+1))))
         # logging.debug('w = ' + str(session.getvalue('wOut'+str(i+1))))
 
-        v[i] = scalingPixelsToMeters*session.getvalue('vOut'+str(i+1))
+        v[i] = 2*scalingPixelsToMeters*session.getvalue('vOut'+str(i+1))
         w[i] = session.getvalue('wOut'+str(i+1))
         deadAgent[i] = session.getvalue('deadlockAgent'+str(i+1))
         # print "Deadlock status (agent "+str(i)+") :"+str(deadAgent[i])

@@ -71,6 +71,10 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         self.coordmap_lab2map = executor.hsub.coordmap_lab2map 
         self.last_warning = 0
 
+        self.map = {}
+        for region in self.rfi.regions:
+            self.map[region.name] = self.createRegionPolygon(region)
+
         # Generate bounding box for passing to the local planner
         # testSetOfRegions = self.rfi.regions
         testSetOfRegions = []
@@ -89,7 +93,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         obstacles.append([Point(574,210),Point(574,280),Point(700,210),Point(700,280)])
         obstacles.append([Point(385,210),Point(385,280),Point(465,210),Point(465,280)])
         obstacles.append([Point(105,210),Point(105,490),Point(385,210),Point(385,490)])
-        # obstacles = [r for r in testSetOfRegions if r.name.startswith('o')]
+        # obstacles = [r for r in self.rfi.regions if r.name.startswith('o')]
         obstaclePoints = []
         for region in obstacles:
             obsPoints = self.getRegionVertices(region)
@@ -107,7 +111,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
                     if self.rfi.transitions[regionIdx][nextRegionIdx]:
                         tmp = [float(1)/self.scalingPixelsToMeters*x for x in self.rfi.transitions[regionIdx][nextRegionIdx][0]]
                         tmp1 = (tmp[0].x,tmp[0].y); tmp2 = (tmp[1].x,tmp[1].y);
-                        regionTransitionFaces.append([regionIdx,nextRegionIdx,tmp1[0],tmp2[0],tmp1[1],tmp2[1]])
+                        regionTransitionFaces.append([regionIdx+1,nextRegionIdx+1,tmp1[0],tmp2[0],tmp1[1],tmp2[1]])
         print "Transition faces: "+str(regionTransitionFaces)
 
         # setup matlab communication
@@ -287,8 +291,17 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         #logging.debug("arrived:" + str(arrived))
         return (True in arrived.values()) #arrived[self.executor.hsub.getMainRobot().name]
 
+    def createRegionPolygon(self,region,hole = None):
+        if hole == None:
+            pointArray = [x for x in region.getPoints()]
+        else:
+            pointArray = [x for x in region.getPoints(hole_id = hole)]
+        pointArray = map(self.coordmap_map2lab, pointArray)
+        regionPoints = [(float(1)/self.scalingPixelsToMeters*pt[0],float(1)/self.scalingPixelsToMeters*pt[1]) for pt in pointArray]
+        formedPolygon= Polygon.Polygon(regionPoints)
+        return formedPolygon
+
     def getRegionVertices(self,region):
-        print region
         if type(region).__name__ == 'Region':
             pointArray = [x for x in region.getPoints()]
         else:
