@@ -246,7 +246,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
             # print all(self.goalPosition[robot_name])
             # print self.goalPosition[robot_name]
             # print "list of goals: ", self.goal[robot_name]
-            print "goalPositionList: ", self.goalPositionList[robot_name]
+            # print "goalPositionList: ", self.goalPositionList[robot_name]
             if len(self.goalPosition[robot_name]) > 0:
                 if norm(mat(self.pose[robot_name][:2]).T - self.goalPosition[robot_name]) > 1.5*self.radius or len(self.goalPositionList[robot_name]) == 0:
                     pass
@@ -259,7 +259,8 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
                 print "updating goal!!"
                 self.goalPosition[robot_name] = self.goalPositionList[robot_name].pop(0)
                 self.goalVelocity[robot_name] = self.goalVelocityList[robot_name].pop(0)
-            print "goalPosition: ", self.goalPosition[robot_name]
+                print "goalPosition: ", self.goalPosition[robot_name]
+            # print "goalPosition: ", self.goalPosition[robot_name]
 
         # Run algorithm to find a velocity vector (global frame) to take the robot to the next region
         v, w = LocalPlanner.executeLocalPlanner(self.session, self.pose, self.goalPosition, self.goalVelocity, \

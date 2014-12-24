@@ -81,13 +81,13 @@ class BipedalDriveHandler(handlerTemplates.DriveHandler):
         elif numpy.fabs(y) > self.angcur:
             vx = 0              # Turn in place
             if y > 0:
-                w = self.maxspeed    # Turn left
+                w = x    # Turn left
                 if not self.silent: print >>sys.__stdout__, "(drive) turning left" #??#
             else:
                 w = -self.maxspeed   # Turn right
                 if not self.silent: print >>sys.__stdout__, "(drive) turning right" #??#
         elif numpy.fabs(y) > self.angfwd:
-            vx = self.maxspeed       # Walk forward while turning
+            vx = x       # Walk forward while turning
             if y > 0:
                 w = self.maxspeed/2  # Turn left
                 if not self.silent: print >>sys.__stdout__, "(drive) curving left" #??#
@@ -95,7 +95,7 @@ class BipedalDriveHandler(handlerTemplates.DriveHandler):
                 w = -self.maxspeed/2 # Turn right
                 if not self.silent: print >>sys.__stdout__, "(drive) curving right" #??#
         else:
-            vx = self.maxspeed       # Walk straight forward
+            vx = x       # Walk straight forward
             w = 0
             if not self.silent: print >>sys.__stdout__, "(drive) walking straight" #??#
 
