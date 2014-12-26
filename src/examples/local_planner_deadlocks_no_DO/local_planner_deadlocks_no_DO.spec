@@ -21,17 +21,7 @@ CurrentConfigName:
 two_robots_local_planner
 
 Customs: # List of custom propositions
-rob1_blocked_T
-rob1_blocked_B
-rob1_blocked_L
-rob1_blocked_R
-rob1_blocked_D
 
-rob2_blocked_T
-rob2_blocked_B
-rob2_blocked_L
-rob2_blocked_R
-rob2_blocked_D
 
 RegionFile: # Relative path of region description file
 local_planner_deadlocks_no_DO.regions
@@ -39,10 +29,12 @@ local_planner_deadlocks_no_DO.regions
 Sensors: # List of sensor propositions and their state (enabled = 1, disabled = 0)
 rob1_pickup_ac, 1
 rob2_pickup_ac, 1
-rob1_deadlock, 1
-rob2_deadlock, 1
+rob2_deadlock_T, 1
+rob2_deadlock_B, 1
+rob2_deadlock_L, 1
+rob2_deadlock_R, 1
+rob2_deadlock_D, 1
 garbage, 1
-door, 1
 
 
 ======== SPECIFICATION ========
