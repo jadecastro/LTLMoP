@@ -14,17 +14,7 @@ rob2_D_rc
 rob1_pickup_ac
 rob2_pickup_ac
 
-#rob1_blocked_T
-#rob1_blocked_B
-#rob1_blocked_L
-#rob1_blocked_R
-#rob1_blocked_D
-
-rob2_blocked_T
-rob2_blocked_B
-rob2_blocked_L
-rob2_blocked_R
-rob2_blocked_D
+deadlock
 
 garbage
 #door
@@ -121,30 +111,30 @@ rob2_T_rc' | rob2_B_rc' | rob2_L_rc' | rob2_R_rc' | rob2_D_rc'
 #(! rob1_R | rob1_R_rc') -> ! rob1_blocked_R'
 #(! rob1_D | rob1_D_rc') -> ! rob1_blocked_D'
 
-(rob2_T_rc') -> ! rob2_blocked_T'
-(rob2_B_rc') -> ! rob2_blocked_B'
-(rob2_L_rc') -> ! rob2_blocked_L'
-(rob2_R_rc') -> ! rob2_blocked_R'
-(rob2_D_rc') -> ! rob2_blocked_D'
+(rob2_T_rc') -> ! deadlock'
+(rob2_B_rc') -> ! deadlock'
+(rob2_L_rc') -> ! deadlock'
+(rob2_R_rc') -> ! deadlock'
+(rob2_D_rc') -> ! deadlock'
 
 
 [ENV_LIVENESS]
 #fairness on completion
 ((rob1_T & rob1_T_rc') | (rob1_B & rob1_B_rc') | (rob1_L & rob1_L_rc') | (rob1_R & rob1_R_rc') | (rob1_D & rob1_D_rc') | (rob1_T & !rob1_T') | (rob1_B & !rob1_B') | (rob1_L & !rob1_L') | (rob1_R & !rob1_R') | (rob1_D & !rob1_D') ) & ((rob1_pickup & !rob1_pickup') | (!rob1_pickup & rob1_pickup') | (rob1_pickup & rob1_pickup_ac') | (!rob1_pickup & !rob1_pickup_ac')) & ((rob2_T & rob2_T_rc') | (rob2_B & rob2_B_rc') | (rob2_L & rob2_L_rc') | (rob2_R & rob2_R_rc') | (rob2_D & rob2_D_rc') | (rob2_T & !rob2_T') | (rob2_B & !rob2_B') | (rob2_L & !rob2_L') | (rob2_R & !rob2_R') | (rob2_D & !rob2_D') ) & ((rob2_pickup & !rob2_pickup') | (!rob2_pickup & rob2_pickup') | (rob2_pickup & rob2_pickup_ac') | (!rob2_pickup & !rob2_pickup_ac'))
-# & ((rob2_L_rc & ! rob2_blocked_L) | (rob2_D_rc & ! rob2_blocked_D))
+# & ((rob2_L_rc & ! deadlock) | (rob2_D_rc & ! deadlock))
 
-#rob2_T_rc & ! rob2_blocked_T
-#rob2_B_rc & ! rob2_blocked_B
-#rob2_L_rc & ! rob2_blocked_L
-#rob2_R_rc & ! rob2_blocked_R
-#rob2_D_rc & ! rob2_blocked_D
+#rob2_T_rc & ! deadlock
+#rob2_B_rc & ! deadlock
+#rob2_L_rc & ! deadlock
+#rob2_R_rc & ! deadlock
+#rob2_D_rc & ! deadlock
 
 #! door
 
 [ENV_INIT]
-#(rob1_T_rc) & (!rob1_B_rc) & (!rob1_L_rc) & (!rob1_R_rc) & (!rob1_D_rc) & ! rob1_pickup_ac & (!rob2_T_rc) & (rob2_B_rc) & (!rob2_L_rc) & (!rob2_R_rc) & (!rob2_D_rc) & ! rob2_pickup_ac & !garbage & !rob1_blocked_T & !rob1_blocked_B & !rob1_blocked_L & !rob1_blocked_R & !rob1_blocked_D & !rob2_blocked_T & !rob2_blocked_B & !rob2_blocked_L & !rob2_blocked_R & !rob2_blocked_D
+#(rob1_T_rc) & (!rob1_B_rc) & (!rob1_L_rc) & (!rob1_R_rc) & (!rob1_D_rc) & ! rob1_pickup_ac & (!rob2_T_rc) & (rob2_B_rc) & (!rob2_L_rc) & (!rob2_R_rc) & (!rob2_D_rc) & ! rob2_pickup_ac & !garbage & !rob1_blocked_T & !rob1_blocked_B & !rob1_blocked_L & !rob1_blocked_R & !rob1_blocked_D & !deadlock & !deadlock & !deadlock & !deadlock & !deadlock
 
-(rob1_T_rc) & (!rob1_B_rc) & (!rob1_L_rc) & (!rob1_R_rc) & (!rob1_D_rc) & ! rob1_pickup_ac & (!rob2_T_rc) & (rob2_B_rc) & (!rob2_L_rc) & (!rob2_R_rc) & (!rob2_D_rc) & ! rob2_pickup_ac & !garbage & !rob2_blocked_T & !rob2_blocked_B & !rob2_blocked_L & !rob2_blocked_R & !rob2_blocked_D
+(rob1_T_rc) & (!rob1_B_rc) & (!rob1_L_rc) & (!rob1_R_rc) & (!rob1_D_rc) & ! rob1_pickup_ac & (!rob2_T_rc) & (rob2_B_rc) & (!rob2_L_rc) & (!rob2_R_rc) & (!rob2_D_rc) & ! rob2_pickup_ac & !garbage & !deadlock
 
 
 [SYS_TRANS]
@@ -196,11 +186,11 @@ rob2_T' | rob2_B' | rob2_L' | rob2_R' | rob2_D'
 #(rob2_pickup' & ! rob2_pickup_ac') -> (rob2_D_rc' -> rob2_D')
 
 # disable any blocked transitions
-#((! rob2_T_rc') & rob2_blocked_T') -> ! rob2_T'
-#((! rob2_B_rc') & rob2_blocked_B') -> ! rob2_B'
-((! rob2_L_rc') & rob2_blocked_L') -> ! rob2_L'
-#((! rob2_R_rc') & rob2_blocked_R') -> ! rob2_R'
-((! rob2_D_rc') & rob2_blocked_D') -> ! rob2_D'
+#((! rob2_T_rc') & deadlock') -> ! rob2_T'
+#((! rob2_B_rc') & deadlock') -> ! rob2_B'
+((! rob2_L_rc') & deadlock') -> ! rob2_L'
+#((! rob2_R_rc') & deadlock') -> ! rob2_R'
+((! rob2_D_rc') & deadlock') -> ! rob2_D'
 
 # coordination
 rob1_D_rc' -> !rob2_D_rc'
