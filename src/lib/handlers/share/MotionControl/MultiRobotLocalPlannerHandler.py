@@ -216,7 +216,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
                         self.goalVelocityList[robot_name].append([0, 0])  # temporarily setting this to zero
 
                 else:
-                    goal = self.goal[robot_name]
+                    goal = self.goal[robot_name]  # TODO: fix the case of a self-loop in the initial region
                 
                 self.goal[robot_name] = goal
 

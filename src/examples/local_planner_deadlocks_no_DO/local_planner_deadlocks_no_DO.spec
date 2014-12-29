@@ -29,12 +29,8 @@ local_planner_deadlocks_no_DO.regions
 Sensors: # List of sensor propositions and their state (enabled = 1, disabled = 0)
 rob1_pickup_ac, 1
 rob2_pickup_ac, 1
-rob2_deadlock_T, 1
-rob2_deadlock_B, 1
-rob2_deadlock_L, 1
-rob2_deadlock_R, 1
-rob2_deadlock_D, 1
 garbage, 1
+deadlock, 1
 
 
 ======== SPECIFICATION ========
