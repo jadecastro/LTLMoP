@@ -5,8 +5,7 @@
 ======== SETTINGS ========
 
 Actions: # List of action propositions and their state (enabled = 1, disabled = 0)
-rob1_pickup, 1
-rob2_pickup, 1
+
 
 CompileOptions:
 convexify: True
@@ -18,19 +17,15 @@ fastslow: True
 decompose: True
 
 CurrentConfigName:
-two_robots_local_planner
+exogenous_robots
 
 Customs: # List of custom propositions
-m_deadlock
+
 
 RegionFile: # Relative path of region description file
-local_planner_deadlocks_no_DO.regions
+exogenous_robots.regions
 
 Sensors: # List of sensor propositions and their state (enabled = 1, disabled = 0)
-rob1_pickup_ac, 1
-rob2_pickup_ac, 1
-garbage, 1
-deadlock, 1
 
 
 ======== SPECIFICATION ========

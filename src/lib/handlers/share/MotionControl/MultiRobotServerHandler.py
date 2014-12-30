@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 =======================================================
-MultiRobotLocalPlannerHandler.py 
+MultiRobotServerHandler.py 
 =======================================================
 
 """
@@ -10,29 +10,32 @@ from numpy import *
 from __is_inside import *
 import time, math
 import logging
-import __LocalPlannerHelper as LocalPlanner
 from collections import OrderedDict
 from scipy.linalg import norm
 import Polygon, Polygon.IO
 import Polygon.Utils as PolyUtils
 import Polygon.Shapes as PolyShapes
 
-import subprocess
 import socket
+import subprocess
+import select
+import os
+import sys
+import globalConfig
 import pickle
 
 import lib.handlers.handlerTemplates as handlerTemplates
 from lib.regions import Point
 
-class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
+
+class MultiRobotServerHandler(handlerTemplates.MotionControlHandler):
     def __init__(self, executor, shared_data, scalingPixelsToMeters):
         """
         Vector motion planning controller
 
         scalingPixelsToMeters (float): Scaling factor between RegionEditor map and Javier's map
         """
-        self.numRobots              = []    # number of robots: number of agents in the specification, controlled by the local planner
-        self.numDynamicObstacles    = 0    # number of dynamic obstacles: obstacles whose velocities are internally- or externally-controlled and do NOT do collision avoidance
+
         self.numExogenousRobots     = 2    # number of exogenous agents: robots that are controlled by another (unknown) specification, with collision avoidance
 
         self.scalingPixelsToMeters = scalingPixelsToMeters
@@ -40,11 +43,8 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         self.goal               = {}
         self.previous_next_reg  = {}
         self.pose               = {}
-        self.poseExog           = {}
-        self.goalPosition       = {}
-        self.goalPositionExog   = {}
-        self.goalVelocity       = {}
-        self.goalVelocityExog   = {}
+        self.goalPosition = {}
+        self.goalVelocity = {}
         self.current_regVertices= {}
         self.next_regVertices   = {}
         self.system_print       = False       # for debugging. print on GUI ( a bunch of stuffs)
@@ -53,6 +53,10 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         self.nextRegionPoly     = None
         self.radius             = self.scalingPixelsToMeters*0.15
         self.trans_matrix       = mat([[0,1],[-1,0]])   # transformation matrix for find the normal to the vector
+        # self.response           = [1.,1.]
+        # self.message            = {}
+        self.v                  = self.numExogenousRobots*[0.]
+        self.w                  = self.numExogenousRobots*[0.]
 
         self.pose = OrderedDict()
         self.goalPositionList = OrderedDict()
@@ -60,9 +64,6 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
 
         # get the list of robots
         self.robotList = [robot.name for robot in executor.hsub.executing_config.robots]
-        if not self.numRobots == len(self.robotList):
-            self.numRobots = len(self.robotList)
-            print "WARNING: changing the number of robots to match the config file"
         for robot_name in self.robotList:
             self.goalPosition[robot_name] = []
             self.goalVelocity[robot_name] = []
@@ -88,64 +89,25 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         for region in self.rfi.regions:
             self.map[region.name] = self.createRegionPolygon(region)
 
-        # Generate bounding box for passing to the local planner
-        # testSetOfRegions = self.rfi.regions    # TODO: hard-coding. decomposed region file doesn't store the boundary.
-        testSetOfRegions = []
-        testSetOfRegions.append([Point(0,0),Point(0,700),Point(700,0),Point(700,700)])
-        for region in testSetOfRegions:
-            regionPoints = self.getRegionVertices(region)
-            print regionPoints 
-            # if region.name == 'boundary':
-            xv = [x for x,y in regionPoints]; yv = [y for x,y in regionPoints]
-            limitsMap = [min(xv), max(xv), min(yv), max(yv)]
-        print 'Bounding box: '+str(limitsMap)
+        # start the server
+        address = ('localhost', 9999)  # let the kernel give us a port
+        print "Starting the server..."
 
-        # Generate a list of obstacle vertices for the local planner
-        obstacles = []
-        obstacles.append([Point(490,490),Point(490,700),Point(700,490),Point(700,700)])
-        obstacles.append([Point(574,210),Point(574,280),Point(700,210),Point(700,280)])
-        obstacles.append([Point(385,210),Point(385,280),Point(465,210),Point(465,280)])
-        obstacles.append([Point(105,210),Point(105,490),Point(385,210),Point(385,490)])
-        # obstacles = [r for r in self.rfi.regions if r.name.startswith('o')]   # TODO: hard-coding. decomposed region file doesn't store obstacles.
-        obstaclePoints = []
-        for region in obstacles:
-            obsPoints = self.getRegionVertices(region)
-            xv = [x for x,y in obsPoints]; yv = [y for x,y in obsPoints]
-            obstaclePoints.append(hstack([xv,yv]))
-        print "Obstacle points: "+str(obstaclePoints)
+        # Connect to the server
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.s.bind(address)
 
-        # Generate a set of transition faces for the local planner
-        regionTransitionFaces = []
-        for regionIdx, region in enumerate(self.rfi.regions):
-            if not region in obstacles:
-                # vertices = self.getRegionVertices(region)
-                print region.name
-                for nextRegionIdx, nextRegion in enumerate(self.rfi.transitions[regionIdx]):
-                    if self.rfi.transitions[regionIdx][nextRegionIdx]:
-                        tmp = [float(1)/self.scalingPixelsToMeters*x for x in self.rfi.transitions[regionIdx][nextRegionIdx][0]]
-                        tmp1 = (tmp[0].x,tmp[0].y); tmp2 = (tmp[1].x,tmp[1].y);
-                        regionTransitionFaces.append([regionIdx+1,nextRegionIdx+1,tmp1[0],tmp2[0],tmp1[1],tmp2[1]])
-        print "Transition faces: "+str(regionTransitionFaces)
-
-        # setup matlab communication
-        self.session = LocalPlanner.initializeLocalPlanner(self.rfi.regions, regionTransitionFaces, obstaclePoints, self.scalingPixelsToMeters, limitsMap, \
-            self.numRobots, self.numDynamicObstacles, self.numExogenousRobots)
-
-        # setup a client session if we have other agents to avoid
-        if self.numExogenousRobots > 0:
-            address = ('localhost', 9999)  # let the kernel give us a port
-            print "Starting the client..."
-
-            # Create a socket (SOCK_STREAM means a TCP socket)
-            self.c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.c.connect(address)
+        print "Server started. Waiting for client..."
+        self.s.listen(5)                 # Now wait for client connection.
+        self.client, self.addr = self.s.accept()
 
     def _stop(self):
         """
         Properly terminates all threads/computations in the handler. Leave no trace behind.
         """
         logging.debug("Closing the connection...") 
-        self.c.close()
+        self.s.close()
+
 
     def gotoRegion(self, current_regIndices, next_regIndices, last=False):
         """
@@ -156,7 +118,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         current_regAllIndices: dictionary of region indices
         next_regAllIndices: dictionary of region indices
         """
-
+    
         departed            = {}
         arrived             = {}
         goalArray           = {}
@@ -170,6 +132,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
             for robot_name, current_reg in current_regIndices.iteritems():
                 self.previous_next_reg[robot_name] = []
 
+        self.message = []
         for robot_name, current_reg in current_regIndices.iteritems():
             next_reg = next_regIndices[robot_name]
 
@@ -292,62 +255,69 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
                 print "goalPosition: ", self.goalPosition[robot_name]
             # print "goalPosition: ", self.goalPosition[robot_name]
 
-        if self.numExogenousRobots > 0:
-            try:
-                # Receive data from the server
-                response = pickle.loads(self.c.recv(1024))
-                print "Got message {}".format(response)
+            # prepare the message to be sent to the client
+            self.message.append([list(self.pose[robot_name]), self.goalPosition[robot_name].reshape(-1,).tolist()[0]])
 
-            except socket.error, msg:
-                print "Socket error! %s" % msg
+        try:
+            # Send the data: goal position, current pose, and current velocities
+            print 'Sending : "%s"' % self.message
+            len_sent = self.client.send(pickle.dumps(self.message))
 
-        # parse the incoming pose info
-        for i in range(self.numExogenousRobots):
-            self.poseExog[i] = array(response[i][0]) 
-            self.goalPositionExog[i] = response[i][1]
-            self.goalVelocityExog[i] = [0.,0.]
+            # Receive a response: v and w arrays
+            self.response = pickle.loads(self.client.recv(1024))
+            print 'Received: "%s"' % self.response
 
-        # Run algorithm to find a velocity vector (global frame) to take the robot to the next region
-        v, w, vd, wd, deadAgent = LocalPlanner.executeLocalPlanner(self.session, self.pose, self.goalPosition, self.goalVelocity, self.poseExog, self.goalPositionExog, self.goalVelocityExog, \
-            doUpdate, self.rfi.regions, current_regIndices, next_regIndices, self.coordmap_lab2map, self.scalingPixelsToMeters, self.numDynamicObstacles)
+            v = self.response[0]
+            w = self.response[1]
+            self.v = v; self.w = w
 
-        # send v and w for the dynamic obstacles; receive the goal, pose, and velocity for the dynamic obstacles.
-        if self.numExogenousRobots > 0:
-            try:
-                # Send data to the server
-                message = [vd, wd]
-                self.c.sendall(pickle.dumps(message))
+            # set the velocities
+            for idx, robot_name in enumerate(self.robotList):
+                logging.debug(robot_name + '-v:' + str(v[idx]) + ' w:' + str(w[idx]))
+                self.drive_handler[robot_name].setVelocity(v[idx], w[idx], self.pose[robot_name][2])
+                #logging.debug("pose:" + str(pose))
+                departed[robot_name] = not is_inside([self.pose[robot_name][0], self.pose[robot_name][1]], self.current_regVertices[robot_name])
+                # Figure out whether we've reached the destination region
+                arrived[robot_name] = is_inside([self.pose[robot_name][0], self.pose[robot_name][1]], self.next_regVertices[robot_name])
+                if departed[robot_name] and (not arrived[robot_name]) and (time.time()-self.last_warning) > 0.5:
+                    #print "WARNING: Left current region but not in expected destination region"
+                    # Figure out what region we think we stumbled into
+                    for r in self.rfi.regions:
+                        pointArray = [self.coordmap_map2lab(x) for x in r.getPoints()]
+                        vertices = mat(pointArray).T
+                        if is_inside([self.pose[robot_name][0], self.pose[robot_name][1]], vertices):
+                            logging.info("I think I'm in " + r.name)
+                            break
+                    self.last_warning = time.time()
 
-            except socket.error, msg:
-                print "Socket error! %s" % msg
+            logging.debug("arrived:" + str(arrived))
+            return (True in arrived.values()) #arrived[self.executor.hsub.getMainRobot().name]
 
-        # TODO: do something with the deadlock flag
+        except socket.error, msg:
+            print "Socket error! %s" % msg
 
-        for idx, robot_name in enumerate(self.robotList):
-            logging.debug(robot_name + '-v:' + str(v[idx]) + ' w:' + str(w[idx]))
-            self.drive_handler[robot_name].setVelocity(v[idx], w[idx], self.pose[robot_name][2])
 
+        # for idx, robot_name in enumerate(self.robotList):
+            # logging.debug(robot_name + '-v:' + str(self.v[idx]) + ' w:' + str(self.w[idx]))
+            # self.drive_handler[robot_name].setVelocity(self.v[idx], self.w[idx], self.pose[robot_name][2])
             #logging.debug("pose:" + str(pose))
-            departed[robot_name] = not is_inside([self.pose[robot_name][0], self.pose[robot_name][1]], self.current_regVertices[robot_name])
-            # Figure out whether we've reached the destination region
-            arrived[robot_name] = is_inside([self.pose[robot_name][0], self.pose[robot_name][1]], self.next_regVertices[robot_name])
+            # departed[robot_name] = not is_inside([self.pose[robot_name][0], self.pose[robot_name][1]], self.current_regVertices[robot_name])
+            # # Figure out whether we've reached the destination region
+            # arrived[robot_name] = is_inside([self.pose[robot_name][0], self.pose[robot_name][1]], self.next_regVertices[robot_name])
 
-            if departed[robot_name] and (not arrived[robot_name]) and (time.time()-self.last_warning) > 0.5:
-                #print "WARNING: Left current region but not in expected destination region"
-                # Figure out what region we think we stumbled into
-                for r in self.rfi.regions:
-                    pointArray = [self.coordmap_map2lab(x) for x in r.getPoints()]
-                    vertices = mat(pointArray).T
-                    if is_inside([self.pose[robot_name][0], self.pose[robot_name][1]], vertices):
-                        logging.info("I think I'm in " + r.name)
-                        break
-                self.last_warning = time.time()
+            # if departed[robot_name] and (not arrived[robot_name]) and (time.time()-self.last_warning) > 0.5:
+            #     #print "WARNING: Left current region but not in expected destination region"
+            #     # Figure out what region we think we stumbled into
+            #     for r in self.rfi.regions:
+            #         pointArray = [self.coordmap_map2lab(x) for x in r.getPoints()]
+            #         vertices = mat(pointArray).T
+            #         if is_inside([self.pose[robot_name][0], self.pose[robot_name][1]], vertices):
+            #             logging.info("I think I'm in " + r.name)
+            #             break
+            #     self.last_warning = time.time()
 
-        # if norm([v[idx] for idx in range(len(v))]) < 0.01:
-        #     self.forceUpdate = True
-
-        logging.debug("arrived:" + str(arrived))
-        return (True in arrived.values()) #arrived[self.executor.hsub.getMainRobot().name]
+        # logging.debug("arrived:" + str(arrived))
+        # return (True in arrived.values()) #arrived[self.executor.hsub.getMainRobot().name]
 
     def createRegionPolygon(self,region,hole = None):
         if hole == None:
@@ -367,3 +337,4 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         pointArray = map(self.coordmap_map2lab, pointArray)
         regionPoints = [(float(1)/self.scalingPixelsToMeters*pt[0],float(1)/self.scalingPixelsToMeters*pt[1]) for pt in pointArray]
         return regionPoints
+

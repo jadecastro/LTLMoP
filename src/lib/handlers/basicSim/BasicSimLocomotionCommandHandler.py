@@ -25,5 +25,7 @@ class BasicSimLocomotionCommandHandler(handlerTemplates.LocomotionCommandHandler
 
         v = self.speed*cmd[0]
         w = self.speed*cmd[1]
+
+        # print 'Locomotion Command handler inputs v:' + str(v) + ' w:' + str(w)
         self.simulator.setVel([v,w])
 

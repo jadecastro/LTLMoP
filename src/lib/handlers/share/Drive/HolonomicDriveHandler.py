@@ -34,5 +34,6 @@ class HolonomicDriveHandler(handlerTemplates.DriveHandler):
         y = min(y,100.0)
 
         #print "VEL:%f,%f" % tuple(self.coordmap([x, y]))
+        # print 'Drive handler inputs x:' + str(x) + ' y:' + str(y)
         self.loco.sendCommand([x,y])
 
