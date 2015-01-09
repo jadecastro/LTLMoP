@@ -154,8 +154,8 @@ rob2_deadlock' -> (!rob12_deadlock' & !rob1_deadlock')
 #rob2_L_rc' -> !rob2_deadlock'
 #rob1_D_rc' -> !rob1_deadlock'
 #rob2_D_rc' -> !rob2_deadlock'
-#rob1_R_rc' -> !rob1_deadlock'
-#rob2_R_rc' -> !rob2_deadlock'
+rob1_R_rc' -> !rob1_deadlock'
+rob2_R_rc' -> !rob2_deadlock'
 
 #!rob1_deadlock
 #!rob2_deadlock
