@@ -1,0 +1,5 @@
+TODO: 
+- robots only: when the state machine makes the wrong move, can we remove both transitions?
+- no guarantee that the robots will keep moving in three robot case, since two deadlocked robots can just stop and wait for the third to change regions
+- deadlock sensor handler for robot-pairs
+- robots + DO: algorithm

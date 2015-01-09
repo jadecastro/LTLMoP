@@ -16,6 +16,7 @@ from scipy.linalg import norm
 import Polygon, Polygon.IO
 import Polygon.Utils as PolyUtils
 import Polygon.Shapes as PolyShapes
+import project
 
 import subprocess
 import socket
@@ -32,11 +33,13 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         scalingPixelsToMeters (float): Scaling factor between RegionEditor map and Javier's map
         """
         self.numRobots              = []    # number of robots: number of agents in the specification, controlled by the local planner
-        self.numDynamicObstacles    = 0    # number of dynamic obstacles: obstacles whose velocities are internally- or externally-controlled and do NOT do collision avoidance
-        self.numExogenousRobots     = 2    # number of exogenous agents: robots that are controlled by another (unknown) specification, with collision avoidance
+        self.numDynamicObstacles    = 0     # number of dynamic obstacles: obstacles whose velocities are internally- or externally-controlled and do NOT do collision avoidance
+        self.numExogenousRobots     = 0     # number of exogenous agents: robots that are controlled by another (unknown) specification, with collision avoidance
+        robotType                   = 3     # Set the robot type: iCreate (type 2) and NAO (type 3)
 
         self.scalingPixelsToMeters = scalingPixelsToMeters
-        self.forceUpdate = False
+        self.forceUpdate        = False
+        self.initial            = True
         self.goal               = {}
         self.previous_next_reg  = {}
         self.pose               = {}
@@ -88,6 +91,11 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         for region in self.rfi.regions:
             self.map[region.name] = self.createRegionPolygon(region)
 
+        # set the initial goal as the initial pose, in case there are no transitions to take immediately
+        for robot_name in self.robotList: 
+        #     self.pose.update([(robot_name,self.pose_handler[robot_name].getPose())])
+            self.goal[robot_name] = []
+
         # Generate bounding box for passing to the local planner
         # testSetOfRegions = self.rfi.regions    # TODO: hard-coding. decomposed region file doesn't store the boundary.
         testSetOfRegions = []
@@ -129,7 +137,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
 
         # setup matlab communication
         self.session = LocalPlanner.initializeLocalPlanner(self.rfi.regions, regionTransitionFaces, obstaclePoints, self.scalingPixelsToMeters, limitsMap, \
-            self.numRobots, self.numDynamicObstacles, self.numExogenousRobots)
+            self.numRobots, self.numDynamicObstacles, self.numExogenousRobots, robotType)
 
         # setup a client session if we have other agents to avoid
         if self.numExogenousRobots > 0:
@@ -146,6 +154,26 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         """
         logging.debug("Closing the connection...") 
         self.c.close()
+
+
+    def _duplicateProject(self, proj):
+        """ Creates a copy of a proj, and creates an accompanying spec file with an 
+            auto-incremented counter in the name.  (Not overwriting is mostly for debugging.)"""
+
+        # reload from file instead of deepcopy because hsub stuff can include uncopyable thread locks, etc
+        new_proj = project.Project()
+        new_proj.setSilent(True)
+        new_proj.loadProject(self.executor.proj.getFilenamePrefix() + ".spec")
+
+        # copy hsub references manually
+        # new_proj.hsub = proj.executor.hsub
+        # new_proj.hsub.proj = new_proj # oh my god, guys
+        new_proj.h_instance = proj.h_instance
+        
+        # new_proj.sensor_handler = proj.sensor_handler
+        # new_proj.actuator_handler = proj.actuator_handler
+
+        return new_proj
 
     def gotoRegion(self, current_regIndices, next_regIndices, last=False):
         """
@@ -231,12 +259,12 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
                     while i < goalArrayNew.shape[1]:
                         goal1 = goalArrayNew[:,i]-face_normalNew[:,i]*3*self.radius    ##original 2*self.radius
                         goal2 = goalArrayNew[:,i]+face_normalNew[:,i]*3*self.radius    ##original 2*self.radius
-                        if regionPolyOld.isInside(goal1[0], goal1[1]):
-                            goal[0] = goal2
-                            goal[1] = goal1
-                        else:
+                        if regionPolyOld.isInside(float(1)/self.scalingPixelsToMeters*goal1[0], float(1)/self.scalingPixelsToMeters*goal1[1]):
                             goal[0] = goal1
                             goal[1] = goal2
+                        else:
+                            goal[0] = goal2
+                            goal[1] = goal1
                         i += 1
 
                     self.goalPositionList[robot_name] = []
@@ -249,6 +277,11 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
                     goal = self.goal[robot_name]  # TODO: fix the case of a self-loop in the initial region
                 
                 self.goal[robot_name] = goal
+
+                # initialize the goal to the current pose, if the initial goal list is empty
+                if len(self.goalPositionList[robot_name]) == 0 and self.initial:
+                    self.goalPositionList[robot_name].append(self.pose[robot_name][:2]+[40,-40])
+                    self.goalVelocityList[robot_name].append([0, 0])
 
                 # NOTE: Information about region geometry can be found in self.rfi.regions:
                 vertices = mat(map(self.coordmap_map2lab, [x for x in self.rfi.regions[current_reg].getPoints()])).T
@@ -274,11 +307,11 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
             # print "pose: ", self.pose[robot_name][:2]
             # print self.goalPosition[robot_name]
             # print all(self.goalPosition[robot_name])
-            # print self.goalPosition[robot_name]
-            # print "list of goals: ", self.goal[robot_name]
-            # print "goalPositionList: ", self.goalPositionList[robot_name]
+            # print "current goal: "+str(self.goalPosition[robot_name])
+            # print "list of goals: "+str(self.goal[robot_name])
+            # print "next goal position: "+str(self.goalPositionList[robot_name])
             if len(self.goalPosition[robot_name]) > 0:
-                if norm(mat(self.pose[robot_name][:2]).T - self.goalPosition[robot_name]) > 1.5*self.radius or len(self.goalPositionList[robot_name]) == 0:
+                if norm(mat(self.pose[robot_name][:2]).T - self.goalPosition[robot_name]) > 2*self.radius or len(self.goalPositionList[robot_name]) == 0:
                     pass
                 else:
                     doUpdate[robot_name] = True
@@ -286,17 +319,20 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
                 doUpdate[robot_name] = True
             if doUpdate[robot_name] or self.forceUpdate:
                 self.forceUpdate = False
-                print "updating goal!!"
+                print "updating goal for robot "+str(robot_name)+"!!!"
                 self.goalPosition[robot_name] = self.goalPositionList[robot_name].pop(0)
                 self.goalVelocity[robot_name] = self.goalVelocityList[robot_name].pop(0)
-                print "goalPosition: ", self.goalPosition[robot_name]
+                # print "current goal: "+str(self.goalPosition[robot_name])
+                # print "list of goals: "+str(self.goal[robot_name])
+                # print "next goal position: "+str(self.goalPositionList[robot_name])
             # print "goalPosition: ", self.goalPosition[robot_name]
 
+        # receive the goal, pose, and velocity for the dynamic obstacles.
         if self.numExogenousRobots > 0:
             try:
                 # Receive data from the server
                 response = pickle.loads(self.c.recv(1024))
-                print "Got message {}".format(response)
+                # print "Got message {}".format(response)
 
             except socket.error, msg:
                 print "Socket error! %s" % msg
@@ -311,7 +347,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         v, w, vd, wd, deadAgent = LocalPlanner.executeLocalPlanner(self.session, self.pose, self.goalPosition, self.goalVelocity, self.poseExog, self.goalPositionExog, self.goalVelocityExog, \
             doUpdate, self.rfi.regions, current_regIndices, next_regIndices, self.coordmap_lab2map, self.scalingPixelsToMeters, self.numDynamicObstacles)
 
-        # send v and w for the dynamic obstacles; receive the goal, pose, and velocity for the dynamic obstacles.
+        # send the v and w for the dynamic obstacles
         if self.numExogenousRobots > 0:
             try:
                 # Send data to the server
@@ -321,7 +357,57 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
             except socket.error, msg:
                 print "Socket error! %s" % msg
 
-        # TODO: do something with the deadlock flag
+        # If in deadlock, hot-swap a new automaton
+        # logging.debug("deadAgent: "+str(deadAgent))
+        # autpath = "/home/jon/Dropbox/Repos/LTLMoP/src/examples/local_planner_hotswap/aut/"
+        # if any(deadAgent):
+        #     print "Hot-swapping a new aut..."
+        #     if deadAgent[0] and not deadAgent[1]:
+        #         j = 0
+        #     elif not deadAgent[0] and deadAgent[1]:
+        #         j = 1
+        #     elif deadAgent[0] and deadAgent[1]:
+        #         j = 1
+        #     robot_name = self.robotList[j]
+        #     current_reg = current_regIndices[robot_name]
+        #     next_reg = next_regIndices[robot_name]
+        #     currentName = self.rfi.regions[current_regIndices[robot_name]].name
+        #     nextName = self.rfi.regions[next_regIndices[robot_name]].name
+            
+        #     if "T" in currentName and "L" in nextName:
+        #         aut_file =  autpath+"local_planner_hotswap_rob"+str(j+1)+"_T_L.aut"
+        #     elif "T" in currentName and "R" in nextName:
+        #         aut_file =  autpath+"local_planner_hotswap_rob"+str(j+1)+"_T_R.aut"
+        #     elif "B" in currentName and "L" in nextName:
+        #         aut_file =  autpath+"local_planner_hotswap_rob"+str(j+1)+"_B_L.aut"
+        #     elif "B" in currentName and "D" in nextName:
+        #         aut_file =  autpath+"local_planner_hotswap_rob"+str(j+1)+"_B_D.aut"
+        #     elif "L" in currentName and "T" in nextName:
+        #         aut_file =  autpath+"local_planner_hotswap_rob"+str(j+1)+"_L_T.aut"
+        #     elif "L" in currentName and "B" in nextName:
+        #         aut_file =  autpath+"local_planner_hotswap_rob"+str(j+1)+"_L_B.aut"
+        #     elif "R" in currentName and "T" in nextName:
+        #         aut_file =  autpath+"local_planner_hotswap_rob"+str(j+1)+"_R_T.aut"
+        #     elif "R" in currentName and "D" in nextName:
+        #         aut_file =  autpath+"local_planner_hotswap_rob"+str(j+1)+"_R_D.aut"
+        #     elif "D" in currentName and "R" in nextName:
+        #         aut_file =  autpath+"local_planner_hotswap_rob"+str(j+1)+"_D_R.aut"
+        #     elif "D" in currentName and "B" in nextName:
+        #         aut_file =  autpath+"local_planner_hotswap_rob"+str(j+1)+"_D_B.aut"
+
+        #     self.executor.pause()
+
+        #     # Copy the current project
+        #     print self.executor.proj.__dict__
+        #     new_proj = self._duplicateProject(self.executor.proj)
+
+        #     # Swap in the new automaton
+        #     self.executor.proj = new_proj
+        #     self.executor.initialize("/home/jon/Dropbox/Repos/LTLMoP/src/examples/local_planner_deadlocks/local_planner_deadlocks.spec", aut_file, firstRun=False)
+        #     # aut_file = self.proj.getFilenamePrefix() + ".aut"
+        #     # self.initialize(spec_file, aut_file, firstRun=False)
+
+        #     self.executor.resume()
 
         for idx, robot_name in enumerate(self.robotList):
             logging.debug(robot_name + '-v:' + str(v[idx]) + ' w:' + str(w[idx]))
@@ -346,6 +432,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         # if norm([v[idx] for idx in range(len(v))]) < 0.01:
         #     self.forceUpdate = True
 
+        self.initial = False
         logging.debug("arrived:" + str(arrived))
         return (True in arrived.values()) #arrived[self.executor.hsub.getMainRobot().name]
 

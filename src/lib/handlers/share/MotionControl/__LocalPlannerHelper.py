@@ -17,7 +17,7 @@ if system == 'Darwin':
 else:
     pathToMatlabLocalPlanner = '/home/jon/Dropbox/Repos/uav-avoidance/multiquad-sim'
 
-def initializeLocalPlanner(regions, regionTransitionFaces, obstaclePoints, scalingPixelsToMeters, limitsMap, numRobots, numDynamicObstacles, numExogenousRobots):
+def initializeLocalPlanner(regions, regionTransitionFaces, obstaclePoints, scalingPixelsToMeters, limitsMap, numRobots, numDynamicObstacles, numExogenousRobots, robotType):
     """
     intialize Local Planner by setting up a pymatlab session and setting variables
     """
@@ -27,6 +27,7 @@ def initializeLocalPlanner(regions, regionTransitionFaces, obstaclePoints, scali
     # Initialize the local planner
     session.run('cd '+pathToMatlabLocalPlanner)
     session.run('settingsHadas = 1;')
+    session.run('nB = '+str(numRobots+numExogenousRobots)+';')
     session.run('simLocalPlanning_initialize();')
 
     # Set robot parameters for use in the current Matlab session
@@ -48,10 +49,14 @@ def initializeLocalPlanner(regions, regionTransitionFaces, obstaclePoints, scali
     for i, points in enumerate(obstaclePoints):
         session.putvalue('obstaclePointsNew',points)
         logging.debug("  obstaclePointsNew (matlab): "+str(session.getvalue('obstaclePointsNew')))
-        session.run('obstaclePoints{'+str(i+1)+'} = obstaclePointsNew')
+        session.run('obstaclePoints{'+str(i+1)+'} = obstaclePointsNew;')
 
     # Set the region/obstacle vertices
     session.run('[obstacle_rel, wallConstraintsXYZ, region_doors] = create_map_3d_from_2d_input(limitsMap, obstaclePoints, regionTransitionFaces);')
+    
+    for i in range(numRobots):
+        session.run('agentType('+str(i+1)+') = '+str(robotType)+';')
+
     session.run('initializeAgentParameters();')
     session.run('view(2);')
     session.run('parameters.n_dynamicObstacle = '+str(numDynamicObstacles)+';')
@@ -83,13 +88,13 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, poseExog, 
         poseNew = np.float_(np.hstack([float(1)/scalingPixelsToMeters*poseLoc[1][0:2], poseLoc[1][2]]))
         # poseNew = np.float_(poseLoc[1])
         session.putvalue('poseNew'+str(i+1),poseNew)
-        # logging.debug("  poseNew"+str(i+1)+" (matlab): "+str(session.getvalue('poseNew'+str(i+1))))
+        logging.debug("  poseNew"+str(i+1)+" (matlab): "+str(session.getvalue('poseNew'+str(i+1))))
 
         if doUpdate[roboName]:
             # Set the goal position: PYTHON: goalPosition, MATLAB: zGoal  (size 2 x n)
             # session.putvalue('zGoalNew'+str(i+1),float(1)/scalingPixelsToMeters*np.float_(np.array(coordmap_lab2map(goalPosition[roboName]))))
             session.putvalue('zGoalNew'+str(i+1),float(1)/scalingPixelsToMeters*np.float_(goalPosition[roboName]))
-            # logging.debug("  zGoalNew"+str(i+1)+" (matlab): "+str(session.getvalue('zGoalNew'+str(i+1))))
+            logging.debug("  zGoalNew"+str(i+1)+" (matlab): "+str(session.getvalue('zGoalNew'+str(i+1))))
 
             currRegName = regions[curr[roboName]].name
             nextRegName = regions[next[roboName]].name
@@ -109,7 +114,7 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, poseExog, 
             # nextRegNbr[0] = regionNumbers[nextRegName]
             session.putvalue('id_region_1',np.float_(currNbr))
             session.putvalue('id_region_2',np.float_(nextNbr))
-            session.run('allowed_regions('+str(i+1)+',:) = [id_region_1, id_region_2];')
+            session.run('allowed_regions('+str(i+1)+',:) = [0., 0.];') #[id_region_1, id_region_2];')
             # logging.debug("  id_region_1 (matlab): "+str(session.getvalue('id_region_1')))
             # logging.debug("  id_region_2 (matlab): "+str(session.getvalue('id_region_2')))
 
@@ -137,27 +142,27 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, poseExog, 
 
 
     # Execute one step of the local planner and collect velocity components
-    session.run('simLocalPlanning_doStep_wrapper();')
+    session.run('doStep_wrapper();')
 
     v = {}
     w = {}
-    deadAgent = {}
+    deadAgent = []
     for i, poseLoc in enumerate(poseDic.iteritems()):
         # logging.debug('v = ' + str(session.getvalue('vOut'+str(i+1))))
         # logging.debug('w = ' + str(session.getvalue('wOut'+str(i+1))))
 
         v[i] = 1*scalingPixelsToMeters*session.getvalue('vOut'+str(i+1))
         w[i] = session.getvalue('wOut'+str(i+1))
-        deadAgent[i] = session.getvalue('deadlockAgent'+str(i+1))
+        deadAgent.append(session.getvalue('deadlockAgent'+str(i+1)))
         # print "Deadlock status (agent "+str(i)+") :"+str(deadAgent[i])
 
     vd = {}
     wd = {}
-    deadAgentD = {}
+    deadAgentD = []
     for i in range(len(poseExog)):
         vd[i] = 1*scalingPixelsToMeters*session.getvalue('vOut'+str(numRobots+i+1))
         wd[i] = session.getvalue('wOut'+str(numRobots+i+1))
-        deadAgentD[i] = session.getvalue('deadlockAgent'+str(numRobots+i+1))
+        deadAgentD.append(session.getvalue('deadlockAgent'+str(numRobots+i+1)))
 
 
     # return velocities

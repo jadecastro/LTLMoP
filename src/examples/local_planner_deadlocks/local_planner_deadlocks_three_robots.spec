@@ -16,26 +16,33 @@ fastslow: True
 decompose: True
 
 CurrentConfigName:
-two_robots_local_planner
+three_robots_local_planner
 
 Customs: # List of custom propositions
-m_deadlock_1
+m_rob1_deadlock
+m_rob2_deadlock
+m_rob3_deadlock
 
 RegionFile: # Relative path of region description file
-local_planner_deadlocks_no_DO.regions
+local_planner_deadlocks_three_robots.regions
 
 Sensors: # List of sensor propositions and their state (enabled = 1, disabled = 0)
-deadlock_1, 1
+rob12_deadlock, 1
+rob23_deadlock, 1
+rob13_deadlock, 1
+rob1_deadlock, 1
+rob2_deadlock, 1
+rob3_deadlock, 1
 
 
 ======== SPECIFICATION ========
 
 RegionMapping: # Mapping between region names and their decomposed counterparts
-B = p9
-D = p8
-L = p7
-R = p6
-T = p5
+B = p8
+D = p7
+L = p6
+R = p5
+T = p4
 
 Spec: # Specification in structured English
 visit T

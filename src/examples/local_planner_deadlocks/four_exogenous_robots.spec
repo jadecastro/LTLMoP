@@ -6,6 +6,7 @@
 
 Actions: # List of action propositions and their state (enabled = 1, disabled = 0)
 
+
 CompileOptions:
 convexify: True
 parser: structured
@@ -16,16 +17,15 @@ fastslow: True
 decompose: True
 
 CurrentConfigName:
-two_robots_local_planner
+four_exogenous_robots
 
 Customs: # List of custom propositions
-m_deadlock_1
+
 
 RegionFile: # Relative path of region description file
-local_planner_deadlocks_no_DO.regions
+four_exogenous_robots.regions
 
 Sensors: # List of sensor propositions and their state (enabled = 1, disabled = 0)
-deadlock_1, 1
 
 
 ======== SPECIFICATION ========

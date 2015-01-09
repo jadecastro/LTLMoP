@@ -36,7 +36,7 @@ class MultiRobotServerHandler(handlerTemplates.MotionControlHandler):
         scalingPixelsToMeters (float): Scaling factor between RegionEditor map and Javier's map
         """
 
-        self.numExogenousRobots     = 2    # number of exogenous agents: robots that are controlled by another (unknown) specification, with collision avoidance
+        self.numExogenousRobots     = 4    # number of exogenous agents: robots that are controlled by another (unknown) specification, with collision avoidance
 
         self.scalingPixelsToMeters = scalingPixelsToMeters
         self.forceUpdate = False
@@ -237,9 +237,9 @@ class MultiRobotServerHandler(handlerTemplates.MotionControlHandler):
             # print "pose: ", self.pose[robot_name][:2]
             # print self.goalPosition[robot_name]
             # print all(self.goalPosition[robot_name])
-            # print self.goalPosition[robot_name]
-            # print "list of goals: ", self.goal[robot_name]
-            # print "goalPositionList: ", self.goalPositionList[robot_name]
+            # print "goalPosition: "+str(self.goalPosition[robot_name])
+            # print "list of goals: "+str(self.goal[robot_name])
+            # print "goalPositionList: "+str(self.goalPositionList[robot_name])
             if len(self.goalPosition[robot_name]) > 0:
                 if norm(mat(self.pose[robot_name][:2]).T - self.goalPosition[robot_name]) > 1.5*self.radius or len(self.goalPositionList[robot_name]) == 0:
                     pass
@@ -260,12 +260,12 @@ class MultiRobotServerHandler(handlerTemplates.MotionControlHandler):
 
         try:
             # Send the data: goal position, current pose, and current velocities
-            print 'Sending : "%s"' % self.message
+            # print 'Sending : "%s"' % self.message
             len_sent = self.client.send(pickle.dumps(self.message))
 
             # Receive a response: v and w arrays
             self.response = pickle.loads(self.client.recv(1024))
-            print 'Received: "%s"' % self.response
+            # print 'Received: "%s"' % self.response
 
             v = self.response[0]
             w = self.response[1]
