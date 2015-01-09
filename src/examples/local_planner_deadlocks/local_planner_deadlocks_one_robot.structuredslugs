@@ -1,0 +1,156 @@
+[INPUT]
+rob1_T_rc
+rob1_B_rc
+rob1_L_rc
+rob1_R_rc
+rob1_D_rc
+
+rob1_deadlock
+
+
+[OUTPUT]
+rob1_T
+rob1_B
+rob1_L
+rob1_R
+rob1_D
+
+m_rob1_deadlock
+
+
+[ENV_TRANS]
+#restricts completion
+(rob1_T_rc) & (rob1_T) -> (rob1_T_rc')
+(rob1_B_rc) & (rob1_B) -> (rob1_B_rc')
+(rob1_L_rc) & (rob1_L) -> (rob1_L_rc')
+(rob1_R_rc) & (rob1_R) -> (rob1_R_rc')
+(rob1_D_rc) & (rob1_D) -> (rob1_D_rc')
+
+(rob1_T_rc) & (rob1_L) -> ((rob1_T_rc') | (rob1_L_rc'))
+(rob1_T_rc) & (rob1_R) -> ((rob1_T_rc') | (rob1_R_rc'))
+
+(rob1_B_rc) & (rob1_L) -> ((rob1_B_rc') | (rob1_L_rc'))
+(rob1_B_rc) & (rob1_D) -> ((rob1_B_rc') | (rob1_D_rc'))
+
+(rob1_L_rc) & (rob1_T) -> ((rob1_L_rc') | (rob1_T_rc'))
+(rob1_L_rc) & (rob1_B) -> ((rob1_L_rc') | (rob1_B_rc'))
+
+(rob1_R_rc) & (rob1_T) -> ((rob1_R_rc') | (rob1_T_rc'))
+(rob1_R_rc) & (rob1_D) -> ((rob1_R_rc') | (rob1_D_rc'))
+
+(rob1_D_rc) & (rob1_R) -> ((rob1_D_rc') | (rob1_R_rc'))
+(rob1_D_rc) & (rob1_B) -> ((rob1_D_rc') | (rob1_B_rc'))
+
+rob1_T_rc' -> ! (rob1_B_rc' | rob1_L_rc' | rob1_R_rc' | rob1_D_rc')
+rob1_B_rc' -> ! (rob1_T_rc' | rob1_L_rc' | rob1_R_rc' | rob1_D_rc')
+rob1_L_rc' -> ! (rob1_T_rc' | rob1_B_rc' | rob1_R_rc' | rob1_D_rc')
+rob1_R_rc' -> ! (rob1_T_rc' | rob1_B_rc' | rob1_L_rc' | rob1_D_rc')
+rob1_D_rc' -> ! (rob1_T_rc' | rob1_B_rc' | rob1_L_rc' | rob1_R_rc')
+rob1_T_rc' | rob1_B_rc' | rob1_L_rc' | rob1_R_rc' | rob1_D_rc'
+
+rob1_T_rc -> ! (rob1_B_rc | rob1_L_rc | rob1_R_rc | rob1_D_rc)
+rob1_B_rc -> ! (rob1_T_rc | rob1_L_rc | rob1_R_rc | rob1_D_rc)
+rob1_L_rc -> ! (rob1_T_rc | rob1_B_rc | rob1_R_rc | rob1_D_rc)
+rob1_R_rc -> ! (rob1_T_rc | rob1_B_rc | rob1_L_rc | rob1_D_rc)
+rob1_D_rc -> ! (rob1_T_rc | rob1_B_rc | rob1_L_rc | rob1_R_rc)
+rob1_T_rc | rob1_B_rc | rob1_L_rc | rob1_R_rc | rob1_D_rc
+
+# Added assumptions
+#rob1_T_rc' -> !rob1_deadlock'
+#rob1_B_rc' -> !rob1_deadlock'
+#rob1_L_rc' -> !rob1_deadlock'
+#rob1_D_rc' -> !rob1_deadlock'
+#rob1_R_rc' -> !rob1_deadlock'
+
+
+[ENV_LIVENESS]
+#fairness on completion
+((rob1_T & (rob1_T_rc')) | (rob1_B & (rob1_B_rc')) | (rob1_L & (rob1_L_rc')) | (rob1_R & (rob1_R_rc')) | (rob1_D & (rob1_D_rc')) | (rob1_T & !rob1_T') | (rob1_B & !rob1_B') | (rob1_L & !rob1_L') | (rob1_R & !rob1_R') | (rob1_D & !rob1_D') ) 
+
+!rob1_deadlock
+
+
+[ENV_INIT]
+(!rob1_T_rc) & (rob1_B_rc) & (!rob1_L_rc) & (!rob1_R_rc) & (!rob1_D_rc) & !rob1_deadlock
+
+
+[SYS_TRANS]
+#ROBOT 2
+(rob1_T_rc') -> (rob1_T' | rob1_L' | rob1_R')
+(rob1_B_rc') -> (rob1_B' | rob1_L' | rob1_D')
+(rob1_L_rc') -> (rob1_L' | rob1_T' | rob1_B')
+(rob1_R_rc') -> (rob1_R' | rob1_T' | rob1_D')
+(rob1_D_rc') -> (rob1_D' | rob1_R' | rob1_B')
+
+(rob1_T_rc) -> (rob1_T | rob1_L | rob1_R)
+(rob1_B_rc) -> (rob1_B | rob1_L | rob1_D)
+(rob1_L_rc) -> (rob1_L | rob1_T | rob1_B)
+(rob1_R_rc) -> (rob1_R | rob1_T | rob1_D)
+(rob1_D_rc) -> (rob1_D | rob1_R | rob1_B)
+
+rob1_T' -> ! (rob1_B' | rob1_L' | rob1_R' | rob1_D')
+rob1_B' -> ! (rob1_T' | rob1_L' | rob1_R' | rob1_D')
+rob1_L' -> ! (rob1_T' | rob1_B' | rob1_R' | rob1_D')
+rob1_R' -> ! (rob1_T' | rob1_B' | rob1_L' | rob1_D')
+rob1_D' -> ! (rob1_T' | rob1_B' | rob1_L' | rob1_R')
+rob1_T' | rob1_B' | rob1_L' | rob1_R' | rob1_D'
+
+rob1_T -> ! (rob1_B | rob1_L | rob1_R | rob1_D)
+rob1_B -> ! (rob1_T | rob1_L | rob1_R | rob1_D)
+rob1_L -> ! (rob1_T | rob1_B | rob1_R | rob1_D)
+rob1_R -> ! (rob1_T | rob1_B | rob1_L | rob1_D)
+rob1_D -> ! (rob1_T | rob1_B | rob1_L | rob1_R)
+rob1_T | rob1_B | rob1_L | rob1_R | rob1_D
+
+# disable the current transition for the entirety of the duration in that region
+# REGION T
+(!m_rob1_deadlock & m_rob1_deadlock' & rob1_T_rc & rob1_T_rc' & rob1_L) -> (!rob1_L')
+(!m_rob1_deadlock & m_rob1_deadlock' & rob1_T_rc & rob1_T_rc' & rob1_R) -> (!rob1_R')
+(!m_rob1_deadlock & m_rob1_deadlock' & rob1_T_rc & rob1_T_rc' & rob1_T) -> (!rob1_T')
+(m_rob1_deadlock' & m_rob1_deadlock & rob1_T_rc & rob1_T_rc') -> ((rob1_L & rob1_L') | (rob1_R & rob1_R') | (rob1_T & rob1_T'))
+
+# REGION B
+(!m_rob1_deadlock & m_rob1_deadlock' & rob1_B_rc & rob1_B_rc' & rob1_L) -> (!rob1_L')
+(!m_rob1_deadlock & m_rob1_deadlock' & rob1_B_rc & rob1_B_rc' & rob1_D) -> (!rob1_D')
+(!m_rob1_deadlock & m_rob1_deadlock' & rob1_B_rc & rob1_B_rc' & rob1_B) -> (!rob1_B')
+(m_rob1_deadlock' & m_rob1_deadlock & rob1_B_rc & rob1_B_rc') -> ((rob1_L & rob1_L') | (rob1_D & rob1_D') | (rob1_B & rob1_B'))
+
+# REGION L
+(!m_rob1_deadlock & m_rob1_deadlock' & rob1_L_rc & rob1_L_rc' & rob1_B) -> (!rob1_B')
+(!m_rob1_deadlock & m_rob1_deadlock' & rob1_L_rc & rob1_L_rc' & rob1_T) -> (!rob1_T')
+(!m_rob1_deadlock & m_rob1_deadlock' & rob1_L_rc & rob1_L_rc' & rob1_L) -> (!rob1_L')
+(m_rob1_deadlock' & m_rob1_deadlock & rob1_L_rc & rob1_L_rc') -> ((rob1_B & rob1_B') | (rob1_T & rob1_T') | (rob1_L & rob1_L'))
+
+# REGION R
+(!m_rob1_deadlock & m_rob1_deadlock' & rob1_R_rc & rob1_R_rc' & rob1_D) -> (!rob1_D')
+(!m_rob1_deadlock & m_rob1_deadlock' & rob1_R_rc & rob1_R_rc' & rob1_T) -> (!rob1_T')
+(!m_rob1_deadlock & m_rob1_deadlock' & rob1_R_rc & rob1_R_rc' & rob1_R) -> (!rob1_R')
+(m_rob1_deadlock' & m_rob1_deadlock & rob1_R_rc & rob1_R_rc') -> ((rob1_D & rob1_D') | (rob1_T & rob1_T') | (rob1_R & rob1_R'))
+
+# REGION D
+(!m_rob1_deadlock & m_rob1_deadlock' & rob1_D_rc & rob1_D_rc' & rob1_B) -> (!rob1_B')
+(!m_rob1_deadlock & m_rob1_deadlock' & rob1_D_rc & rob1_D_rc' & rob1_R) -> (!rob1_R')
+(!m_rob1_deadlock & m_rob1_deadlock' & rob1_D_rc & rob1_D_rc' & rob1_D) -> (!rob1_D')
+(m_rob1_deadlock' & m_rob1_deadlock & rob1_D_rc & rob1_D_rc') -> ((rob1_B & rob1_B') | (rob1_R & rob1_R') | (rob1_D & rob1_D'))
+
+# set memory of deadlock when it has occured, resetting when it enters a new region
+(!m_rob1_deadlock & (!rob1_deadlock & rob1_deadlock') & ((rob1_T_rc & rob1_T_rc') | (rob1_B_rc & rob1_B_rc') | (rob1_L_rc & rob1_L_rc') | (rob1_R_rc & rob1_R_rc') | (rob1_D_rc & rob1_D_rc'))) -> m_rob1_deadlock'
+
+m_rob1_deadlock -> ((((rob1_T_rc & rob1_T_rc') | (rob1_B_rc & rob1_B_rc') | (rob1_L_rc & rob1_L_rc') | (rob1_R_rc & rob1_R_rc') | (rob1_D_rc & rob1_D_rc'))) <-> m_rob1_deadlock')
+
+(!m_rob1_deadlock & (!rob1_deadlock & !rob1_deadlock')) -> (!m_rob1_deadlock')
+
+
+[SYS_LIVENESS]
+rob1_T_rc
+rob1_B_rc
+
+
+# uncomment only to check if realizability is due to Env == False
+#0
+
+[SYS_INIT]
+!rob1_T & rob1_B & !rob1_L & !rob1_R & !rob1_D & !m_rob1_deadlock
+
+
+
