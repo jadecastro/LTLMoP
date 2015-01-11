@@ -1,0 +1,72 @@
+[INPUT]
+fire
+person
+p3_rc
+p6_rc
+p7_rc
+p4_rc
+p5_rc
+p8_rc
+
+[OUTPUT]
+radio
+p3
+p6
+p7
+p4
+p5
+p8
+
+[ENV_TRANS]
+! & fire' person'
+| ! & p3_rc p3 p3_rc'
+| ! & p3_rc p4 | p3_rc' p4_rc'
+| ! & p3_rc p5 | p3_rc' p5_rc'
+| ! & p6_rc p6 p6_rc'
+| ! & p6_rc p4 | p6_rc' p4_rc'
+| ! & p6_rc p5 | p6_rc' p5_rc'
+| ! & p7_rc p7 p7_rc'
+| ! & p7_rc p5 | p7_rc' p5_rc'
+| ! & p7_rc p8 | p7_rc' p8_rc'
+| ! & p4_rc p4 p4_rc'
+| ! & p4_rc p3 | p4_rc' p3_rc'
+| ! & p4_rc p6 | p4_rc' p6_rc'
+| ! & p4_rc p8 | p4_rc' p8_rc'
+| ! & p5_rc p5 p5_rc'
+| ! & p5_rc p3 | p5_rc' p3_rc'
+| ! & p5_rc p6 | p5_rc' p6_rc'
+| ! & p5_rc p7 | p5_rc' p7_rc'
+| ! & p8_rc p8 p8_rc'
+| ! & p8_rc p7 | p8_rc' p7_rc'
+| ! & p8_rc p4 | p8_rc' p4_rc'
+| | | | | & & & & & p3_rc ! p6_rc ! p7_rc ! p4_rc ! p5_rc ! p8_rc & & & & & ! p3_rc p6_rc ! p7_rc ! p4_rc ! p5_rc ! p8_rc & & & & & ! p3_rc ! p6_rc p7_rc ! p4_rc ! p5_rc ! p8_rc & & & & & ! p3_rc ! p6_rc ! p7_rc p4_rc ! p5_rc ! p8_rc & & & & & ! p3_rc ! p6_rc ! p7_rc ! p4_rc p5_rc ! p8_rc & & & & & ! p3_rc ! p6_rc ! p7_rc ! p4_rc ! p5_rc p8_rc
+
+[ENV_LIVENESS]
+1
+| | | | | | | | | | | & p3 p3_rc' & p6 p6_rc' & p7 p7_rc' & p4 p4_rc' & p5 p5_rc' & p8 p8_rc' & p3 ! p3' & p6 ! p6' & p7 ! p7' & p4 ! p4' & p5 ! p5' & p8 ! p8'
+
+[ENV_INIT]
+! fire
+! person
+| | | | | & & & & & p3_rc ! p6_rc ! p7_rc ! p4_rc ! p5_rc ! p8_rc & & & & & ! p3_rc p6_rc ! p7_rc ! p4_rc ! p5_rc ! p8_rc & & & & & ! p3_rc ! p6_rc p7_rc ! p4_rc ! p5_rc ! p8_rc & & & & & ! p3_rc ! p6_rc ! p7_rc p4_rc ! p5_rc ! p8_rc & & & & & ! p3_rc ! p6_rc ! p7_rc ! p4_rc p5_rc ! p8_rc & & & & & ! p3_rc ! p6_rc ! p7_rc ! p4_rc ! p5_rc p8_rc
+
+[SYS_TRANS]
+! radio'
+| | | | | p5' p3' p7' p8' p6' p4'
+& & & & & & & & & & & & & & ! & p3 p6 ! & p3 p7 ! & p3 p4 ! & p3 p5 ! & p3 p8 ! & p6 p7 ! & p6 p4 ! & p6 p5 ! & p6 p8 ! & p7 p4 ! & p7 p5 ! & p7 p8 ! & p4 p5 ! & p4 p8 ! & p5 p8
+| ! p3_rc | | p3' p4' p5'
+| ! p6_rc | | p6' p4' p5'
+| ! p7_rc | | p7' p5' p8'
+| ! p4_rc | | | p4' p3' p6' p8'
+| ! p5_rc | | | p5' p3' p6' p7'
+| ! p8_rc | | p8' p7' p4'
+| | | | | & & & & & p3 ! p6 ! p7 ! p4 ! p5 ! p8 & & & & & ! p3 p6 ! p7 ! p4 ! p5 ! p8 & & & & & ! p3 ! p6 p7 ! p4 ! p5 ! p8 & & & & & ! p3 ! p6 ! p7 p4 ! p5 ! p8 & & & & & ! p3 ! p6 ! p7 ! p4 p5 ! p8 & & & & & ! p3 ! p6 ! p7 ! p4 ! p5 p8
+
+[SYS_LIVENESS]
+p3_rc'
+
+[SYS_INIT]
+! radio
+p7
+| | | | | & & & & & p3 ! p6 ! p7 ! p4 ! p5 ! p8 & & & & & ! p3 p6 ! p7 ! p4 ! p5 ! p8 & & & & & ! p3 ! p6 p7 ! p4 ! p5 ! p8 & & & & & ! p3 ! p6 ! p7 p4 ! p5 ! p8 & & & & & ! p3 ! p6 ! p7 ! p4 p5 ! p8 & & & & & ! p3 ! p6 ! p7 ! p4 ! p5 p8
+
