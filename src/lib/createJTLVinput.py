@@ -65,14 +65,15 @@ def createTopologyFragment(adjData, regions, use_bits=True):
         bitEncode = parseEnglishToLTL.bitEncoding(len(adjData), numBits)
         currBitEnc = bitEncode['current']
         nextBitEnc = bitEncode['next']
-
+        envBitEnc = bitEncode['env']
+        
     # The topological relation (adjacency)
     adjFormulas = []
 
     for Origin in range(len(adjData)):
         # from region i we can stay in region i
         adjFormula = '\t\t\t []( ('
-        adjFormula = adjFormula + (currBitEnc[Origin] if use_bits else "s."+regions[Origin].name)
+        adjFormula = adjFormula + (envBitEnc[Origin] if use_bits else 'e.'+regions[Origin].name+'_rc')
         adjFormula = adjFormula + ') -> ( ('
         adjFormula = adjFormula + (nextBitEnc[Origin] if use_bits else "next(s."+regions[Origin].name+")")
         adjFormula = adjFormula + ')'
@@ -94,6 +95,87 @@ def createTopologyFragment(adjData, regions, use_bits=True):
 
     return " & \n".join(adjFormulas)
 
+def createCompletionFragment(adjData, regions, use_bits=True):
+    if use_bits:
+        numBits = int(math.ceil(math.log(len(adjData),2)))
+        # TODO: only calc bitencoding once
+        bitEncode = parseEnglishToLTL.bitEncoding(len(adjData), numBits)
+        currBitEnc = bitEncode['current']
+        nextBitEnc = bitEncode['next']
+        envBitEnc = bitEncode['env']
+        
+    # The topological relation (adjacency)
+    adjFormulas = []
+
+    for Origin in range(len(adjData)):
+        # from region i we can stay in region i
+        adjFormula = '\t\t\t []( ('
+        adjFormula = adjFormula + (envBitEnc[Origin] if use_bits else 'e.'+regions[Origin].name+'_rc')
+        adjFormula = adjFormula + ' & ' 
+        adjFormula = adjFormula + (nextBitEnc[Origin] if use_bits else "s."+regions[Origin].name)
+        adjFormula = adjFormula + ') -> ( '
+        adjFormula = adjFormula + 'next('+(envBitEnc[Origin] if use_bits else 'e.'+regions[Origin].name+'_rc')+')'
+        adjFormula = adjFormula + ')'
+        adjFormula = adjFormula + ' ) '
+        adjFormulas.append(adjFormula)
+        
+        for dest in range(len(adjData)):
+            if adjData[Origin][dest]:
+                # not empty, hence there is a transition
+                adjFormula = '\t\t\t []( ('
+                adjFormula = adjFormula + (envBitEnc[Origin] if use_bits else 'e.'+regions[Origin].name+'_rc')
+                adjFormula = adjFormula + ' & ' 
+                adjFormula = adjFormula + (nextBitEnc[dest] if use_bits else "s."+regions[dest].name)
+                adjFormula = adjFormula + ') -> ( '
+                adjFormula = adjFormula + 'next('+(envBitEnc[Origin] if use_bits else 'e.'+regions[Origin].name+'_rc')+')'
+                adjFormula = adjFormula + ') | ('
+                adjFormula = adjFormula + 'next('+(envBitEnc[dest] if use_bits else 'e.'+regions[dest].name+'_rc')+')'
+                adjFormula = adjFormula + ')'
+                adjFormula = adjFormula + ' ) '
+                adjFormulas.append(adjFormula)
+
+    adjFormulas.append("[]"+createInitialCompletionFragment(regions, use_bits))
+    adjFormulas.append(createCompletionFairness(regions, use_bits))
+                
+    return " & \n".join(adjFormulas)
+
+
+
+
+def createCompletionFairness(regions, use_bits=True):
+    if use_bits:
+        numBits = int(math.ceil(math.log(len(adjData),2)))
+        # TODO: only calc bitencoding once
+        bitEncode = parseEnglishToLTL.bitEncoding(len(adjData), numBits)
+        currBitEnc = bitEncode['current']
+        nextBitEnc = bitEncode['next']
+        envBitEnc = bitEncode['env']
+        
+    # The topological relation (adjacency)
+   
+    completion = []
+    change = []
+    for Origin in range(len(regions)):
+        # from region i we can stay in region i
+        formula = '('
+        formula = formula + (currBitEnc[Origin] if use_bits else 's.'+regions[Origin].name)
+        formula = formula + ' & ' 
+        formula = formula + (envBitEnc[Origin] if use_bits else "next(e."+regions[Origin].name+"_rc)")
+        formula = formula + ')'
+        completion.append(formula)
+        
+        formula =  '('
+        formula += (currBitEnc[Origin] if use_bits else 's.'+regions[Origin].name)
+        formula += ' & ' 
+        formula += (nextBitEnc[Origin] if use_bits else "! next(s."+regions[Origin].name+")")
+        formula += ')'
+        change.append(formula)
+
+        
+    return '\t\t\t []<>( ' +  " | \n".join(completion) + " | " +  " | \n".join(change) + ")"
+
+
+
 def createInitialRegionFragment(regions, use_bits=True):
     # Setting the system initial formula to allow only valid
     #  region (encoding). This may be redundant if an initial region is
@@ -112,6 +194,26 @@ def createInitialRegionFragment(regions, use_bits=True):
         initreg_formula = initreg_formula + '\t\t\t) \n'
     else:
         initreg_formula = "\n\t({})".format(" | ".join(["({})".format(" & ".join(["s."+r2.name if r is r2 else "!s."+r2.name for r2 in regions])) for r in regions]))
+        
+    return initreg_formula
+
+def createInitialCompletionFragment(regions, use_bits=True):
+    # Setting the system initial formula to allow only valid
+    #  region (encoding). This may be redundant if an initial region is
+    #  specified, but it is here to ensure the system cannot start from
+    #  an invalid, or empty region (encoding).
+    if use_bits:
+        numBits = int(math.ceil(math.log(len(regions),2)))
+        # TODO: only calc bitencoding once
+        bitEncode = parseEnglishToLTL.bitEncoding(len(regions), numBits)
+        currBitEnc = bitEncode['env']
+
+        initreg_formula = '\t\t\t( ' + currBitEnc[0] + ' \n'
+        for regionInd in range(1,len(currBitEnc)):
+            initreg_formula = initreg_formula + '\t\t\t\t | ' + currBitEnc[regionInd] + '\n'
+        initreg_formula = initreg_formula + '\t\t\t) \n'
+    else:
+        initreg_formula = "\n\t({})".format(" | ".join(["({})".format(" & ".join(["e."+r2.name+'_rc' if r is r2 else "!e."+r2.name+'_rc' for r2 in regions])) for r in regions]))
         
     return initreg_formula
 

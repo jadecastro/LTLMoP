@@ -1051,7 +1051,7 @@ class SpecEditorFrame(wx.Frame):
             self.list_box_locphrases.Select(0)
 
         self.appendLog("Creating LTL...\n", "BLUE")
-
+        
         spec, self.tracebackTree, self.response = compiler._writeLTLFile()
 
         # Add any auto-generated propositions to the list

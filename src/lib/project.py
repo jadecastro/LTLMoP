@@ -211,7 +211,7 @@ class Project:
             # for region completion sensors
             self.rfi.regionsCompleted = self.populateCompletedPropositions([str(x.name) for x in self.rfi.regions if not "boundary" in x.name])
             self.all_sensors.extend(self.rfi.regionsCompleted)
-            self.enabled_sensors.extend(self.rfi.regionsCompleted)
+            #self.enabled_sensors.extend(self.rfi.regionsCompleted)
             
             # for actuator completion sensors
             #self.enabled_actuatorsCompleted = self.populateCompletedPropositions(self.enabled_actuators,"_ac")

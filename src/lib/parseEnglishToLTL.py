@@ -303,7 +303,7 @@ def writeSpec(text, sensorList, regionList, robotPropList):
                     Requirement = Requirement.replace(' and stay there','')
 
                     # parse the liveness requirement
-                    ReqFormulaInfo = parseLiveness(Requirement,sensorList,allRobotProp,lineInd)
+                    ReqFormulaInfo = parseLiveness(Requirement,sensorList,allRobotProp,regionList,lineInd)
                     if ReqFormulaInfo['formula'] == '': failed = True
 
                     # If not SysGoals, then it is an error
@@ -350,7 +350,7 @@ def writeSpec(text, sensorList, regionList, robotPropList):
                     Requirement = Requirement.replace(' at least once','')
 
                     # parse the liveness requirement
-                    ReqFormulaInfo = parseLiveness(Requirement,sensorList,allRobotProp,lineInd)
+                    ReqFormulaInfo = parseLiveness(Requirement,sensorList,allRobotProp,regionList,lineInd)
                     if ReqFormulaInfo['formula'] == '': failed = True
 
                     # If not SysGoals, then it is an error
@@ -404,7 +404,7 @@ def writeSpec(text, sensorList, regionList, robotPropList):
                     ReqFormulaInfo['formula'] = '\t\t\t []<>(' + ' & '.join(memPropNames) + ') & \n'
                 else:
                     # parse requirement normally
-                    ReqFormulaInfo = parseLiveness(Requirement,sensorList,allRobotProp,lineInd)
+                    ReqFormulaInfo = parseLiveness(Requirement,sensorList,allRobotProp,regionList,lineInd)
                     if ReqFormulaInfo['formula'] == '': failed = True
             elif SafetyRE.search(Requirement):
                 # remove first words
@@ -563,7 +563,7 @@ def writeSpec(text, sensorList, regionList, robotPropList):
             LivenessReq = LivenessReq.replace(' and stay there','')
 
             # parse the liveness requirement
-            formulaInfo = parseLiveness(LivenessReq,sensorList,allRobotProp,lineInd)
+            formulaInfo = parseLiveness(LivenessReq,sensorList,allRobotProp,regionList,lineInd)
 
             # If could not parse the liveness
             if formulaInfo['formula']=='':
@@ -603,7 +603,7 @@ def writeSpec(text, sensorList, regionList, robotPropList):
             LivenessReq = LivenessRE.sub('',line)
 
             # parse the liveness requirement
-            formulaInfo = parseLiveness(LivenessReq,sensorList,allRobotProp,lineInd)
+            formulaInfo = parseLiveness(LivenessReq,sensorList,allRobotProp,regionList,lineInd)
             if formulaInfo['formula'] == '': failed = True
 
             # Replace any quantifier in the requirement
@@ -847,7 +847,7 @@ def parseSafety(sentence,sensorList,allRobotProp,lineInd):
 
     return formulaInfo
 
-def parseLiveness(sentence,sensorList,allRobotProp,lineInd):
+def parseLiveness(sentence,sensorList,allRobotProp,regionList,lineInd):
     ''' This function creates the LTL formula representing a basic liveness requirement.
         It takes the sentence, the sensor list and the list of all robot propositions (to check that only 'legal'
         propositions are used and to determine whether it is an environment safety or a robot one)
@@ -863,11 +863,16 @@ def parseLiveness(sentence,sensorList,allRobotProp,lineInd):
     formulaInfo['type'] = ''
     
     tempFormula = sentence[:]
-    PropList = sensorList + allRobotProp
+    sensorList = sensorList
+    PropList = sensorList + allRobotProp + ['e.'+r[2:]+"_rc" for r in regionList]
+    print PropList
     
     # Replace logic operations with TLV convention
     tempFormula = replaceLogicOp(tempFormula)
-
+    for r in regionList:
+        tempFormula = tempFormula.replace(r, 'e.'+r[2:]+"_rc");
+        
+    
     # checking that all propositions are 'legal' (in the list of propositions)
     for prop in re.findall('([\w\.]+)',tempFormula):
         if not prop in PropList:
@@ -887,9 +892,10 @@ def parseLiveness(sentence,sensorList,allRobotProp,lineInd):
         if prop in sensorList and formulaInfo['type'] == '':
             formulaInfo['type'] = 'EnvGoals'
 
-        elif prop in allRobotProp and formulaInfo['type'] == '':
+        elif prop not in sensorList and formulaInfo['type'] == '':
             formulaInfo['type'] = 'SysGoals'
-    
+
+      
     
     formulaInfo['formula'] = '\t\t\t []<>(' + tempFormula + ') & \n'
 
@@ -1017,7 +1023,7 @@ def parseCond(condition,sensorList,allRobotProp,ReqType,lineInd):
 
         # Determine the type of the formula to follow (current)
         # If not a livness requirement, add 'next'
-        if (subCondition in CurrCond) and (not livenessFlag) :
+        if (subCondition in CurrCond):# and (not livenessFlag) : (NO LONGER NEEDED)
             NextFlag = True
             if 'not' in subCondition:
                 NotFlag = True

@@ -13,7 +13,7 @@ from multiprocessing import Pool
 import project
 import regions
 import parseLP
-from createJTLVinput import createLTLfile, createSMVfile, createTopologyFragment, createInitialRegionFragment
+from createJTLVinput import createLTLfile, createSMVfile, createTopologyFragment, createCompletionFragment, createInitialRegionFragment, createInitialCompletionFragment
 from parseEnglishToLTL import bitEncoding, replaceRegionName, createStayFormula
 import fsa
 from copy import deepcopy
@@ -352,6 +352,11 @@ class SpecCompiler(object):
         else:
             self.spec['Topo'] = createTopologyFragment(adjData, self.proj.rfi.regions, use_bits=self.proj.compile_options["use_region_bit_encoding"])
 
+        if self.proj.compile_options["decompose"]:
+            self.spec['EnvTopo'] = createCompletionFragment(adjData, self.parser.proj.rfi.regions, use_bits=self.proj.compile_options["use_region_bit_encoding"])
+        else:
+            self.spec['EnvTopo'] = createCompletionFragment(adjData, self.proj.rfi.regions, use_bits=self.proj.compile_options["use_region_bit_encoding"])
+
         # Substitute any macros that the parsers passed us
         LTLspec_env = self.substituteMacros(LTLspec_env)
         LTLspec_sys = self.substituteMacros(LTLspec_sys)
@@ -384,9 +389,17 @@ class SpecCompiler(object):
             self.spec['InitRegionSanityCheck'] = createInitialRegionFragment(self.proj.rfi.regions, use_bits=self.proj.compile_options["use_region_bit_encoding"])
         LTLspec_sys += "\n&\n" + self.spec['InitRegionSanityCheck']
 
-        if not self.proj.compile_options['fastslow']:
-            LTLspec_sys += "\n&\n" + self.spec['Topo']
+        if self.proj.compile_options["decompose"]:
+            self.spec['InitCompletionSanityCheck'] = createInitialCompletionFragment(self.parser.proj.rfi.regions, use_bits=self.proj.compile_options["use_region_bit_encoding"])
+        else:
+            self.spec['InitCompletionSanityCheck'] = createInitialCompletionFragment(self.proj.rfi.regions, use_bits=self.proj.compile_options["use_region_bit_encoding"])
+            
+        LTLspec_env += "\n&\n" + self.spec['InitCompletionSanityCheck']
 
+        #if not self.proj.compile_options['fastslow']:
+        LTLspec_sys += "\n&\n" + self.spec['Topo']
+        LTLspec_env += "\n&\n" + self.spec['EnvTopo']
+        
         createLTLfile(self.proj.getFilenamePrefix(), LTLspec_env, LTLspec_sys)
 
         if self.proj.compile_options["parser"] == "slurp":
@@ -457,6 +470,7 @@ class SpecCompiler(object):
         bitEncode = bitEncoding(len(regionList),numBits)
         currBitEnc = bitEncode['current']
         nextBitEnc = bitEncode['next']
+        envBitEnc = bitEncode['next']
 
         # switch to bit encodings for regions
         if self.proj.compile_options["use_region_bit_encoding"]:
@@ -923,7 +937,8 @@ class SpecCompiler(object):
 
             # Make sure flags are compatible
             if self.proj.compile_options["fastslow"]:
-                raise RuntimeError("Slugs does not currently support fast/slow option.")
+                pass
+                #raise RuntimeError("Slugs does not currently support fast/slow option.")
             if self.proj.compile_options["symbolic"]:
                 cmd.extend(["--symbolicStrategy", self.proj.getFilenamePrefix() + ".bdd"])
             else:
