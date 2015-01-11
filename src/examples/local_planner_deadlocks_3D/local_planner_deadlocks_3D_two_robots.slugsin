@@ -1,0 +1,352 @@
+[INPUT]
+rob1_A_rc
+rob1_B_rc
+rob1_C_rc
+rob1_D_rc
+rob1_E_rc
+rob1_F_rc
+rob2_A_rc
+rob2_B_rc
+rob2_C_rc
+rob2_D_rc
+rob2_E_rc
+rob2_F_rc
+#rob1_pickup_ac
+#rob1_pickup_ac
+#rob2_pickup_ac
+#rob2_pickup_ac
+rob1_deadlock
+rob2_deadlock
+rob12_deadlock
+#garbage
+#garbage
+#door
+#door
+
+[OUTPUT]
+rob1_A
+rob1_B
+rob1_C
+rob1_D
+rob1_E
+rob1_F
+rob2_A
+rob2_B
+rob2_C
+rob2_D
+rob2_E
+rob2_F
+#rob1_pickup
+#rob1_pickup
+#rob2_pickup
+#rob2_pickup
+m_rob1_deadlock
+m_rob2_deadlock
+
+[ENV_TRANS]
+#restricts completion
+| ! & rob1_A_rc rob1_A rob1_A_rc'
+| ! & rob1_B_rc rob1_B rob1_B_rc'
+| ! & rob1_C_rc rob1_C rob1_C_rc'
+| ! & rob1_D_rc rob1_D rob1_D_rc'
+| ! & rob1_E_rc rob1_E rob1_E_rc'
+| ! & rob1_F_rc rob1_F rob1_F_rc'
+| ! & rob1_A_rc rob1_B | rob1_A_rc' rob1_B_rc'
+| ! & rob1_A_rc rob1_C | rob1_A_rc' rob1_C_rc'
+| ! & rob1_A_rc rob1_D | rob1_A_rc' rob1_D_rc'
+| ! & rob1_B_rc rob1_A | rob1_B_rc' rob1_A_rc'
+| ! & rob1_B_rc rob1_C | rob1_B_rc' rob1_C_rc'
+| ! & rob1_B_rc rob1_D | rob1_B_rc' rob1_D_rc'
+| ! & rob1_C_rc rob1_A | rob1_C_rc' rob1_A_rc'
+| ! & rob1_C_rc rob1_B | rob1_C_rc' rob1_B_rc'
+| ! & rob1_C_rc rob1_E | rob1_C_rc' rob1_E_rc'
+| ! & rob1_D_rc rob1_A | rob1_D_rc' rob1_A_rc'
+| ! & rob1_D_rc rob1_B | rob1_D_rc' rob1_B_rc'
+| ! & rob1_D_rc rob1_E | rob1_D_rc' rob1_E_rc'
+| ! & rob1_D_rc rob1_F | rob1_D_rc' rob1_F_rc'
+| ! & rob1_E_rc rob1_C | rob1_E_rc' rob1_C_rc'
+| ! & rob1_E_rc rob1_D | rob1_E_rc' rob1_D_rc'
+| ! & rob1_E_rc rob1_F | rob1_E_rc' rob1_F_rc'
+| ! & rob1_F_rc rob1_C | rob1_F_rc' rob1_C_rc'
+| ! & rob1_F_rc rob1_D | rob1_F_rc' rob1_D_rc'
+| ! & rob1_F_rc rob1_E | rob1_F_rc' rob1_E_rc'
+| ! rob1_A_rc' ! | | | | rob1_B_rc' rob1_C_rc' rob1_D_rc' rob1_E_rc' rob1_F_rc'
+| ! rob1_B_rc' ! | | | | rob1_A_rc' rob1_C_rc' rob1_D_rc' rob1_E_rc' rob1_F_rc'
+| ! rob1_C_rc' ! | | | | rob1_A_rc' rob1_B_rc' rob1_D_rc' rob1_E_rc' rob1_F_rc'
+| ! rob1_D_rc' ! | | | | rob1_A_rc' rob1_B_rc' rob1_C_rc' rob1_E_rc' rob1_F_rc'
+| ! rob1_E_rc' ! | | | | rob1_A_rc' rob1_B_rc' rob1_C_rc' rob1_D_rc' rob1_F_rc'
+| ! rob1_F_rc' ! | | | | rob1_A_rc' rob1_B_rc' rob1_C_rc' rob1_D_rc' rob1_E_rc'
+| | | | | rob1_A_rc' rob1_B_rc' rob1_C_rc' rob1_D_rc' rob1_E_rc' rob1_F_rc'
+| ! rob1_A_rc ! | | | | rob1_B_rc rob1_C_rc rob1_D_rc rob1_E_rc rob1_F_rc
+| ! rob1_B_rc ! | | | | rob1_A_rc rob1_C_rc rob1_D_rc rob1_E_rc rob1_F_rc
+| ! rob1_C_rc ! | | | | rob1_A_rc rob1_B_rc rob1_D_rc rob1_E_rc rob1_F_rc
+| ! rob1_D_rc ! | | | | rob1_A_rc rob1_B_rc rob1_C_rc rob1_E_rc rob1_F_rc
+| ! rob1_E_rc ! | | | | rob1_A_rc rob1_B_rc rob1_C_rc rob1_D_rc rob1_F_rc
+| ! rob1_F_rc ! | | | | rob1_A_rc rob1_B_rc rob1_C_rc rob1_D_rc rob1_E_rc
+| | | | | rob1_A_rc rob1_B_rc rob1_C_rc rob1_D_rc rob1_E_rc rob1_F_rc
+#(rob1_pickup_ac & rob1_pickup) -> rob1_pickup_ac'
+#(! rob1_pickup_ac & ! rob1_pickup) -> ! rob1_pickup_ac'
+| ! & rob2_A_rc rob2_A rob2_A_rc'
+| ! & rob2_B_rc rob2_B rob2_B_rc'
+| ! & rob2_C_rc rob2_C rob2_C_rc'
+| ! & rob2_D_rc rob2_D rob2_D_rc'
+| ! & rob2_E_rc rob2_E rob2_E_rc'
+| ! & rob2_F_rc rob2_F rob2_F_rc'
+| ! & rob2_A_rc rob2_B | rob2_A_rc' rob2_B_rc'
+| ! & rob2_A_rc rob2_C | rob2_A_rc' rob2_C_rc'
+| ! & rob2_A_rc rob2_D | rob2_A_rc' rob2_D_rc'
+| ! & rob2_B_rc rob2_A | rob2_B_rc' rob2_A_rc'
+| ! & rob2_B_rc rob2_C | rob2_B_rc' rob2_C_rc'
+| ! & rob2_B_rc rob2_D | rob2_B_rc' rob2_D_rc'
+| ! & rob2_C_rc rob2_A | rob2_C_rc' rob2_A_rc'
+| ! & rob2_C_rc rob2_B | rob2_C_rc' rob2_B_rc'
+| ! & rob2_C_rc rob2_E | rob2_C_rc' rob2_E_rc'
+| ! & rob2_D_rc rob2_A | rob2_D_rc' rob2_A_rc'
+| ! & rob2_D_rc rob2_B | rob2_D_rc' rob2_B_rc'
+| ! & rob2_D_rc rob2_E | rob2_D_rc' rob2_E_rc'
+| ! & rob2_D_rc rob2_F | rob2_D_rc' rob2_F_rc'
+| ! & rob2_E_rc rob2_C | rob2_E_rc' rob2_C_rc'
+| ! & rob2_E_rc rob2_D | rob2_E_rc' rob2_D_rc'
+| ! & rob2_E_rc rob2_F | rob2_E_rc' rob2_F_rc'
+| ! & rob2_F_rc rob2_C | rob2_F_rc' rob2_C_rc'
+| ! & rob2_F_rc rob2_D | rob2_F_rc' rob2_D_rc'
+| ! & rob2_F_rc rob2_E | rob2_F_rc' rob2_E_rc'
+| ! rob2_A_rc' ! | | | | rob2_B_rc' rob2_C_rc' rob2_D_rc' rob2_E_rc' rob2_F_rc'
+| ! rob2_B_rc' ! | | | | rob2_A_rc' rob2_C_rc' rob2_D_rc' rob2_E_rc' rob2_F_rc'
+| ! rob2_C_rc' ! | | | | rob2_A_rc' rob2_B_rc' rob2_D_rc' rob2_E_rc' rob2_F_rc'
+| ! rob2_D_rc' ! | | | | rob2_A_rc' rob2_B_rc' rob2_C_rc' rob2_E_rc' rob2_F_rc'
+| ! rob2_E_rc' ! | | | | rob2_A_rc' rob2_B_rc' rob2_C_rc' rob2_D_rc' rob2_F_rc'
+| ! rob2_F_rc' ! | | | | rob2_A_rc' rob2_B_rc' rob2_C_rc' rob2_D_rc' rob2_E_rc'
+| | | | | rob2_A_rc' rob2_B_rc' rob2_C_rc' rob2_D_rc' rob2_E_rc' rob2_F_rc'
+| ! rob2_A_rc ! | | | | rob2_B_rc rob2_C_rc rob2_D_rc rob2_E_rc rob2_F_rc
+| ! rob2_B_rc ! | | | | rob2_A_rc rob2_C_rc rob2_D_rc rob2_E_rc rob2_F_rc
+| ! rob2_C_rc ! | | | | rob2_A_rc rob2_B_rc rob2_D_rc rob2_E_rc rob2_F_rc
+| ! rob2_D_rc ! | | | | rob2_A_rc rob2_B_rc rob2_C_rc rob2_E_rc rob2_F_rc
+| ! rob2_E_rc ! | | | | rob2_A_rc rob2_B_rc rob2_C_rc rob2_D_rc rob2_F_rc
+| ! rob2_F_rc ! | | | | rob2_A_rc rob2_B_rc rob2_C_rc rob2_D_rc rob2_E_rc
+| | | | | rob2_A_rc rob2_B_rc rob2_C_rc rob2_D_rc rob2_E_rc rob2_F_rc
+#(rob2_pickup_ac & rob2_pickup) -> rob2_pickup_ac'
+#(! rob2_pickup_ac & ! rob2_pickup) -> ! rob2_pickup_ac'
+#rob1_D_rc' -> !door'
+#(rob2_deadlock' & rob2_T_rc) -> (rob2_T_rc')
+#( (rob2_T_rc & rob2_R -> ((rob2_T_rc' & !rob2_deadlock') | (rob2_R_rc' & !rob2_deadlock'))))
+#( (rob2_B_rc & rob2_L -> ((rob2_B_rc' & !rob2_deadlock') | (rob2_L_rc' & !rob2_deadlock'))))
+#( (rob2_L_rc & rob2_T -> ((rob2_L_rc' & !rob1_deadlock') | (rob2_T_rc'))))
+#rob2_L_rc & rob2_B  -> (!rob2_deadlock')
+#( (rob2_R_rc & rob2_D -> ((rob2_R_rc' & !rob2_deadlock') | (rob2_D_rc' & !rob2_deadlock'))))
+#( (rob2_D_rc & rob2_B -> ((rob2_D_rc' & !rob1_deadlock') | (rob2_B_rc'))))
+#rob2_D_rc & rob2_B -> (!rob2_deadlock')
+# no pairwise deadlock if robots are not in same or adjacent regions
+| ! & rob1_A_rc' | rob2_E_rc' rob2_F_rc' ! rob12_deadlock'
+| ! & rob1_B_rc' | rob2_E_rc' rob2_F_rc' ! rob12_deadlock'
+| ! & rob1_C_rc' | rob2_D_rc' rob2_F_rc' ! rob12_deadlock'
+| ! & rob1_D_rc' rob2_C_rc' ! rob12_deadlock'
+| ! & rob1_E_rc' | rob2_A_rc' rob2_B_rc' ! rob12_deadlock'
+| ! & rob1_F_rc' | | rob2_A_rc' rob2_B_rc' rob2_C_rc' ! rob12_deadlock'
+# only pairs can be in deadlock
+| ! rob12_deadlock' & ! rob1_deadlock' ! rob2_deadlock'
+| ! rob1_deadlock' & ! rob12_deadlock' ! rob2_deadlock'
+| ! rob2_deadlock' & ! rob12_deadlock' ! rob1_deadlock'
+# Added assumptions
+#rob1_T_rc' -> !rob1_deadlock'
+#rob2_T_rc' -> !rob2_deadlock'
+#rob1_B_rc' -> !rob1_deadlock'
+#rob2_B_rc' -> !rob2_deadlock'
+#rob1_L_rc' -> !rob1_deadlock'
+#rob2_L_rc' -> !rob2_deadlock'
+| ! rob1_C_rc' ! rob1_deadlock'
+| ! rob2_C_rc' ! rob2_deadlock'
+#rob1_D_rc' -> !rob1_deadlock'
+#rob2_D_rc' -> !rob2_deadlock'
+#!rob1_deadlock
+#!rob2_deadlock
+
+[ENV_INIT]
+& & & & & & & & & & & & & & ! rob1_A_rc rob1_B_rc ! rob1_C_rc ! rob1_D_rc ! rob1_E_rc ! rob1_F_rc ! rob2_A_rc rob2_B_rc ! rob2_C_rc ! rob2_D_rc ! rob2_E_rc ! rob2_F_rc ! rob12_deadlock ! rob1_deadlock ! rob2_deadlock
+
+[SYS_TRANS]
+| ! rob1_A_rc' | | | rob1_A' rob1_B' rob1_C' rob1_D'
+| ! rob1_B_rc' | | | rob1_B' rob1_A' rob1_C' rob1_D'
+| ! rob1_C_rc' | | | rob1_C' rob1_A' rob1_B' rob1_E'
+| ! rob1_D_rc' | | | | rob1_D' rob1_A' rob1_B' rob1_E' rob1_F'
+| ! rob1_E_rc' | | | rob1_E' rob1_C' rob1_D' rob1_F'
+| ! rob1_F_rc' | | rob1_F' rob1_D' rob1_E'
+| ! rob1_A_rc | | | rob1_A rob1_B rob1_C rob1_D
+| ! rob1_B_rc | | | rob1_B rob1_A rob1_C rob1_D
+| ! rob1_C_rc | | | rob1_C rob1_A rob1_B rob1_E
+| ! rob1_D_rc | | | | rob1_D rob1_A rob1_B rob1_E rob1_F
+| ! rob1_E_rc | | | rob1_E rob1_C rob1_D rob1_F
+| ! rob1_F_rc | | rob1_F rob1_D rob1_E
+| ! rob1_A' ! | | | | rob1_B' rob1_C' rob1_D' rob1_E' rob1_F'
+| ! rob1_B' ! | | | | rob1_A' rob1_C' rob1_D' rob1_E' rob1_F'
+| ! rob1_C' ! | | | | rob1_A' rob1_B' rob1_D' rob1_E' rob1_F'
+| ! rob1_D' ! | | | | rob1_A' rob1_B' rob1_C' rob1_E' rob1_F'
+| ! rob1_E' ! | | | | rob1_A' rob1_B' rob1_C' rob1_D' rob1_F'
+| ! rob1_F' ! | | | | rob1_A' rob1_B' rob1_C' rob1_D' rob1_E'
+| | | | | rob1_A' rob1_B' rob1_C' rob1_D' rob1_E' rob1_F'
+| ! rob1_A ! | | | | rob1_B rob1_C rob1_D rob1_E rob1_F
+| ! rob1_B ! | | | | rob1_A rob1_C rob1_D rob1_E rob1_F
+| ! rob1_C ! | | | | rob1_A rob1_B rob1_D rob1_E rob1_F
+| ! rob1_D ! | | | | rob1_A rob1_B rob1_C rob1_E rob1_F
+| ! rob1_E ! | | | | rob1_A rob1_B rob1_C rob1_D rob1_F
+| ! rob1_F ! | | | | rob1_A rob1_B rob1_C rob1_D rob1_E
+| | | | | rob1_A rob1_B rob1_C rob1_D rob1_E rob1_F
+#(rob1_pickup' & ! rob1_pickup_ac') -> (rob1_T_rc' -> rob1_T')
+#(rob1_pickup' & ! rob1_pickup_ac') -> (rob1_B_rc' -> rob1_B')
+#(rob1_pickup' & ! rob1_pickup_ac') -> (rob1_L_rc' -> rob1_L')
+#(rob1_pickup' & ! rob1_pickup_ac') -> (rob1_R_rc' -> rob1_R')
+#(rob1_pickup' & ! rob1_pickup_ac') -> (rob1_D_rc' -> rob1_D')
+| ! rob2_A_rc' | | | rob2_A' rob2_B' rob2_C' rob2_D'
+| ! rob2_B_rc' | | | rob2_B' rob2_A' rob2_C' rob2_D'
+| ! rob2_C_rc' | | | rob2_C' rob2_A' rob2_B' rob2_E'
+| ! rob2_D_rc' | | | | rob2_D' rob2_A' rob2_B' rob2_E' rob2_F'
+| ! rob2_E_rc' | | | rob2_E' rob2_C' rob2_D' rob2_F'
+| ! rob2_F_rc' | | rob2_F' rob2_D' rob2_E'
+| ! rob2_A_rc | | | rob2_A rob2_B rob2_C rob2_D
+| ! rob2_B_rc | | | rob2_B rob2_A rob2_C rob2_D
+| ! rob2_C_rc | | | rob2_C rob2_A rob2_B rob2_E
+| ! rob2_D_rc | | | | rob2_D rob2_A rob2_B rob2_E rob2_F
+| ! rob2_E_rc | | | rob2_E rob2_C rob2_D rob2_F
+| ! rob2_F_rc | | rob2_F rob2_D rob2_E
+| ! rob2_A' ! | | | | rob2_B' rob2_C' rob2_D' rob2_E' rob2_F'
+| ! rob2_B' ! | | | | rob2_A' rob2_C' rob2_D' rob2_E' rob2_F'
+| ! rob2_C' ! | | | | rob2_A' rob2_B' rob2_D' rob2_E' rob2_F'
+| ! rob2_D' ! | | | | rob2_A' rob2_B' rob2_C' rob2_E' rob2_F'
+| ! rob2_E' ! | | | | rob2_A' rob2_B' rob2_C' rob2_D' rob2_F'
+| ! rob2_F' ! | | | | rob2_A' rob2_B' rob2_C' rob2_D' rob2_E'
+| | | | | rob2_A' rob2_B' rob2_C' rob2_D' rob2_E' rob2_F'
+| ! rob2_A ! | | | | rob2_B rob2_C rob2_D rob2_E rob2_F
+| ! rob2_B ! | | | | rob2_A rob2_C rob2_D rob2_E rob2_F
+| ! rob2_C ! | | | | rob2_A rob2_B rob2_D rob2_E rob2_F
+| ! rob2_D ! | | | | rob2_A rob2_B rob2_C rob2_E rob2_F
+| ! rob2_E ! | | | | rob2_A rob2_B rob2_C rob2_D rob2_F
+| ! rob2_F ! | | | | rob2_A rob2_B rob2_C rob2_D rob2_E
+| | | | | rob2_A rob2_B rob2_C rob2_D rob2_E rob2_F
+#(rob2_pickup' & ! rob2_pickup_ac') -> (rob2_T_rc' -> rob2_T')
+#(rob2_pickup' & ! rob2_pickup_ac') -> (rob2_B_rc' -> rob2_B')
+#(rob2_pickup' & ! rob2_pickup_ac') -> (rob2_L_rc' -> rob2_L')
+#(rob2_pickup' & ! rob2_pickup_ac') -> (rob2_R_rc' -> rob2_R')
+#(rob2_pickup' & ! rob2_pickup_ac') -> (rob2_D_rc' -> rob2_D')
+#ROBOT 1
+# disable the current transition for the entirety of the duration in that region
+# REGION A
+| ! & & & & ! m_rob1_deadlock m_rob1_deadlock' rob1_A_rc rob1_A_rc' rob1_B ! rob1_B'
+| ! & & & & ! m_rob1_deadlock m_rob1_deadlock' rob1_A_rc rob1_A_rc' rob1_C ! rob1_C'
+| ! & & & & ! m_rob1_deadlock m_rob1_deadlock' rob1_A_rc rob1_A_rc' rob1_D ! rob1_D'
+| ! & & & & ! m_rob1_deadlock m_rob1_deadlock' rob1_A_rc rob1_A_rc' rob1_A ! rob1_A'
+| ! & & & m_rob1_deadlock' m_rob1_deadlock rob1_A_rc rob1_A_rc' | | | & rob1_B rob1_B' & rob1_C rob1_C' & rob1_D rob1_D' & rob1_A rob1_A'
+# REGION B
+| ! & & & & ! m_rob1_deadlock m_rob1_deadlock' rob1_B_rc rob1_B_rc' rob1_A ! rob1_A'
+| ! & & & & ! m_rob1_deadlock m_rob1_deadlock' rob1_B_rc rob1_B_rc' rob1_C ! rob1_C'
+| ! & & & & ! m_rob1_deadlock m_rob1_deadlock' rob1_B_rc rob1_B_rc' rob1_D ! rob1_D'
+| ! & & & & ! m_rob1_deadlock m_rob1_deadlock' rob1_B_rc rob1_B_rc' rob1_B ! rob1_B'
+| ! & & & m_rob1_deadlock' m_rob1_deadlock rob1_B_rc rob1_B_rc' | | | & rob1_A rob1_A' & rob1_C rob1_C' & rob1_D rob1_D' & rob1_B rob1_B'
+# REGION C
+| ! & & & & ! m_rob1_deadlock m_rob1_deadlock' rob1_C_rc rob1_C_rc' rob1_A ! rob1_A'
+| ! & & & & ! m_rob1_deadlock m_rob1_deadlock' rob1_C_rc rob1_C_rc' rob1_B ! rob1_B'
+| ! & & & & ! m_rob1_deadlock m_rob1_deadlock' rob1_C_rc rob1_C_rc' rob1_E ! rob1_E'
+| ! & & & & ! m_rob1_deadlock m_rob1_deadlock' rob1_C_rc rob1_C_rc' rob1_C ! rob1_C'
+| ! & & & m_rob1_deadlock' m_rob1_deadlock rob1_C_rc rob1_C_rc' | | | & rob1_A rob1_A' & rob1_B rob1_B' & rob1_E rob1_E' & rob1_C rob1_C'
+# REGION D
+| ! & & & & ! m_rob1_deadlock m_rob1_deadlock' rob1_D_rc rob1_D_rc' rob1_A ! rob1_A'
+| ! & & & & ! m_rob1_deadlock m_rob1_deadlock' rob1_D_rc rob1_D_rc' rob1_B ! rob1_B'
+| ! & & & & ! m_rob1_deadlock m_rob1_deadlock' rob1_D_rc rob1_D_rc' rob1_E ! rob1_E'
+| ! & & & & ! m_rob1_deadlock m_rob1_deadlock' rob1_D_rc rob1_D_rc' rob1_F ! rob1_F'
+| ! & & & & ! m_rob1_deadlock m_rob1_deadlock' rob1_D_rc rob1_D_rc' rob1_D ! rob1_D'
+| ! & & & m_rob1_deadlock' m_rob1_deadlock rob1_D_rc rob1_D_rc' | | | | & rob1_A rob1_A' & rob1_B rob1_B' & rob1_E rob1_E' & rob1_F rob1_F' & rob1_D rob1_D'
+# REGION E
+| ! & & & & ! m_rob1_deadlock m_rob1_deadlock' rob1_E_rc rob1_E_rc' rob1_C ! rob1_C'
+| ! & & & & ! m_rob1_deadlock m_rob1_deadlock' rob1_E_rc rob1_E_rc' rob1_D ! rob1_D'
+| ! & & & & ! m_rob1_deadlock m_rob1_deadlock' rob1_E_rc rob1_E_rc' rob1_F ! rob1_F'
+| ! & & & & ! m_rob1_deadlock m_rob1_deadlock' rob1_E_rc rob1_E_rc' rob1_E ! rob1_E'
+| ! & & & m_rob1_deadlock' m_rob1_deadlock rob1_E_rc rob1_E_rc' | | | & rob1_C rob1_C' & rob1_D rob1_D' & rob1_F rob1_F' & rob1_E rob1_E'
+# REGION F
+| ! & & & & ! m_rob1_deadlock m_rob1_deadlock' rob1_F_rc rob1_F_rc' rob1_D ! rob1_D'
+| ! & & & & ! m_rob1_deadlock m_rob1_deadlock' rob1_F_rc rob1_F_rc' rob1_E ! rob1_E'
+| ! & & & & ! m_rob1_deadlock m_rob1_deadlock' rob1_F_rc rob1_F_rc' rob1_F ! rob1_F'
+| ! & & & m_rob1_deadlock' m_rob1_deadlock rob1_F_rc rob1_F_rc' | | & rob1_D rob1_D' & rob1_E rob1_E' & rob1_F rob1_F'
+# set memory of deadlock when it has occured, resetting when it enters a new region
+| ! & & & ! m_rob1_deadlock ! rob1_deadlock rob1_deadlock' | | | | | & rob2_A_rc rob2_A_rc' & rob2_B_rc rob2_B_rc' & rob2_C_rc rob2_C_rc' & rob2_D_rc rob2_D_rc' & rob2_E_rc rob2_E_rc' & rob2_F_rc rob2_F_rc' m_rob1_deadlock'
+#m_rob1_deadlock -> ((((rob2_T_rc & rob2_T_rc') | (rob2_B_rc & rob2_B_rc') | (rob2_L_rc & rob2_L_rc') | (rob2_R_rc & rob2_R_rc') | (rob2_D_rc & rob2_D_rc')) & ((rob1_T_rc & rob1_T_rc') | (rob1_B_rc & rob1_B_rc') | (rob1_L_rc & rob1_L_rc') | (rob1_R_rc & rob1_R_rc') | (rob1_D_rc & rob1_D_rc')) & ((rob3_T_rc & rob3_T_rc') | (rob3_B_rc & rob3_B_rc') | (rob3_L_rc & rob3_L_rc') | (rob3_R_rc & rob3_R_rc') | (rob3_D_rc & rob3_D_rc'))) <-> m_rob1_deadlock')
+| ! m_rob1_deadlock | & ! | | | | | & rob1_A_rc rob1_A_rc' & rob1_B_rc rob1_B_rc' & rob1_C_rc rob1_C_rc' & rob1_D_rc rob1_D_rc' & rob1_E_rc rob1_E_rc' & rob1_F_rc rob1_F_rc' ! m_rob1_deadlock' & | | | | | & rob1_A_rc rob1_A_rc' & rob1_B_rc rob1_B_rc' & rob1_C_rc rob1_C_rc' & rob1_D_rc rob1_D_rc' & rob1_E_rc rob1_E_rc' & rob1_F_rc rob1_F_rc' m_rob1_deadlock'
+#ROBOT 2
+# disable the current transition for the entirety of the duration in that region
+# REGION A
+| ! & & & & ! m_rob2_deadlock m_rob2_deadlock' rob2_A_rc rob2_A_rc' rob2_B ! rob2_B'
+| ! & & & & ! m_rob2_deadlock m_rob2_deadlock' rob2_A_rc rob2_A_rc' rob2_C ! rob2_C'
+| ! & & & & ! m_rob2_deadlock m_rob2_deadlock' rob2_A_rc rob2_A_rc' rob2_D ! rob2_D'
+| ! & & & & ! m_rob2_deadlock m_rob2_deadlock' rob2_A_rc rob2_A_rc' rob2_A ! rob2_A'
+| ! & & & m_rob2_deadlock' m_rob2_deadlock rob2_A_rc rob2_A_rc' | | | & rob2_B rob2_B' & rob2_C rob2_C' & rob2_D rob2_D' & rob2_A rob2_A'
+# REGION B
+| ! & & & & ! m_rob2_deadlock m_rob2_deadlock' rob2_B_rc rob2_B_rc' rob2_A ! rob2_A'
+| ! & & & & ! m_rob2_deadlock m_rob2_deadlock' rob2_B_rc rob2_B_rc' rob2_C ! rob2_C'
+| ! & & & & ! m_rob2_deadlock m_rob2_deadlock' rob2_B_rc rob2_B_rc' rob2_D ! rob2_D'
+| ! & & & & ! m_rob2_deadlock m_rob2_deadlock' rob2_B_rc rob2_B_rc' rob2_B ! rob2_B'
+| ! & & & m_rob2_deadlock' m_rob2_deadlock rob2_B_rc rob2_B_rc' | | | & rob2_A rob2_A' & rob2_C rob2_C' & rob2_D rob2_D' & rob2_B rob2_B'
+# REGION C
+| ! & & & & ! m_rob2_deadlock m_rob2_deadlock' rob2_C_rc rob2_C_rc' rob2_A ! rob2_A'
+| ! & & & & ! m_rob2_deadlock m_rob2_deadlock' rob2_C_rc rob2_C_rc' rob2_B ! rob2_B'
+| ! & & & & ! m_rob2_deadlock m_rob2_deadlock' rob2_C_rc rob2_C_rc' rob2_E ! rob2_E'
+| ! & & & & ! m_rob2_deadlock m_rob2_deadlock' rob2_C_rc rob2_C_rc' rob2_C ! rob2_C'
+| ! & & & m_rob2_deadlock' m_rob2_deadlock rob2_C_rc rob2_C_rc' | | | & rob2_A rob2_A' & rob2_B rob2_B' & rob2_E rob2_E' & rob2_C rob2_C'
+# REGION D
+| ! & & & & ! m_rob2_deadlock m_rob2_deadlock' rob2_D_rc rob2_D_rc' rob2_A ! rob2_A'
+| ! & & & & ! m_rob2_deadlock m_rob2_deadlock' rob2_D_rc rob2_D_rc' rob2_B ! rob2_B'
+| ! & & & & ! m_rob2_deadlock m_rob2_deadlock' rob2_D_rc rob2_D_rc' rob2_E ! rob2_E'
+| ! & & & & ! m_rob2_deadlock m_rob2_deadlock' rob2_D_rc rob2_D_rc' rob2_F ! rob2_F'
+| ! & & & & ! m_rob2_deadlock m_rob2_deadlock' rob2_D_rc rob2_D_rc' rob2_D ! rob2_D'
+| ! & & & m_rob2_deadlock' m_rob2_deadlock rob2_D_rc rob2_D_rc' | | | | & rob2_A rob2_A' & rob2_B rob2_B' & rob2_E rob2_E' & rob2_F rob2_F' & rob2_D rob2_D'
+# REGION E
+| ! & & & & ! m_rob2_deadlock m_rob2_deadlock' rob2_E_rc rob2_E_rc' rob2_C ! rob2_C'
+| ! & & & & ! m_rob2_deadlock m_rob2_deadlock' rob2_E_rc rob2_E_rc' rob2_D ! rob2_D'
+| ! & & & & ! m_rob2_deadlock m_rob2_deadlock' rob2_E_rc rob2_E_rc' rob2_F ! rob2_F'
+| ! & & & & ! m_rob2_deadlock m_rob2_deadlock' rob2_E_rc rob2_E_rc' rob2_E ! rob2_E'
+| ! & & & m_rob2_deadlock' m_rob2_deadlock rob2_E_rc rob2_E_rc' | | | & rob2_C rob2_C' & rob2_D rob2_D' & rob2_F rob2_F' & rob2_E rob2_E'
+# REGION F
+| ! & & & & ! m_rob2_deadlock m_rob2_deadlock' rob2_F_rc rob2_F_rc' rob2_D ! rob2_D'
+| ! & & & & ! m_rob2_deadlock m_rob2_deadlock' rob2_F_rc rob2_F_rc' rob2_E ! rob2_E'
+| ! & & & & ! m_rob2_deadlock m_rob2_deadlock' rob2_F_rc rob2_F_rc' rob2_F ! rob2_F'
+| ! & & & m_rob2_deadlock' m_rob2_deadlock rob2_F_rc rob2_F_rc' | | & rob2_D rob2_D' & rob2_E rob2_E' & rob2_F rob2_F'
+# set memory of deadlock when it has occured, resetting when it enters a new region
+| ! & & & ! m_rob2_deadlock ! rob2_deadlock rob2_deadlock' | | | | | & rob2_A_rc rob2_A_rc' & rob2_B_rc rob2_B_rc' & rob2_C_rc rob2_C_rc' & rob2_D_rc rob2_D_rc' & rob2_E_rc rob2_E_rc' & rob2_F_rc rob2_F_rc' m_rob2_deadlock'
+#m_rob2_deadlock -> ((((rob2_T_rc & rob2_T_rc') | (rob2_B_rc & rob2_B_rc') | (rob2_L_rc & rob2_L_rc') | (rob2_R_rc & rob2_R_rc') | (rob2_D_rc & rob2_D_rc')) & ((rob2_T_rc & rob2_T_rc') | (rob2_B_rc & rob2_B_rc') | (rob2_L_rc & rob2_L_rc') | (rob2_R_rc & rob2_R_rc') | (rob2_D_rc & rob2_D_rc')) & ((rob3_T_rc & rob3_T_rc') | (rob3_B_rc & rob3_B_rc') | (rob3_L_rc & rob3_L_rc') | (rob3_R_rc & rob3_R_rc') | (rob3_D_rc & rob3_D_rc'))) <-> m_rob2_deadlock')
+| ! m_rob2_deadlock | & ! | | | | | & rob2_A_rc rob2_A_rc' & rob2_B_rc rob2_B_rc' & rob2_C_rc rob2_C_rc' & rob2_D_rc rob2_D_rc' & rob2_E_rc rob2_E_rc' & rob2_F_rc rob2_F_rc' ! m_rob2_deadlock' & | | | | | & rob2_A_rc rob2_A_rc' & rob2_B_rc rob2_B_rc' & rob2_C_rc rob2_C_rc' & rob2_D_rc rob2_D_rc' & rob2_E_rc rob2_E_rc' & rob2_F_rc rob2_F_rc' m_rob2_deadlock'
+# coordination - what happens when two robots deadlock at the same time?
+| ! & & & & & ! m_rob1_deadlock ! m_rob2_deadlock ! rob12_deadlock rob12_deadlock' | | | | | & rob2_A_rc rob2_A_rc' & rob2_B_rc rob2_B_rc' & rob2_C_rc rob2_C_rc' & rob2_D_rc rob2_D_rc' & rob2_E_rc rob2_E_rc' & rob2_F_rc rob2_F_rc' | | | | | & rob1_A_rc rob1_A_rc' & rob1_B_rc rob1_B_rc' & rob1_C_rc rob1_C_rc' & rob1_D_rc rob1_D_rc' & rob1_E_rc rob1_E_rc' & rob1_F_rc rob1_F_rc' | m_rob1_deadlock' m_rob2_deadlock'
+| ! & & & & ! m_rob1_deadlock ! rob1_deadlock ! rob1_deadlock' ! rob12_deadlock ! rob12_deadlock' ! m_rob1_deadlock'
+| ! & & & & ! m_rob2_deadlock ! rob2_deadlock ! rob2_deadlock' ! rob12_deadlock ! rob12_deadlock' ! m_rob2_deadlock'
+# coordination
+#rob1_D_rc' -> !rob2_D_rc'
+#rob2_D_rc' -> !rob1_D_rc'
+#garbage' & rob1_B_rc' -> rob1_pickup'
+#garbage' & rob2_B_rc' & !rob1_pickup' -> rob2_pickup'
+#door' -> !rob2_D'
+#door' -> !rob2_L'
+
+[SYS_INIT]
+& & & & & & & & & & & & & ! rob1_A rob1_B ! rob1_C ! rob1_D ! rob1_E ! rob1_F ! rob2_A rob2_B ! rob2_C ! rob2_D ! rob2_E ! rob2_F ! m_rob1_deadlock ! m_rob2_deadlock
+
+[ENV_LIVENESS]
+#fairness on completion
+#((rob1_A & rob1_A_rc') | (rob1_B & rob1_B_rc') | (rob1_C & rob1_C_rc') | (rob1_D & rob1_D_rc') | (rob1_E & rob1_E_rc') | (rob1_F & rob1_F_rc') | (rob1_A & !rob1_A') | (rob1_B & !rob1_B') | (rob1_C & !rob1_C') | (rob1_D & !rob1_D') | (rob1_E & !rob1_E') | (rob1_F & !rob1_F') ) & ((rob1_pickup & !rob1_pickup') | (!rob1_pickup & rob1_pickup') | (rob1_pickup & rob1_pickup_ac') | (!rob1_pickup & !rob1_pickup_ac')) & ((rob2_T & (rob2_T_rc')) | (rob2_B & (rob2_B_rc')) | (rob2_L & (rob2_L_rc')) | (rob2_R & (rob2_R_rc')) | (rob2_D & (rob2_D_rc')) | (rob2_T & !rob2_T') | (rob2_B & !rob2_B') | (rob2_L & !rob2_L') | (rob2_R & !rob2_R') | (rob2_D & !rob2_D') ) & ((rob2_pickup & !rob2_pickup') | (!rob2_pickup & rob2_pickup') | (rob2_pickup & rob2_pickup_ac') | (!rob2_pickup & !rob2_pickup_ac'))
+& | | | | | | | | | | | & rob1_A rob1_A_rc' & rob1_B rob1_B_rc' & rob1_C rob1_C_rc' & rob1_D rob1_D_rc' & rob1_E rob1_E_rc' & rob1_F rob1_F_rc' & rob1_A ! rob1_A' & rob1_B ! rob1_B' & rob1_C ! rob1_C' & rob1_D ! rob1_D' & rob1_E ! rob1_E' & rob1_F ! rob1_F' | | | | | | | | | | | & rob2_A rob2_A_rc' & rob2_B rob2_B_rc' & rob2_C rob2_C_rc' & rob2_D rob2_D_rc' & rob2_E rob2_E_rc' & rob2_F rob2_F_rc' & rob2_A ! rob2_A' & rob2_B ! rob2_B' & rob2_C ! rob2_C' & rob2_D ! rob2_D' & rob2_E ! rob2_E' & rob2_F ! rob2_F'
+#& ( (rob2_L_rc & rob2_T -> ((rob2_T_rc')))) & ( (rob2_D_rc & rob2_B -> ((rob2_D_rc' & !rob2_deadlock') | (rob2_B_rc'))))
+#& ( (rob2_T_rc & rob2_R -> (rob2_R_rc' & !rob2_deadlock'))) & ( (rob2_B_rc & rob2_L -> (rob2_L_rc' & !rob2_deadlock'))) & ( (rob2_L_rc & rob2_T -> ((rob2_L_rc' & !rob2_deadlock') | (rob2_T_rc')))) & ( (rob2_R_rc & rob2_D -> (rob2_D_rc' & !rob2_deadlock')) ) & ( (rob2_D_rc & rob2_B -> (rob2_B_rc' & !rob2_deadlock')) )
+#((rob2_T & (rob2_T_rc')) | (rob2_B & (rob2_B_rc')) | (rob2_L & (rob2_L_rc')) | (rob2_R & (rob2_R_rc')) | (rob2_D & (rob2_D_rc')) | (rob2_T & !rob2_T') | (rob2_B & !rob2_B') | (rob2_L & !rob2_L') | (rob2_R & !rob2_R') | (rob2_D & !rob2_D') )
+#& ( ((!rob2_deadlock & rob2_L_rc & rob2_L & !m_rob2_deadlock) -> (!rob2_T_rc' & !rob2_B_rc' & rob2_L_rc' & !rob2_R_rc' & !rob2_D_rc' & rob2_deadlock')) )
+! rob12_deadlock
+! rob1_deadlock
+! rob2_deadlock
+
+[SYS_LIVENESS]
+rob1_A_rc
+rob2_A_rc
+rob1_B_rc
+rob2_B_rc
+rob1_E_rc
+rob2_E_rc
+rob1_F_rc
+rob2_F_rc
+# uncomment only to check if realizability is due to Env == False
+#0
+
