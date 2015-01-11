@@ -53,7 +53,7 @@ def initializeLocalPlanner(regions, regionTransitionFaces, obstaclePoints, scali
 
     # Set the region/obstacle vertices
     session.run('[obstacle_rel, wallConstraintsXYZ, region_doors] = create_map_3d_from_2d_input(limitsMap, obstaclePoints, regionTransitionFaces);')
-    
+
     for i in range(numRobots):
         session.run('agentType('+str(i+1)+') = '+str(robotType)+';')
 
@@ -65,8 +65,8 @@ def initializeLocalPlanner(regions, regionTransitionFaces, obstaclePoints, scali
     for i in range(numRobots+numExogenousRobots):
         session.run('allowed_regions('+str(i+1)+',:) = [0, 0];')
 
-    print "obstacle_rel: "+str(session.getvalue('obstacle_rel'))
-    print "wallConstraintsXYZ: "+str(session.getvalue('wallConstraintsXYZ'))
+    # print "obstacle_rel: "+str(session.getvalue('obstacle_rel'))
+    # print "wallConstraintsXYZ: "+str(session.getvalue('wallConstraintsXYZ'))
 
     
     # return matlab session
@@ -98,8 +98,9 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, poseExog, 
 
             currRegName = regions[curr[roboName]].name
             nextRegName = regions[next[roboName]].name
-            print "current region: ",currRegName
-            print "next region: ",nextRegName
+            print "current region: "+currRegName
+            print "next region: "+nextRegName
+            print "  zGoalNew"+str(i+1)+" (matlab): "+str(session.getvalue('zGoalNew'+str(i+1)))
             # print regionNumbers
             currNbr = [[]]; nextNbr =[[]]
             for currRegNbr, region in enumerate(regions):
@@ -108,7 +109,7 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, poseExog, 
             for nextRegNbr, region in enumerate(regions):
                 if region.name == regions[next[roboName]].name:
                     break
-            print currRegNbr, nextRegNbr
+            # print currRegNbr, nextRegNbr
             currNbr[0] = currRegNbr+1; nextNbr[0] = nextRegNbr+1
             # currRegNbr[0] = regions.name.index(currRegName) #regionNumbers[currRegName]
             # nextRegNbr[0] = regionNumbers[nextRegName]
@@ -118,8 +119,8 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, poseExog, 
             # logging.debug("  id_region_1 (matlab): "+str(session.getvalue('id_region_1')))
             # logging.debug("  id_region_2 (matlab): "+str(session.getvalue('id_region_2')))
 
-            print 'robot '+str(i)+', curr:'+str(currNbr)
-            print 'robot '+str(i)+', next:'+str(nextNbr)
+            # print 'robot '+str(i)+', curr:'+str(currNbr)
+            # print 'robot '+str(i)+', next:'+str(nextNbr)
 
     for i in range(len(poseExog)):
         # Set the current pose: PYTHON: pose, MATLAB: zAux  (size d x n)  
@@ -142,7 +143,10 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, poseExog, 
 
 
     # Execute one step of the local planner and collect velocity components
-    session.run('doStep_wrapper();')
+    try:
+        session.run('doStep_wrapper();')
+    except:
+        print "WARNING: Matlab function doStep_wrapper experienced an error!!"
 
     v = {}
     w = {}
@@ -152,7 +156,7 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, poseExog, 
         # logging.debug('w = ' + str(session.getvalue('wOut'+str(i+1))))
 
         v[i] = 1*scalingPixelsToMeters*session.getvalue('vOut'+str(i+1))
-        w[i] = session.getvalue('wOut'+str(i+1))
+        w[i] = 1*session.getvalue('wOut'+str(i+1)) #0.25*session.getvalue('wOut'+str(i+1))
         deadAgent.append(session.getvalue('deadlockAgent'+str(i+1)))
         # print "Deadlock status (agent "+str(i)+") :"+str(deadAgent[i])
 

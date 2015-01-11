@@ -35,7 +35,8 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         self.numRobots              = []    # number of robots: number of agents in the specification, controlled by the local planner
         self.numDynamicObstacles    = 0     # number of dynamic obstacles: obstacles whose velocities are internally- or externally-controlled and do NOT do collision avoidance
         self.numExogenousRobots     = 0     # number of exogenous agents: robots that are controlled by another (unknown) specification, with collision avoidance
-        robotType                   = 3     # Set the robot type: iCreate (type 2) and NAO (type 3)
+        self.robotType              = 3     # Set the robot type: iCreate (type 2) and NAO (type 3)
+        self.acceptanceFactor       = 4     # factor on the robot radius for achieving a goal point
 
         self.scalingPixelsToMeters = scalingPixelsToMeters
         self.forceUpdate        = False
@@ -106,7 +107,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
             # if region.name == 'boundary':
             xv = [x for x,y in regionPoints]; yv = [y for x,y in regionPoints]
             limitsMap = [min(xv), max(xv), min(yv), max(yv)]
-        print 'Bounding box: '+str(limitsMap)
+        # print 'Bounding box: '+str(limitsMap)
 
         # Generate a list of obstacle vertices for the local planner
         obstacles = []
@@ -120,7 +121,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
             obsPoints = self.getRegionVertices(region)
             xv = [x for x,y in obsPoints]; yv = [y for x,y in obsPoints]
             obstaclePoints.append(hstack([xv,yv]))
-        print "Obstacle points: "+str(obstaclePoints)
+        # print "Obstacle points: "+str(obstaclePoints)
 
         # Generate a set of transition faces for the local planner
         regionTransitionFaces = []
@@ -133,11 +134,11 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
                         tmp = [float(1)/self.scalingPixelsToMeters*x for x in self.rfi.transitions[regionIdx][nextRegionIdx][0]]
                         tmp1 = (tmp[0].x,tmp[0].y); tmp2 = (tmp[1].x,tmp[1].y);
                         regionTransitionFaces.append([regionIdx+1,nextRegionIdx+1,tmp1[0],tmp2[0],tmp1[1],tmp2[1]])
-        print "Transition faces: "+str(regionTransitionFaces)
+        # print "Transition faces: "+str(regionTransitionFaces)
 
         # setup matlab communication
         self.session = LocalPlanner.initializeLocalPlanner(self.rfi.regions, regionTransitionFaces, obstaclePoints, self.scalingPixelsToMeters, limitsMap, \
-            self.numRobots, self.numDynamicObstacles, self.numExogenousRobots, robotType)
+            self.numRobots, self.numDynamicObstacles, self.numExogenousRobots, self.robotType)
 
         # setup a client session if we have other agents to avoid
         if self.numExogenousRobots > 0:
@@ -201,10 +202,14 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         for robot_name, current_reg in current_regIndices.iteritems():
             next_reg = next_regIndices[robot_name]
 
+            self.pose.update([(robot_name,self.pose_handler[robot_name].getPose())])
+            # print "pose: "+str(self.pose[robot_name])
+
             doUpdate[robot_name] = False            
             if not self.previous_next_reg[robot_name] == next_reg:
                 # Find our current configuration
-                self.pose.update([(robot_name,self.pose_handler[robot_name].getPose())])
+                # self.pose.update([(robot_name,self.pose_handler[robot_name].getPose())])
+                # print "pose: "+str(self.pose[robot_name])
 
                 # Check if Vicon has cut out
                 # TODO: this should probably go in posehandler?
@@ -220,7 +225,6 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
                 logging.debug("Next Region is " + str(self.rfi.regions[next_reg].name))
                 logging.debug("Current Region is " + str(self.rfi.regions[current_reg].name))
 
-                print "self.rfi.regions[current_reg].name: ",self.rfi.regions[current_reg].name
                 self.currentRegionPoly = self.map[self.rfi.regions[current_reg].name]
                 regionPolyOld = Polygon.Polygon(self.currentRegionPoly)
 
@@ -280,7 +284,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
 
                 # initialize the goal to the current pose, if the initial goal list is empty
                 if len(self.goalPositionList[robot_name]) == 0 and self.initial:
-                    self.goalPositionList[robot_name].append(self.pose[robot_name][:2]+[40,-40])
+                    self.goalPositionList[robot_name].append(self.pose[robot_name][:2]+[0.1,-0.1])
                     self.goalVelocityList[robot_name].append([0, 0])
 
                 # NOTE: Information about region geometry can be found in self.rfi.regions:
@@ -311,7 +315,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
             # print "list of goals: "+str(self.goal[robot_name])
             # print "next goal position: "+str(self.goalPositionList[robot_name])
             if len(self.goalPosition[robot_name]) > 0:
-                if norm(mat(self.pose[robot_name][:2]).T - self.goalPosition[robot_name]) > 2*self.radius or len(self.goalPositionList[robot_name]) == 0:
+                if norm(mat(self.pose[robot_name][:2]).T - self.goalPosition[robot_name]) > self.acceptanceFactor*self.radius or len(self.goalPositionList[robot_name]) == 0:
                     pass
                 else:
                     doUpdate[robot_name] = True

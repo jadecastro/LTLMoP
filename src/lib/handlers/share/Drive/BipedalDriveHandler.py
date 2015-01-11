@@ -10,6 +10,7 @@ Converts a desired global velocity vector into a desired velocity vector local t
 from math import sin, cos, sqrt, atan2, pi, fabs
 import sys
 import numpy
+import math
 #import naoqi
 #from naoqi import ALProxy
 
@@ -74,33 +75,97 @@ class BipedalDriveHandler(handlerTemplates.DriveHandler):
         # if not self.silent: print >>sys.__stdout__, "(drive) th = "+str(th) #??#
 
         # Set velocities based on where robot should go
+        v = 10*v
+        w = 0.15*w
+
+        v = math.floor(v*1000)/1000
+        w = math.floor(w*1000)/1000
+        # print "v:"+str(v)
+        # print "w:"+str(w)
+
         f = self.maxfreq             # Step frequency
-        vyout = 0                  # Never step sideways
-        if v < self.minvel:
-            vxout = 0              # Don't move
-            wout = 0
-            if not self.silent: print >>sys.__stdout__, "(drive) not moving" #??#
-        elif numpy.fabs(w) > self.angcur:
-            vxout = 0              # Turn in place
-            if w > 0:
-                wout = w    # Turn left
-                if not self.silent: print >>sys.__stdout__, "(drive) turning left" #??#
-            else:
-                wout = -self.maxspeed   # Turn right
-                if not self.silent: print >>sys.__stdout__, "(drive) turning right" #??#
-        elif numpy.fabs(w) > self.angfwd:
-            vxout = v       # Walk forward while turning
-            if w > 0:
-                wout = self.maxspeed/2  # Turn left
-                if not self.silent: print >>sys.__stdout__, "(drive) curving left" #??#
-            else:
-                wout = -self.maxspeed/2 # Turn right
-                if not self.silent: print >>sys.__stdout__, "(drive) curving right" #??#
-        else:
-            vxout = v       # Walk straight forward
-            wout = 0
-            if not self.silent: print >>sys.__stdout__, "(drive) walking straight" #??#
+        vyout = 0.                  # Never step sideways
+
+
+        if v == 0.:
+            vxout = 0.              # Don't move
+            wout = 0.
+        vxout = min(max(v,0),self.maxspeed)
+        wout = min(max(w,-self.maxspeed),self.maxspeed)
+
+        # if v < self.minvel and w == 0.:
+        #     vxout = 0.              # Don't move
+        #     wout = 0.
+        #     if not self.silent: print >>sys.__stdout__, "(drive) not moving" #??#
+        # elif numpy.fabs(w) > self.angcur:
+        #     vxout = 0.              # Turn in place
+        #     if w > 0.:
+        #         wout = self.maxspeed    # Turn left
+        #         if not self.silent: print >>sys.__stdout__, "(drive) turning left" #??#
+        #     else:
+        #         wout = -self.maxspeed   # Turn right
+        #         if not self.silent: print >>sys.__stdout__, "(drive) turning right" #??#
+        # elif numpy.fabs(w) > self.angfwd:
+        #     vxout = v       # Walk forward while turning
+        #     if w > 0.:
+        #         wout = self.maxspeed/2  # Turn left
+        #         if not self.silent: print >>sys.__stdout__, "(drive) curving left" #??#
+        #     else:
+        #         wout = -self.maxspeed/2 # Turn right
+        #         if not self.silent: print >>sys.__stdout__, "(drive) curving right" #??#
+        # else:
+        #     vxout = v       # Walk straight forward
+        #     wout = 0.
+        #     if not self.silent: print >>sys.__stdout__, "(drive) walking straight" #??#
 
         # Call locomotion handler
+        # print "vxout:"+str(vxout)
+        # print "wout:"+str(wout)
         self.loco.sendCommand([vxout,vyout,wout,f])
+
+
+    # def setVelocity(self, x, y, theta=0):
+    #     #if not self.silent: print "VEL:%f,%f" % tuple(self.coordmap([x, y]))
+    #     #if not self.silent: print "(drive) velocity = %f,%f" % tuple([x,y]) #???#
+
+
+    #     if not self.silent: print >>sys.__stdout__, 180*atan2(y,x)/pi
+    #     # Find direction of where robot should go
+    #     th = numpy.arctan2(y,x)-theta
+    #     while th > pi:
+    #         th = th-2*pi
+    #     while th < -pi:
+    #         th = th+2*pi
+    #     if not self.silent: print >>sys.__stdout__, "(drive) th = "+str(th) #??#
+
+    #     # Set velocities based on where robot should go
+    #     f = self.maxfreq             # Step frequency
+    #     vy = 0                  # Never step sideways
+    #     if numpy.hypot(x,y) < self.minvel:
+    #         vx = 0              # Don't move
+    #         w = 0
+    #         if not self.silent: print >>sys.__stdout__, "(drive) not moving" #??#
+    #     elif numpy.fabs(th) > self.angcur:
+    #         vx = 0              # Turn in place
+    #         if th > 0:
+    #             w = self.maxspeed    # Turn left
+    #             if not self.silent: print >>sys.__stdout__, "(drive) turning left" #??#
+    #         else:
+    #             w = -self.maxspeed   # Turn right
+    #             if not self.silent: print >>sys.__stdout__, "(drive) turning right" #??#
+    #     elif numpy.fabs(th) > self.angfwd:
+    #         vx = self.maxspeed       # Walk forward while turning
+    #         if th > 0:
+    #             w = self.maxspeed/2  # Turn left
+    #             if not self.silent: print >>sys.__stdout__, "(drive) curving left" #??#
+    #         else:
+    #             w = -self.maxspeed/2 # Turn right
+    #             if not self.silent: print >>sys.__stdout__, "(drive) curving right" #??#
+    #     else:
+    #         vx = self.maxspeed       # Walk straight forward
+    #         w = 0
+    #         if not self.silent: print >>sys.__stdout__, "(drive) walking straight" #??#
+
+    #     # Call locomotion handler
+    #     self.loco.sendCommand([vx,vy,w,f])
 
