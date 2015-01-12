@@ -221,8 +221,12 @@ def writeSpec(text, sensorList, regionList, robotPropList):
             
         # If the sentence describes the initial state of the robot
         elif SysInitRE.search(line):
-            # remove the first words     
+            # remove the first words
+            
             SysInit = SysInitRE.sub('',line)
+            completions = ['e.'+r[2:]+'_rc' for r in regionList]
+            for r in regionList:
+                SysInit = SysInit.replace(r,'e.'+r[2:]+'_rc')
 
             RegInit = ''
             ActInit = ''
@@ -245,7 +249,7 @@ def writeSpec(text, sensorList, regionList, robotPropList):
 
             if RegInit:
                 # parse regions
-                LTLRegSubformula = parseInit(RegInit,regionList + ["QUANTIFIER_PLACEHOLDER"],lineInd)
+                LTLRegSubformula = parseInit(RegInit,completions + ["QUANTIFIER_PLACEHOLDER"],lineInd)
                 if LTLRegSubformula == '': failed = True
             if ActInit:
                 if len(robotPropList) == 0:
@@ -260,7 +264,9 @@ def writeSpec(text, sensorList, regionList, robotPropList):
             elif QuantifierFlag == "ALL":
                 LTLRegSubformula = LTLRegSubformula.replace("QUANTIFIER_PLACEHOLDER", quant_and_string['current'])
 
-            spec['SysInit']= spec['SysInit'] + LTLRegSubformula + LTLActSubformula
+            spec['EnvInit']= spec['EnvInit'] + LTLRegSubformula
+            spec['SysInit']= spec['SysInit'] + LTLActSubformula
+            
             linemap['SysInit'].append(lineInd)            
             LTL2LineNo[replaceRegionName(LTLRegSubformula + LTLActSubformula,bitEncode,regionList)] = lineInd    
 
@@ -752,7 +758,6 @@ def parseInit(sentence,PropList,lineInd):
 
     FalseRE = re.compile('false',re.IGNORECASE)
     TrueRE = re.compile('true',re.IGNORECASE)
-    
 
     if FalseRE.search(sentence):
         # All propositions should be false
@@ -958,6 +963,7 @@ def parseCond(condition,sensorList,allRobotProp,ReqType,lineInd):
 
     NotFlag = False
     NextFlag = False
+    CompletionFlag = False
     EdgeType = None
 
     PropList = sensorList + allRobotProp
@@ -1023,6 +1029,8 @@ def parseCond(condition,sensorList,allRobotProp,ReqType,lineInd):
 
         # Determine the type of the formula to follow (current)
         # If not a livness requirement, add 'next'
+        if (subCondition in regionPastCond):
+            CompletionFlag = True
         if (subCondition in CurrCond):# and (not livenessFlag) : (NO LONGER NEEDED)
             NextFlag = True
             if 'not' in subCondition:
