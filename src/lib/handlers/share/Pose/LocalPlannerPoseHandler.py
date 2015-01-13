@@ -19,13 +19,14 @@ class LocalPlannerPoseHandler(handlerTemplates.PoseHandler):
         scalingPixelsToMeters (float): Scaling factor between RegionEditor map and Javier's map
         """
 
+        self.session = executor.proj.session
+
         session.run('vOut'+str(i+1)+' = 1;')
         session.run('wOut'+str(i+1)+' = 2;')
 
         self.scalingPixelsToMeters = scalingPixelsToMeters
         self.robot_id = robot_id
 
-        self.session = executor.proj.session
 
     def getPose(self, cached=False):
         """ Returns the most recent (x,y) reading from matlab """
