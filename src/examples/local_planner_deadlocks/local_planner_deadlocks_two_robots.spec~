@@ -16,14 +16,14 @@ fastslow: True
 decompose: True
 
 CurrentConfigName:
-two_robots_local_planner
+two_robots_local_planner_naos
 
 Customs: # List of custom propositions
 m_rob1_deadlock
 m_rob2_deadlock
 
 RegionFile: # Relative path of region description file
-local_planner_deadlocks.regions
+local_planner_deadlocks_two_robots.regions
 
 Sensors: # List of sensor propositions and their state (enabled = 1, disabled = 0)
 rob12_deadlock, 1

@@ -149,7 +149,7 @@ m_rob3_deadlock
 #( (rob2_R_rc & rob2_D -> ((rob2_R_rc' & !rob2_deadlock') | (rob2_D_rc' & !rob2_deadlock'))))
 #( (rob2_D_rc & rob2_B -> ((rob2_D_rc' & !rob1_deadlock') | (rob2_B_rc'))))
 #rob2_D_rc & rob2_B -> (!rob2_deadlock')
-# no deadlock if robots are not in same or adjacent regions - NO DYNAMIC OBSTACLES
+# no pairwise deadlock if robots are not in same or adjacent regions
 | ! & rob1_T_rc' | rob2_B_rc' rob2_D_rc' ! rob12_deadlock'
 | ! & rob1_B_rc' | rob2_T_rc' rob2_R_rc' ! rob12_deadlock'
 | ! & rob1_L_rc' | rob2_D_rc' rob2_R_rc' ! rob12_deadlock'
@@ -182,12 +182,12 @@ m_rob3_deadlock
 #rob1_B_rc' -> !rob1_deadlock'
 #rob2_B_rc' -> !rob2_deadlock'
 #rob3_B_rc' -> !rob3_deadlock'
-| ! rob1_L_rc' ! rob1_deadlock'
-| ! rob2_L_rc' ! rob2_deadlock'
-| ! rob3_L_rc' ! rob3_deadlock'
-| ! rob1_D_rc' ! rob1_deadlock'
-| ! rob2_D_rc' ! rob2_deadlock'
-| ! rob3_D_rc' ! rob3_deadlock'
+#rob1_L_rc' -> !rob1_deadlock'
+#rob2_L_rc' -> !rob2_deadlock'
+#rob3_L_rc' -> !rob3_deadlock'
+#rob1_D_rc' -> !rob1_deadlock'
+#rob2_D_rc' -> !rob2_deadlock'
+#rob3_D_rc' -> !rob3_deadlock'
 | ! rob1_R_rc' ! rob1_deadlock'
 | ! rob2_R_rc' ! rob2_deadlock'
 | ! rob3_R_rc' ! rob3_deadlock'
@@ -307,7 +307,7 @@ m_rob3_deadlock
 | ! & & & & ! m_rob1_deadlock m_rob1_deadlock' rob1_D_rc rob1_D_rc' rob1_R ! rob1_R'
 | ! & & & & ! m_rob1_deadlock m_rob1_deadlock' rob1_D_rc rob1_D_rc' rob1_D ! rob1_D'
 | ! & & & m_rob1_deadlock' m_rob1_deadlock rob1_D_rc rob1_D_rc' | | & rob1_B rob1_B' & rob1_R rob1_R' & rob1_D rob1_D'
-# set memory of deadlock when it has occured, resetting when *any robot* enters a new region
+# set memory of deadlock when it has occured, resetting when it enters a new region
 | ! & & & ! m_rob1_deadlock ! rob1_deadlock rob1_deadlock' | | | | & rob2_T_rc rob2_T_rc' & rob2_B_rc rob2_B_rc' & rob2_L_rc rob2_L_rc' & rob2_R_rc rob2_R_rc' & rob2_D_rc rob2_D_rc' m_rob1_deadlock'
 #m_rob1_deadlock -> ((((rob2_T_rc & rob2_T_rc') | (rob2_B_rc & rob2_B_rc') | (rob2_L_rc & rob2_L_rc') | (rob2_R_rc & rob2_R_rc') | (rob2_D_rc & rob2_D_rc')) & ((rob1_T_rc & rob1_T_rc') | (rob1_B_rc & rob1_B_rc') | (rob1_L_rc & rob1_L_rc') | (rob1_R_rc & rob1_R_rc') | (rob1_D_rc & rob1_D_rc')) & ((rob3_T_rc & rob3_T_rc') | (rob3_B_rc & rob3_B_rc') | (rob3_L_rc & rob3_L_rc') | (rob3_R_rc & rob3_R_rc') | (rob3_D_rc & rob3_D_rc'))) <-> m_rob1_deadlock')
 | ! m_rob1_deadlock | & ! | | | | & rob1_T_rc rob1_T_rc' & rob1_B_rc rob1_B_rc' & rob1_L_rc rob1_L_rc' & rob1_R_rc rob1_R_rc' & rob1_D_rc rob1_D_rc' ! m_rob1_deadlock' & | | | | & rob1_T_rc rob1_T_rc' & rob1_B_rc rob1_B_rc' & rob1_L_rc rob1_L_rc' & rob1_R_rc rob1_R_rc' & rob1_D_rc rob1_D_rc' m_rob1_deadlock'
@@ -338,7 +338,7 @@ m_rob3_deadlock
 | ! & & & & ! m_rob2_deadlock m_rob2_deadlock' rob2_D_rc rob2_D_rc' rob2_R ! rob2_R'
 | ! & & & & ! m_rob2_deadlock m_rob2_deadlock' rob2_D_rc rob2_D_rc' rob2_D ! rob2_D'
 | ! & & & m_rob2_deadlock' m_rob2_deadlock rob2_D_rc rob2_D_rc' | | & rob2_B rob2_B' & rob2_R rob2_R' & rob2_D rob2_D'
-# set memory of deadlock when it has occured, resetting when *any robot* enters a new region
+# set memory of deadlock when it has occured, resetting when it enters a new region
 | ! & & & ! m_rob2_deadlock ! rob2_deadlock rob2_deadlock' | | | | & rob2_T_rc rob2_T_rc' & rob2_B_rc rob2_B_rc' & rob2_L_rc rob2_L_rc' & rob2_R_rc rob2_R_rc' & rob2_D_rc rob2_D_rc' m_rob2_deadlock'
 #m_rob2_deadlock -> ((((rob2_T_rc & rob2_T_rc') | (rob2_B_rc & rob2_B_rc') | (rob2_L_rc & rob2_L_rc') | (rob2_R_rc & rob2_R_rc') | (rob2_D_rc & rob2_D_rc')) & ((rob1_T_rc & rob1_T_rc') | (rob1_B_rc & rob1_B_rc') | (rob1_L_rc & rob1_L_rc') | (rob1_R_rc & rob1_R_rc') | (rob1_D_rc & rob1_D_rc')) & ((rob3_T_rc & rob3_T_rc') | (rob3_B_rc & rob3_B_rc') | (rob3_L_rc & rob3_L_rc') | (rob3_R_rc & rob3_R_rc') | (rob3_D_rc & rob3_D_rc'))) <-> m_rob2_deadlock')
 | ! m_rob2_deadlock | & ! | | | | & rob2_T_rc rob2_T_rc' & rob2_B_rc rob2_B_rc' & rob2_L_rc rob2_L_rc' & rob2_R_rc rob2_R_rc' & rob2_D_rc rob2_D_rc' ! m_rob2_deadlock' & | | | | & rob2_T_rc rob2_T_rc' & rob2_B_rc rob2_B_rc' & rob2_L_rc rob2_L_rc' & rob2_R_rc rob2_R_rc' & rob2_D_rc rob2_D_rc' m_rob2_deadlock'
@@ -369,7 +369,7 @@ m_rob3_deadlock
 | ! & & & & ! m_rob3_deadlock m_rob3_deadlock' rob3_D_rc rob3_D_rc' rob3_R ! rob3_R'
 | ! & & & & ! m_rob3_deadlock m_rob3_deadlock' rob3_D_rc rob3_D_rc' rob3_D ! rob3_D'
 | ! & & & m_rob3_deadlock' m_rob3_deadlock rob3_D_rc rob3_D_rc' | | & rob3_B rob3_B' & rob3_R rob3_R' & rob3_D rob3_D'
-# set memory of deadlock when it has occured, resetting when *any robot* enters a new region
+# set memory of deadlock when it has occured, resetting when it enters a new region
 | ! & & & ! m_rob3_deadlock ! rob3_deadlock rob3_deadlock' | | | | & rob3_T_rc rob3_T_rc' & rob3_B_rc rob3_B_rc' & rob3_L_rc rob3_L_rc' & rob3_R_rc rob3_R_rc' & rob3_D_rc rob3_D_rc' m_rob3_deadlock'
 #m_rob3_deadlock -> ((((rob3_T_rc & rob3_T_rc') | (rob3_B_rc & rob3_B_rc') | (rob3_L_rc & rob3_L_rc') | (rob3_R_rc & rob3_R_rc') | (rob3_D_rc & rob3_D_rc')) & ((rob1_T_rc & rob1_T_rc') | (rob1_B_rc & rob1_B_rc') | (rob1_L_rc & rob1_L_rc') | (rob1_R_rc & rob1_R_rc') | (rob1_D_rc & rob1_D_rc')) & ((rob2_T_rc & rob2_T_rc') | (rob2_B_rc & rob2_B_rc') | (rob2_L_rc & rob2_L_rc') | (rob2_R_rc & rob2_R_rc') | (rob2_D_rc & rob2_D_rc'))) <-> m_rob3_deadlock')
 | ! m_rob3_deadlock | & ! | | | | & rob3_T_rc rob3_T_rc' & rob3_B_rc rob3_B_rc' & rob3_L_rc rob3_L_rc' & rob3_R_rc rob3_R_rc' & rob3_D_rc rob3_D_rc' ! m_rob3_deadlock' & | | | | & rob3_T_rc rob3_T_rc' & rob3_B_rc rob3_B_rc' & rob3_L_rc rob3_L_rc' & rob3_R_rc rob3_R_rc' & rob3_D_rc rob3_D_rc' m_rob3_deadlock'

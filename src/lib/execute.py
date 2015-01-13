@@ -47,6 +47,8 @@ from resynthesis import ExecutorResynthesisExtensions
 from executeStrategy import ExecutorStrategyExtensions
 import globalConfig, logging
 
+import pymatlab
+
 import LTLParser.LTLcheck
 import logging
 import LTLParser.LTLFormula

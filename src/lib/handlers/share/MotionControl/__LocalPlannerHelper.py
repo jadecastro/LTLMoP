@@ -17,17 +17,21 @@ if system == 'Darwin':
 else:
     pathToMatlabLocalPlanner = '/home/jon/Dropbox/Repos/uav-avoidance/multiquad-sim'
 
-def initializeLocalPlanner(regions, regionTransitionFaces, obstaclePoints, scalingPixelsToMeters, limitsMap, numRobots, numDynamicObstacles, numExogenousRobots, robotType):
+def initializeLocalPlanner(session, regions, regionTransitionFaces, obstaclePoints, scalingPixelsToMeters, limitsMap, numRobots, numDynamicObstacles, numExogenousRobots, robotType, scenario):
     """
     intialize Local Planner by setting up a pymatlab session and setting variables
     """
     logging.info('Starting Matlab session...')
-    session = pymatlab.session_factory()
+    # session = pymatlab.session_factory()
 
     # Initialize the local planner
     session.run('cd '+pathToMatlabLocalPlanner)
-    session.run('settingsHadas = 1;')
-    session.run('nB = '+str(numRobots+numExogenousRobots)+';')
+    if scenario == 1:
+        session.run('settingsHadas = 1;')
+    elif scenario == 2:
+        session.run('settingsHadas = 2;')
+
+    session.run('nB = '+str(numRobots+numExogenousRobots+numDynamicObstacles)+';')
     session.run('simLocalPlanning_initialize();')
 
     # Set robot parameters for use in the current Matlab session
@@ -52,14 +56,23 @@ def initializeLocalPlanner(regions, regionTransitionFaces, obstaclePoints, scali
         session.run('obstaclePoints{'+str(i+1)+'} = obstaclePointsNew;')
 
     # Set the region/obstacle vertices
-    session.run('[obstacle_rel, wallConstraintsXYZ, region_doors] = create_map_3d_from_2d_input(limitsMap, obstaclePoints, regionTransitionFaces);')
+    if scenario == 1:
+        session.run('[obstacle_rel, wallConstraintsXYZ, region_doors] = create_map_3d_from_2d_input(limitsMap, obstaclePoints, regionTransitionFaces);')
+    elif scenario == 2:
+        session.run('[obstacle_rel, wallConstraintsXYZ, region_doors] = create_map_3d(scenario_type);')
 
     for i in range(numRobots):
         session.run('agentType('+str(i+1)+') = '+str(robotType)+';')
+        # put initial values into the variables we will be querying
+        session.run('vOut'+str(i+1)+' = 1;')
+        session.run('wOut'+str(i+1)+' = 2;')
+        session.run('deadlockAgent'+str(i+1)+' = 0;')
 
     session.run('initializeAgentParameters();')
     session.run('view(2);')
     session.run('parameters.n_dynamicObstacle = '+str(numDynamicObstacles)+';')
+    if numDynamicObstacles > 0:
+        session.run('parameters.dynamicObstacleVelocityControlled = 1;')
 
     # initially set the allowed regions to zero (no constraints)
     for i in range(numRobots+numExogenousRobots):
@@ -70,9 +83,9 @@ def initializeLocalPlanner(regions, regionTransitionFaces, obstaclePoints, scali
 
     
     # return matlab session
-    return session
+    # return session
 
-def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, poseExog, goalPositionExog, goalVelocityExog, doUpdate, regions, curr, next, coordmap_lab2map, scalingPixelsToMeters, numDynamicObstacles):
+def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, poseExog, goalPositionExog, goalVelocityExog, doUpdate, regions, curr, next, coordmap_lab2map, scalingPixelsToMeters, numDynamicObstacles, scenario):
     """
     pose  = {'rob1':[-1 ,.5],'rob2':[1,1],'rob3':[3.5 , -1]}
     next_regIndices = {'rob1': 2,'rob2':3,'rob3':3}
@@ -157,17 +170,17 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, poseExog, 
 
         v[i] = 1*scalingPixelsToMeters*session.getvalue('vOut'+str(i+1))
         w[i] = 1*session.getvalue('wOut'+str(i+1)) #0.25*session.getvalue('wOut'+str(i+1))
-        deadAgent.append(session.getvalue('deadlockAgent'+str(i+1)))
+        # deadAgent.append(session.getvalue('deadlockAgent'+str(i+1)))
         # print "Deadlock status (agent "+str(i)+") :"+str(deadAgent[i])
 
     vd = {}
     wd = {}
     deadAgentD = []
-    for i in range(len(poseExog)):
-        vd[i] = 1*scalingPixelsToMeters*session.getvalue('vOut'+str(numRobots+i+1))
-        wd[i] = session.getvalue('wOut'+str(numRobots+i+1))
-        deadAgentD.append(session.getvalue('deadlockAgent'+str(numRobots+i+1)))
-
+    if numDynamicObstacles == 0:
+        for i in range(len(poseExog)):
+            vd[i] = 1*scalingPixelsToMeters*session.getvalue('vOut'+str(numRobots+i+1))
+            wd[i] = session.getvalue('wOut'+str(numRobots+i+1))
+            deadAgentD.append(session.getvalue('deadlockAgent'+str(numRobots+i+1)))
 
     # return velocities
     return v, w, vd, wd, deadAgent

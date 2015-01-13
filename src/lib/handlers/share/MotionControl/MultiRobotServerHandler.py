@@ -36,15 +36,16 @@ class MultiRobotServerHandler(handlerTemplates.MotionControlHandler):
         scalingPixelsToMeters (float): Scaling factor between RegionEditor map and Javier's map
         """
 
-        self.numExogenousRobots     = 4    # number of exogenous agents: robots that are controlled by another (unknown) specification, with collision avoidance
+        self.numExogenousRobots = 4    # number of exogenous agents: robots that are controlled by another (unknown) specification, with collision avoidance
 
         self.scalingPixelsToMeters = scalingPixelsToMeters
-        self.forceUpdate = False
+        self.forceUpdate        = False
+        self.initial            = True
         self.goal               = {}
         self.previous_next_reg  = {}
         self.pose               = {}
-        self.goalPosition = {}
-        self.goalVelocity = {}
+        self.goalPosition       = {}
+        self.goalVelocity       = {}
         self.current_regVertices= {}
         self.next_regVertices   = {}
         self.system_print       = False       # for debugging. print on GUI ( a bunch of stuffs)
@@ -88,6 +89,11 @@ class MultiRobotServerHandler(handlerTemplates.MotionControlHandler):
         self.map = {}
         for region in self.rfi.regions:
             self.map[region.name] = self.createRegionPolygon(region)
+
+        # set the initial goal as the initial pose, in case there are no transitions to take immediately
+        for robot_name in self.robotList: 
+        #     self.pose.update([(robot_name,self.pose_handler[robot_name].getPose())])
+            self.goal[robot_name] = []
 
         # start the server
         address = ('localhost', 9999)  # let the kernel give us a port
@@ -213,6 +219,11 @@ class MultiRobotServerHandler(handlerTemplates.MotionControlHandler):
                 
                 self.goal[robot_name] = goal
 
+                # initialize the goal to the current pose, if the initial goal list is empty
+                if len(self.goalPositionList[robot_name]) == 0 and self.initial:
+                    self.goalPositionList[robot_name].append(self.pose[robot_name][:2]+[0.1,-0.1])
+                    self.goalVelocityList[robot_name].append([0, 0])
+
                 # NOTE: Information about region geometry can be found in self.rfi.regions:
                 vertices = mat(map(self.coordmap_map2lab, [x for x in self.rfi.regions[current_reg].getPoints()])).T
                 self.current_regVertices[robot_name] = vertices
@@ -241,7 +252,7 @@ class MultiRobotServerHandler(handlerTemplates.MotionControlHandler):
             # print "list of goals: "+str(self.goal[robot_name])
             # print "goalPositionList: "+str(self.goalPositionList[robot_name])
             if len(self.goalPosition[robot_name]) > 0:
-                if norm(mat(self.pose[robot_name][:2]).T - self.goalPosition[robot_name]) > 1.5*self.radius or len(self.goalPositionList[robot_name]) == 0:
+                if norm(mat(self.pose[robot_name][:2]).T - self.goalPosition[robot_name]) > 3*self.radius or len(self.goalPositionList[robot_name]) == 0:
                     pass
                 else:
                     doUpdate[robot_name] = True
@@ -264,15 +275,23 @@ class MultiRobotServerHandler(handlerTemplates.MotionControlHandler):
             len_sent = self.client.send(pickle.dumps(self.message))
 
             # Receive a response: v and w arrays
-            self.response = pickle.loads(self.client.recv(1024))
-            # print 'Received: "%s"' % self.response
+            if not self.numExogenousRobots == 1:
+                self.response = pickle.loads(self.client.recv(1024))
+                # print 'Received: "%s"' % self.response
 
-            v = self.response[0]
-            w = self.response[1]
+                v = self.response[0]
+                w = self.response[1]
+            else:
+                v = [0.]
+                w = [0.]
             self.v = v; self.w = w
 
             # set the velocities
             for idx, robot_name in enumerate(self.robotList):
+                if current_regIndices[robot_name] == next_regIndices[robot_name]:
+                    v[idx] = 0.
+                    w[idx] = 0.
+                
                 logging.debug(robot_name + '-v:' + str(v[idx]) + ' w:' + str(w[idx]))
                 self.drive_handler[robot_name].setVelocity(v[idx], w[idx], self.pose[robot_name][2])
                 #logging.debug("pose:" + str(pose))
@@ -290,6 +309,7 @@ class MultiRobotServerHandler(handlerTemplates.MotionControlHandler):
                             break
                     self.last_warning = time.time()
 
+            self.initial = False
             logging.debug("arrived:" + str(arrived))
             return (True in arrived.values()) #arrived[self.executor.hsub.getMainRobot().name]
 

@@ -8,7 +8,7 @@ MultiRobotLocalPlannerHandler.py
 
 from numpy import *
 from __is_inside import *
-import time, math
+import time, math, sys
 import logging
 import __LocalPlannerHelper as LocalPlanner
 from collections import OrderedDict
@@ -17,10 +17,13 @@ import Polygon, Polygon.IO
 import Polygon.Utils as PolyUtils
 import Polygon.Shapes as PolyShapes
 import project
+import pymatlab
 
 import subprocess
 import socket
 import pickle
+
+import _pyvicon
 
 import lib.handlers.handlerTemplates as handlerTemplates
 from lib.regions import Point
@@ -35,8 +38,10 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         self.numRobots              = []    # number of robots: number of agents in the specification, controlled by the local planner
         self.numDynamicObstacles    = 0     # number of dynamic obstacles: obstacles whose velocities are internally- or externally-controlled and do NOT do collision avoidance
         self.numExogenousRobots     = 0     # number of exogenous agents: robots that are controlled by another (unknown) specification, with collision avoidance
-        self.robotType              = 3     # Set the robot type: iCreate (type 2) and NAO (type 3)
-        self.acceptanceFactor       = 4     # factor on the robot radius for achieving a goal point
+        self.robotType              = 2     # Set the robot type: iCreate (type 2) and NAO (type 3)
+        self.acceptanceFactor       = 3     # factor on the robot radius for achieving a goal point
+
+        self.scenario               = 2     # 1 = garbage collection, 2 = 3D quads
 
         self.scalingPixelsToMeters = scalingPixelsToMeters
         self.forceUpdate        = False
@@ -57,6 +62,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         self.nextRegionPoly     = None
         self.radius             = self.scalingPixelsToMeters*0.15
         self.trans_matrix       = mat([[0,1],[-1,0]])   # transformation matrix for find the normal to the vector
+        self.timer              = time.time()
 
         self.pose = OrderedDict()
         self.goalPositionList = OrderedDict()
@@ -66,6 +72,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         self.robotList = [robot.name for robot in executor.hsub.executing_config.robots]
         if not self.numRobots == len(self.robotList):
             self.numRobots = len(self.robotList)
+            # self.numRobots = 3
             print "WARNING: changing the number of robots to match the config file"
         for robot_name in self.robotList:
             self.goalPosition[robot_name] = []
@@ -100,7 +107,10 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         # Generate bounding box for passing to the local planner
         # testSetOfRegions = self.rfi.regions    # TODO: hard-coding. decomposed region file doesn't store the boundary.
         testSetOfRegions = []
-        testSetOfRegions.append([Point(0,0),Point(0,700),Point(700,0),Point(700,700)])
+        if self.scenario == 1:
+            testSetOfRegions.append([Point(0,0),Point(0,700),Point(700,0),Point(700,700)])
+        if self.scenario == 2:
+            testSetOfRegions.append([Point(0,0),Point(0,595),Point(490,0),Point(490,595)])
         for region in testSetOfRegions:
             regionPoints = self.getRegionVertices(region)
             print regionPoints 
@@ -108,13 +118,17 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
             xv = [x for x,y in regionPoints]; yv = [y for x,y in regionPoints]
             limitsMap = [min(xv), max(xv), min(yv), max(yv)]
         # print 'Bounding box: '+str(limitsMap)
+        self.limitsMap = limitsMap
 
         # Generate a list of obstacle vertices for the local planner
         obstacles = []
-        obstacles.append([Point(490,490),Point(490,700),Point(700,490),Point(700,700)])
-        obstacles.append([Point(574,210),Point(574,280),Point(700,210),Point(700,280)])
-        obstacles.append([Point(385,210),Point(385,280),Point(465,210),Point(465,280)])
-        obstacles.append([Point(105,210),Point(105,490),Point(385,210),Point(385,490)])
+        if self.scenario == 1:
+            obstacles.append([Point(490,490),Point(490,700),Point(700,490),Point(700,700)])
+            obstacles.append([Point(574,210),Point(574,280),Point(700,210),Point(700,280)])
+            obstacles.append([Point(385,210),Point(385,280),Point(465,210),Point(465,280)])
+            obstacles.append([Point(105,210),Point(105,490),Point(385,210),Point(385,490)])
+        if self.scenario == 2:
+            obstacles.append([Point(280,105),Point(280,245),Point(385,105),Point(385,245)])
         # obstacles = [r for r in self.rfi.regions if r.name.startswith('o')]   # TODO: hard-coding. decomposed region file doesn't store obstacles.
         obstaclePoints = []
         for region in obstacles:
@@ -137,11 +151,14 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         # print "Transition faces: "+str(regionTransitionFaces)
 
         # setup matlab communication
-        self.session = LocalPlanner.initializeLocalPlanner(self.rfi.regions, regionTransitionFaces, obstaclePoints, self.scalingPixelsToMeters, limitsMap, \
-            self.numRobots, self.numDynamicObstacles, self.numExogenousRobots, self.robotType)
+        self.session = executor.proj.session
+        # self.session = pymatlab.session_factory()
 
-        # setup a client session if we have other agents to avoid
-        if self.numExogenousRobots > 0:
+        LocalPlanner.initializeLocalPlanner(self.session, self.rfi.regions, regionTransitionFaces, obstaclePoints, self.scalingPixelsToMeters, limitsMap, \
+            self.numRobots, self.numDynamicObstacles, self.numExogenousRobots, self.robotType, self.scenario)
+
+        # set up a client session if we have other agents to avoid
+        if self.numExogenousRobots > 1:
             address = ('localhost', 9999)  # let the kernel give us a port
             print "Starting the client..."
 
@@ -149,10 +166,29 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
             self.c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.c.connect(address)
 
+        # set up vicon feed of helmet data
+        elif self.numDynamicObstacles > 0:
+            self.host = "10.0.0.102"
+            self.port = 800
+            self.x = "GPSReceiverHelmet-goodaxes:GPSReceiverHelmet01 <t-X>"
+            self.y = "GPSReceiverHelmet-goodaxes:GPSReceiverHelmet01 <t-Y>"
+            self.theta = "GPSReceiverHelmet-goodaxes:GPSReceiverHelmet01 <a-Z>"
+
+            self.streamer = _pyvicon.ViconStreamer()
+            self.streamer.connect(self.host,self.port)
+
+            self.streamer.selectStreams(["Time", self.x, self.y, self.theta])
+
+            self.streamer.startStreams()
+
+            self.poseExog[0] = array([0.,0.,0.])
+
     def _stop(self):
         """
         Properly terminates all threads/computations in the handler. Leave no trace behind.
         """
+
+        session.run('simLocalPlanning_saveData();')
         logging.debug("Closing the connection...") 
         self.c.close()
 
@@ -278,13 +314,21 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
                         self.goalVelocityList[robot_name].append([0, 0])  # temporarily setting this to zero
 
                 else:
+                    # self.goalPositionList[robot_name] = []
+                    # self.goalVelocityList[robot_name] = []
+                    if len(self.goalPositionList[robot_name]) > 1:
+                        self.goalPositionList[robot_name].pop()
+                        self.goalVelocityList[robot_name].pop()
+                    # goal = []
                     goal = self.goal[robot_name]  # TODO: fix the case of a self-loop in the initial region
                 
+
                 self.goal[robot_name] = goal
 
                 # initialize the goal to the current pose, if the initial goal list is empty
                 if len(self.goalPositionList[robot_name]) == 0 and self.initial:
                     self.goalPositionList[robot_name].append(self.pose[robot_name][:2]+[0.1,-0.1])
+                    # self.goalPositionList[robot_name].append(self.pose[robot_name][:2]+[40,-40])
                     self.goalVelocityList[robot_name].append([0, 0])
 
                 # NOTE: Information about region geometry can be found in self.rfi.regions:
@@ -332,7 +376,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
             # print "goalPosition: ", self.goalPosition[robot_name]
 
         # receive the goal, pose, and velocity for the dynamic obstacles.
-        if self.numExogenousRobots > 0:
+        if self.numExogenousRobots > 1:
             try:
                 # Receive data from the server
                 response = pickle.loads(self.c.recv(1024))
@@ -341,18 +385,35 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
             except socket.error, msg:
                 print "Socket error! %s" % msg
 
-        # parse the incoming pose info
-        for i in range(self.numExogenousRobots):
-            self.poseExog[i] = array(response[i][0]) 
-            self.goalPositionExog[i] = response[i][1]
-            self.goalVelocityExog[i] = [0.,0.]
+            # parse the incoming pose info
+            for i in range(self.numExogenousRobots):
+                self.poseExog[i] = array(response[i][0]) 
+                self.goalPositionExog[i] = response[i][1]
+                self.goalVelocityExog[i] = [0.,0.]
+
+        elif self.numDynamicObstacles > 0:
+            (t0, x0, y0, o0) = self.streamer.getData()
+            (t0, x0, y0, o0) = [t0/100, x0/1000, y0/1000, o0]
+            if x0 == 0. and y0 == 0:
+                print "WARNING: No helmet vicon data. Re-using old data."
+            elif (x0 < self.limitsMap[0] or x0 > self.limitsMap[1] or y0 < self.limitsMap[2] or y0 > self.limitsMap[3]):
+                print "WARNING: Helmet outside of map bounds. Re-using old data."
+            else:
+                self.poseExog[0] = array([x0, y0, o0])
+            self.goalPositionExog[0] = [0.,0.]
+            self.goalVelocityExog[0] = [0.,0.]
 
         # Run algorithm to find a velocity vector (global frame) to take the robot to the next region
         v, w, vd, wd, deadAgent = LocalPlanner.executeLocalPlanner(self.session, self.pose, self.goalPosition, self.goalVelocity, self.poseExog, self.goalPositionExog, self.goalVelocityExog, \
-            doUpdate, self.rfi.regions, current_regIndices, next_regIndices, self.coordmap_lab2map, self.scalingPixelsToMeters, self.numDynamicObstacles)
+            doUpdate, self.rfi.regions, current_regIndices, next_regIndices, self.coordmap_lab2map, self.scalingPixelsToMeters, self.numDynamicObstacles, self.scenario)
+
+        # save the data
+        if (time.time() - self.timer) > 10:
+            self.timer = time.time()
+            # self.session.run('simLocalPlanning_saveData();')
 
         # send the v and w for the dynamic obstacles
-        if self.numExogenousRobots > 0:
+        if self.numExogenousRobots > 1:
             try:
                 # Send data to the server
                 message = [vd, wd]
@@ -414,6 +475,10 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         #     self.executor.resume()
 
         for idx, robot_name in enumerate(self.robotList):
+            if self.scenario == 1 and current_regIndices[robot_name] == next_regIndices[robot_name]:
+                v[idx] = 0.
+                w[idx] = 0.
+
             logging.debug(robot_name + '-v:' + str(v[idx]) + ' w:' + str(w[idx]))
             self.drive_handler[robot_name].setVelocity(v[idx], w[idx], self.pose[robot_name][2])
 
