@@ -65,10 +65,10 @@ def initializeLocalPlanner(session, regions, regionTransitionFaces, obstaclePoin
     for i in range(numRobots):
         session.run('agentType('+str(i+1)+') = '+str(robotType)+';')
         # put initial values into the variables we will be querying
-        if i == 1:
+        if i == 0:
             session.run('vOut'+str(i+1)+' = 1;')
             session.run('wOut'+str(i+1)+' = 2;')
-        elif i == 2:
+        elif i == 1:
             session.run('vOut'+str(i+1)+' = 2;')
             session.run('wOut'+str(i+1)+' = 2;')
         session.run('deadlockAgent'+str(i+1)+' = 0;')
