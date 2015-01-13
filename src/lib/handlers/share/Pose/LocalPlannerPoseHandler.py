@@ -21,8 +21,8 @@ class LocalPlannerPoseHandler(handlerTemplates.PoseHandler):
 
         self.session = executor.proj.session
 
-        self.session.run('vOut'+str(i+1)+' = 1;')
-        self.session.run('wOut'+str(i+1)+' = 2;')
+        self.session.run('vOut'+str(robot_id+1)+' = 1;')
+        self.session.run('wOut'+str(robot_id+1)+' = 2;')
 
         self.scalingPixelsToMeters = scalingPixelsToMeters
         self.robot_id = robot_id
