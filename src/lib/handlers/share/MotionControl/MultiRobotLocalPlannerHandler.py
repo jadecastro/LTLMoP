@@ -38,7 +38,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         self.numRobots              = []    # number of robots: number of agents in the specification, controlled by the local planner
         self.numDynamicObstacles    = 0     # number of dynamic obstacles: obstacles whose velocities are internally- or externally-controlled and do NOT do collision avoidance
         self.numExogenousRobots     = 0     # number of exogenous agents: robots that are controlled by another (unknown) specification, with collision avoidance
-        self.robotType              = 2     # Set the robot type: iCreate (type 2) and NAO (type 3)
+        self.robotType              = 1     # Set the robot type: iCreate (type 2) and NAO (type 3)
         self.acceptanceFactor       = 3     # factor on the robot radius for achieving a goal point
 
         self.scenario               = 2     # 1 = garbage collection, 2 = 3D quads
@@ -123,7 +123,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         # Generate a list of obstacle vertices for the local planner
         obstacles = []
         if self.scenario == 1:
-            obstacles.append([Point(490,490),Point(490,700),Point(700,490),Point(700,700)])
+            obstacles.append([Point(540,490),Point(540,700),Point(700,490),Point(700,700)])
             obstacles.append([Point(574,210),Point(574,280),Point(700,210),Point(700,280)])
             obstacles.append([Point(385,210),Point(385,280),Point(465,210),Point(465,280)])
             obstacles.append([Point(105,210),Point(105,490),Point(385,210),Point(385,490)])

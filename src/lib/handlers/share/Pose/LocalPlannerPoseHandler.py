@@ -19,6 +19,9 @@ class LocalPlannerPoseHandler(handlerTemplates.PoseHandler):
         scalingPixelsToMeters (float): Scaling factor between RegionEditor map and Javier's map
         """
 
+        session.run('vOut'+str(i+1)+' = 1;')
+        session.run('wOut'+str(i+1)+' = 2;')
+
         self.scalingPixelsToMeters = scalingPixelsToMeters
         self.robot_id = robot_id
 
