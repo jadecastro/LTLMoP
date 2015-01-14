@@ -63,6 +63,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         self.radius             = self.scalingPixelsToMeters*0.15
         self.trans_matrix       = mat([[0,1],[-1,0]])   # transformation matrix for find the normal to the vector
         self.timer              = time.time()
+        self.counter            = 0
 
         self.pose = OrderedDict()
         self.goalPositionList = OrderedDict()
@@ -373,6 +374,18 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
                 # print "current goal: "+str(self.goalPosition[robot_name])
                 # print "list of goals: "+str(self.goal[robot_name])
                 # print "next goal position: "+str(self.goalPositionList[robot_name])
+                if self.scenario == 2 and current_regIndices[robot_name] == next_regIndices[robot_name]:
+                    print "counter increment"
+                    self.counter += 1
+            if self.counter > 0 and current_regIndices[robot_name] == next_regIndices[robot_name]:
+                print "counter increment"
+                self.counter += 1
+            if self.counter > 2 and current_regIndices[robot_name] == next_regIndices[robot_name]:
+                self.counter = 0
+                self.goalPosition[robot_name] = self.pose[robot_name][:2]
+                doUpdate[robot_name] = True
+                print "new zgoal: "+str(self.goalPosition[robot_name] )
+
             # print "goalPosition: ", self.goalPosition[robot_name]
 
         # receive the goal, pose, and velocity for the dynamic obstacles.

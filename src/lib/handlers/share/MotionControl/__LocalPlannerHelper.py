@@ -139,6 +139,7 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, poseExog, 
 
             # print 'robot '+str(i)+', curr:'+str(currNbr)
             # print 'robot '+str(i)+', next:'+str(nextNbr)
+        logging.debug("  zGoalNew"+str(i+1)+" (matlab): "+str(session.getvalue('zGoalNew'+str(i+1))))
 
     for i in range(len(poseExog)):
         # Set the current pose: PYTHON: pose, MATLAB: zAux  (size d x n)  
