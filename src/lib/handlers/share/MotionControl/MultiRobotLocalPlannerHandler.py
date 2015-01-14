@@ -380,7 +380,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
             if self.counter > 0 and current_regIndices[robot_name] == next_regIndices[robot_name]:
                 print "counter increment"
                 self.counter += 1
-            if self.counter > 2 and current_regIndices[robot_name] == next_regIndices[robot_name]:
+            if self.counter > 4 and current_regIndices[robot_name] == next_regIndices[robot_name]:
                 self.counter = 0
                 self.goalPosition[robot_name] = self.pose[robot_name][:2]
                 doUpdate[robot_name] = True
