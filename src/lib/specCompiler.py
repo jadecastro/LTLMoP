@@ -137,25 +137,25 @@ class SpecCompiler(object):
             robotPropList.extend(["bit"+str(i) for i in range(0,int(numpy.ceil(numpy.log2(numRegions))))])
             if self.proj.compile_options['fastslow']:
                 # remove _rc props from sensor_list and add in sbit for region completion
-                sensorList = [x for x in sensorList if not x.endswith('_rc')]
-                sensorList.extend(["sbit"+str(i) for i in range(0,int(numpy.ceil(numpy.log2(numRegions))))])
+                newSensorList = [x for x in sensorList if not x.endswith('_rc')]
+                newSensorList.extend(["sbit"+str(i) for i in range(0,int(numpy.ceil(numpy.log2(numRegions))))])
         else:
             if self.proj.compile_options["decompose"]:
                 robotPropList.extend([r.name for r in self.parser.proj.rfi.regions])
                 # added in region_rc with the decomposed region names
                 if self.proj.compile_options['fastslow']:
-                    sensorList = [x for x in sensorList if not x.endswith('_rc')]
-                    sensorList.extend([r.name+"_rc" for r in self.parser.proj.rfi.regions])
+                    newSensorList = [x for x in sensorList if not x.endswith('_rc')]
+                    newSensorList.extend([r.name+"_rc" for r in self.parser.proj.rfi.regions])
             else:
                 robotPropList.extend([r.name for r in self.proj.rfi.regions])
                 # added in region_rc with the original region names
                 if self.proj.compile_options['fastslow']:
-                    sensorList = [x for x in sensorList if not x.endswith('_rc')]
-                    sensorList.extend([r.name+"_rc" for r in self.proj.rfi.regions])
+                    newSensorList = [x for x in sensorList if not x.endswith('_rc')]
+                    newSensorList.extend([r.name+"_rc" for r in self.proj.rfi.regions])
 
-        self.propList = sensorList + robotPropList
+        self.propList = newSensorList + robotPropList
 
-        createSMVfile(self.proj.getFilenamePrefix(), sensorList, robotPropList)
+        createSMVfile(self.proj.getFilenamePrefix(), newSensorList, robotPropList)
 
     def _writeLTLFile(self):
 
@@ -164,7 +164,27 @@ class SpecCompiler(object):
         #regionList = [r.name for r in self.parser.proj.rfi.regions]
         regionList = [r.name for r in self.proj.rfi.regions]
         sensorList = deepcopy(self.proj.enabled_sensors)
+
+        if self.proj.compile_options["use_region_bit_encoding"]:
+            
+            if self.proj.compile_options['fastslow']:
+                # remove _rc props from sensor_list and add in sbit for region completion
+                sensorList = [x for x in sensorList if not x.endswith('_rc')]
+                sensorList.extend(["sbit"+str(i) for i in range(0,int(numpy.ceil(numpy.log2(numRegions))))])
+        else:
+            if self.proj.compile_options["decompose"]:
+                # added in region_rc with the decomposed region names
+                if self.proj.compile_options['fastslow']:
+                    sensorList = [x for x in sensorList if not x.endswith('_rc')]
+                    sensorList.extend([r.name+"_rc" for r in self.parser.proj.rfi.regions])
+            else:
+                # added in region_rc with the original region names
+                if self.proj.compile_options['fastslow']:
+                    sensorList = [x for x in sensorList if not x.endswith('_rc')]
+                    sensorList.extend([r.name+"_rc" for r in self.proj.rfi.regions])
+                    
         robotPropList = self.proj.enabled_actuators + self.proj.all_customs
+        
 
         text = self.proj.specText
 
@@ -577,14 +597,17 @@ class SpecCompiler(object):
         enabled_sensors = self.proj.enabled_sensors
 
         if self.proj.compile_options['fastslow']:
-            regionCompleted_domain = [strategy.Domain("regionCompleted", regions, strategy.Domain.B0_IS_MSB)]
+            regionCompleted_domain = [r.name + "_rc" for r in regions]
+
+            #regionCompleted_domain = strategy.Domain("regionCompleted", regions, strategy.Domain.B0_IS_MSB)
             enabled_sensors = [x for x in self.proj.enabled_sensors if not x.endswith('_rc')]
         else:
             regionCompleted_domain = []
 
+        
         strat = strategy.createStrategyFromFile(self.proj.getStrategyFilename(),
-                                                enabled_sensors + regionCompleted_domain ,
-                                                self.proj.enabled_actuators + self.proj.all_customs +  [region_domain])
+                                                enabled_sensors + regionCompleted_domain,
+                                                self.proj.enabled_actuators + self.proj.all_customs +  [r.name for r in regions])
 
         nonTrivial = any([len(strat.findTransitionableStates({}, s)) > 0 for s in strat.iterateOverStates()])
 

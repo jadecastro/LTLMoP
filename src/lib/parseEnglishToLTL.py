@@ -195,15 +195,17 @@ def writeSpec(text, sensorList, regionList, robotPropList):
 
         # If the sentence describes the initial state of the environemnt
         elif EnvInitRE.search(line):
+            completions = ['e.'+r[2:]+'_rc' for r in regionList]
 
             # remove the first words     
             EnvInit = EnvInitRE.sub('',line)
 
             # parse the rest and return it to spec['EnvInit']
-            if len(sensorList) == 0:
+            nonrc=[s for s in sensorList if s not in completions]
+            if len(nonrc) == 0:
                 LTLsubformula = ''
             else:
-                LTLsubformula = parseInit(EnvInit,sensorList,lineInd)
+                LTLsubformula = parseInit(EnvInit,nonrc,lineInd)
                 if LTLsubformula == '': failed = True
 
             # this shouldn't even be possible, but check just in case:
@@ -282,6 +284,7 @@ def writeSpec(text, sensorList, regionList, robotPropList):
                 CondParts = IffRE.search(line)
                 CondType = 'IFF'
 
+
             # Extract the 2 pieces (condition and requirement)  
             Condition = CondParts.group('cond')
             Requirement = CondParts.group('req')
@@ -303,13 +306,14 @@ def writeSpec(text, sensorList, regionList, robotPropList):
                 # remove first words
                 Requirement = LivenessRE.sub(' ',Requirement)
 
+            
                 # check for "stay there" condition
                 if StayRE.search(Requirement):
                     # remove the 'and stay there'      
                     Requirement = Requirement.replace(' and stay there','')
-
+                
                     # parse the liveness requirement
-                    ReqFormulaInfo = parseLiveness(Requirement,sensorList,allRobotProp,regionList,lineInd)
+                    ReqFormulaInfo = parseLiveness(Requirement,sensorList,regionList,allRobotProp,lineInd)
                     if ReqFormulaInfo['formula'] == '': failed = True
 
                     # If not SysGoals, then it is an error
@@ -339,10 +343,10 @@ def writeSpec(text, sensorList, regionList, robotPropList):
 
                     condStayFormula = {}
                     condStayFormula['formula'] = '\t\t\t [](' + regCond + ' -> ' + StayFormula + ') & \n'
-                    condStayFormula['type'] = 'SysGoals'  # HACK: this is obviously SysTrans, but we don't want to allow any next()s 
+                    condStayFormula['type'] = 'SysGoals'  # HACK: this is obviously SysTrans, but we don't want to allow any next()s
 
                     # Parse the condition and add it to the requirement
-                    CondFormulaInfo = parseConditional(Condition,condStayFormula,CondType,sensorList,allRobotProp,lineInd)
+                    CondFormulaInfo = parseConditional(Condition,condStayFormula,CondType,sensorList,regionList,allRobotProp,lineInd)
                     CondFormulaInfo['type'] = 'SysTrans'
                     if CondFormulaInfo['formula'] == '': failed = True
 
@@ -356,7 +360,7 @@ def writeSpec(text, sensorList, regionList, robotPropList):
                     Requirement = Requirement.replace(' at least once','')
 
                     # parse the liveness requirement
-                    ReqFormulaInfo = parseLiveness(Requirement,sensorList,allRobotProp,regionList,lineInd)
+                    ReqFormulaInfo = parseLiveness(Requirement,sensorList,regionList,allRobotProp,lineInd)
                     if ReqFormulaInfo['formula'] == '': failed = True
 
                     # If not SysGoals, then it is an error
@@ -410,13 +414,13 @@ def writeSpec(text, sensorList, regionList, robotPropList):
                     ReqFormulaInfo['formula'] = '\t\t\t []<>(' + ' & '.join(memPropNames) + ') & \n'
                 else:
                     # parse requirement normally
-                    ReqFormulaInfo = parseLiveness(Requirement,sensorList,allRobotProp,regionList,lineInd)
+                    ReqFormulaInfo = parseLiveness(Requirement,sensorList,regionList,allRobotProp,lineInd)
                     if ReqFormulaInfo['formula'] == '': failed = True
             elif SafetyRE.search(Requirement):
                 # remove first words
                 Requirement = SafetyRE.sub(' ',Requirement)
                 # and parse requirement
-                ReqFormulaInfo = parseSafety(Requirement,sensorList,allRobotProp,lineInd)
+                ReqFormulaInfo = parseSafety(Requirement,sensorList,regionList,allRobotProp,lineInd)
                 if ReqFormulaInfo['formula'] == '': failed = True
 
             elif StayRE.search(Requirement):
@@ -449,7 +453,7 @@ def writeSpec(text, sensorList, regionList, robotPropList):
                     continue
 
                 # Parse the condition and add it to the requirement
-                CondFormulaInfo = parseConditional(Condition,ReqFormulaInfo,CondType,sensorList,allRobotProp,lineInd)
+                CondFormulaInfo = parseConditional(Condition,ReqFormulaInfo,CondType,sensorList,regionList,allRobotProp,lineInd)
                 if CondFormulaInfo['formula'] == '': failed = True
                 spec[CondFormulaInfo['type']] = spec[CondFormulaInfo['type']] + CondFormulaInfo['formula']
                 linemap[CondFormulaInfo['type']].append(lineInd)
@@ -460,14 +464,14 @@ def writeSpec(text, sensorList, regionList, robotPropList):
                     tmp_req['formula'] = tmp_req['formula'].replace("next(QUANTIFIER_PLACEHOLDER)", nextify(r))
                     tmp_req['formula'] = tmp_req['formula'].replace("QUANTIFIER_PLACEHOLDER", r)
                     # Parse the condition and add it to the requirement
-                    CondFormulaInfo = parseConditional(Condition,tmp_req,CondType,sensorList,allRobotProp,lineInd)
+                    CondFormulaInfo = parseConditional(Condition,tmp_req,CondType,sensorList,regionList,allRobotProp,lineInd)
                     if CondFormulaInfo['formula'] == '': failed = True
                     spec[CondFormulaInfo['type']] = spec[CondFormulaInfo['type']] + CondFormulaInfo['formula']
                     linemap[CondFormulaInfo['type']].append(lineInd)
                     LTL2LineNo[replaceRegionName(CondFormulaInfo['formula'],bitEncode,regionList)] = lineInd
             else:
                 # Parse the condition and add it to the requirement
-                CondFormulaInfo = parseConditional(Condition,ReqFormulaInfo,CondType,sensorList,allRobotProp,lineInd)
+                CondFormulaInfo = parseConditional(Condition,ReqFormulaInfo,CondType,sensorList,regionList,allRobotProp,lineInd)
                 if CondFormulaInfo['formula'] == '': failed = True
                 spec[CondFormulaInfo['type']] = spec[CondFormulaInfo['type']] + CondFormulaInfo['formula']
                 linemap[CondFormulaInfo['type']].append(lineInd)
@@ -569,7 +573,7 @@ def writeSpec(text, sensorList, regionList, robotPropList):
             LivenessReq = LivenessReq.replace(' and stay there','')
 
             # parse the liveness requirement
-            formulaInfo = parseLiveness(LivenessReq,sensorList,allRobotProp,regionList,lineInd)
+            formulaInfo = parseLiveness(LivenessReq,sensorList,regionList,allRobotProp,lineInd)
 
             # If could not parse the liveness
             if formulaInfo['formula']=='':
@@ -609,7 +613,7 @@ def writeSpec(text, sensorList, regionList, robotPropList):
             LivenessReq = LivenessRE.sub('',line)
 
             # parse the liveness requirement
-            formulaInfo = parseLiveness(LivenessReq,sensorList,allRobotProp,regionList,lineInd)
+            formulaInfo = parseLiveness(LivenessReq,sensorList,regionList,allRobotProp,lineInd)
             if formulaInfo['formula'] == '': failed = True
 
             # Replace any quantifier in the requirement
@@ -638,7 +642,7 @@ def writeSpec(text, sensorList, regionList, robotPropList):
             SafetyReq = SafetyRE.sub('',line)
 
             # parse the safety requirement
-            formulaInfo = parseSafety(SafetyReq,sensorList,allRobotProp,lineInd)
+            formulaInfo = parseSafety(SafetyReq,sensorList,regionList,allRobotProp,lineInd)
             if formulaInfo['formula'] == '': failed = True 
 
             # Replace any quantifier in the requirement
@@ -794,7 +798,7 @@ def parseInit(sentence,PropList,lineInd):
 
     return LTLsubformula
 
-def parseSafety(sentence,sensorList,allRobotProp,lineInd):
+def parseSafety(sentence,sensorList,regionList,allRobotProp,lineInd):
     ''' This function creates the LTL formula representing a basic safety requirement.
         It takes the sentence, the sensor list and the list of all robot propositions (to check that only 'legal'
         propositions are used and to determine whether it is an environment safety or a robot one)
@@ -810,13 +814,14 @@ def parseSafety(sentence,sensorList,allRobotProp,lineInd):
     formulaInfo['type'] = ''
     
     tempFormula = sentence[:]
-    PropList = sensorList + allRobotProp
+    PropList = sensorList + allRobotProp + ['e.'+r[2:]+"_rc" for r in regionList]
     
     # Replace logic operations with TLV convention
     tempFormula = replaceLogicOp(tempFormula)
 
     # checking that all propositions are 'legal' (in the list of propositions)
     for prop in re.findall('([\w\.]+)',tempFormula):
+        
         if not prop in PropList:
             print 'ERROR(2): Could not parse the sentence in line '+ str(lineInd)+' because ' + prop + ' is not recognized\n'
             formulaInfo['type'] = 'EnvTrans' # arbitrary
@@ -841,7 +846,8 @@ def parseSafety(sentence,sensorList,allRobotProp,lineInd):
             # replace every occurrence of the proposition with next(proposition)
             # it is written this way to prevent nesting of 'next' (as with the .replace method)
             tempFormula = re.sub('(next\('+prop+'\)|\\b'+prop+'\\b)', 'next('+ prop +')',tempFormula)
-
+        elif formulaInfo['type'] == '':
+             formulaInfo['type'] = 'SysTrans'
         else:
             # replace every occurrence of the proposition with next(proposition)
             # it is written this way to prevent nesting of 'next' (as with the .replace method)
@@ -852,7 +858,7 @@ def parseSafety(sentence,sensorList,allRobotProp,lineInd):
 
     return formulaInfo
 
-def parseLiveness(sentence,sensorList,allRobotProp,regionList,lineInd):
+def parseLiveness(sentence,sensorList,regionList,allRobotProp,lineInd):
     ''' This function creates the LTL formula representing a basic liveness requirement.
         It takes the sentence, the sensor list and the list of all robot propositions (to check that only 'legal'
         propositions are used and to determine whether it is an environment safety or a robot one)
@@ -870,7 +876,6 @@ def parseLiveness(sentence,sensorList,allRobotProp,regionList,lineInd):
     tempFormula = sentence[:]
     sensorList = sensorList
     PropList = sensorList + allRobotProp + ['e.'+r[2:]+"_rc" for r in regionList]
-    print PropList
     
     # Replace logic operations with TLV convention
     tempFormula = replaceLogicOp(tempFormula)
@@ -894,10 +899,11 @@ def parseLiveness(sentence,sensorList,allRobotProp,regionList,lineInd):
             #return formulaInfo
             pass
 
-        if prop in sensorList and formulaInfo['type'] == '':
+  
+        if prop in sensorList and prop not in ['e.'+r[2:]+"_rc" for r in regionList] and formulaInfo['type'] == '':
             formulaInfo['type'] = 'EnvGoals'
 
-        elif prop not in sensorList and formulaInfo['type'] == '':
+        elif formulaInfo['type'] == '':
             formulaInfo['type'] = 'SysGoals'
 
       
@@ -907,7 +913,7 @@ def parseLiveness(sentence,sensorList,allRobotProp,regionList,lineInd):
     return formulaInfo
 
 
-def parseConditional(Condition,ReqFormulaInfo,CondType,sensorList,allRobotProp,lineInd):
+def parseConditional(Condition,ReqFormulaInfo,CondType,sensorList,regionList,allRobotProp,lineInd):
     ''' This function creates the LTL formula representing a conditional.
         It takes the condition, the requirement formula (that was already parsed),
         the condition type, and the list of all propositions (to check that only 'legal'
@@ -916,14 +922,15 @@ def parseConditional(Condition,ReqFormulaInfo,CondType,sensorList,allRobotProp,l
         the type of the requirement.
     '''
 
-    PropList = sensorList + allRobotProp
+    PropList = sensorList + allRobotProp + ['e.'+r[2:]+"_rc" for r in regionList]
+    
     formulaInfo = {}
     # Initilalizing in case the sentence cannot be parsed
     formulaInfo['formula'] = ''
     formulaInfo['type'] = ReqFormulaInfo['type']
 
     # Getting the subformula encoding the condition
-    condFormula = parseCond(Condition,sensorList,allRobotProp,formulaInfo['type'],lineInd)
+    condFormula = parseCond(Condition,sensorList,regionList,allRobotProp,formulaInfo['type'],lineInd)
     if condFormula == '':
         # If could not parse the condition, return
         print 'ERROR(6): Could not parse the condition in line '+ str(lineInd)+'\n'
@@ -954,7 +961,7 @@ def parseConditional(Condition,ReqFormulaInfo,CondType,sensorList,allRobotProp,l
     return formulaInfo
 
 
-def parseCond(condition,sensorList,allRobotProp,ReqType,lineInd):
+def parseCond(condition,sensorList,regionList,allRobotProp,ReqType,lineInd):
     ''' This function creates the LTL formula representing the condition part of a conditional.
         It takes the condition and PropList - a list of propositions (to check that only 'legal'
         propositions are used)and 'lineInd' that indicates which line is being processed.
@@ -966,7 +973,7 @@ def parseCond(condition,sensorList,allRobotProp,ReqType,lineInd):
     CompletionFlag = False
     EdgeType = None
 
-    PropList = sensorList + allRobotProp
+    PropList = sensorList + allRobotProp + ['e.'+r[2:]+"_rc" for r in regionList]
     tempFormula = ''
 
     # Flag to indicate whether it is a liveness requirement
@@ -1029,8 +1036,9 @@ def parseCond(condition,sensorList,allRobotProp,ReqType,lineInd):
 
         # Determine the type of the formula to follow (current)
         # If not a livness requirement, add 'next'
-        if (subCondition in regionPastCond):
+        if (subCondition in regionPastCond or subCondition in regionCurrCond):
             CompletionFlag = True
+            
         if (subCondition in CurrCond):# and (not livenessFlag) : (NO LONGER NEEDED)
             NextFlag = True
             if 'not' in subCondition:
@@ -1074,6 +1082,11 @@ def parseCond(condition,sensorList,allRobotProp,ReqType,lineInd):
 
             # Replace logic operations with TLV convention 
             subTempFormula = replaceLogicOp(subTempFormula)
+
+            if CompletionFlag:
+                for r in regionList:
+                    subCondition = subCondition.replace(r, 'e.'+r[2:]+"_rc");
+
          
             # checking that all propositions are 'legal' (in the list of propositions)
             # and adding 'next' if needed
@@ -1093,9 +1106,9 @@ def parseCond(condition,sensorList,allRobotProp,ReqType,lineInd):
                 prop = props[0]
 
                 # only allow edges in places where they make sense
-                if livenessFlag:
-                    print 'ERROR(8): Could not parse the sentence in line '+ str(lineInd)+' because edge conditions cannot be used in liveness specifications\n'
-                    return ''
+                #if livenessFlag:
+                #    print 'ERROR(8): Could not parse the sentence in line '+ str(lineInd)+' because edge conditions cannot be used in liveness specifications\n'
+                #    return ''
                 
                 if (prop in allRobotProp) and (ReqType == 'EnvTrans'):
                     print 'ERROR(8): Could not parse the sentence in line '+ str(lineInd)+' because ' + prop + ' is a robot proposition and cannot be used in an edge condition in an environment safety requirement\n'
@@ -1130,14 +1143,14 @@ def parseCond(condition,sensorList,allRobotProp,ReqType,lineInd):
 
 def parseAfterEachTime(Cond, Requirement, sensorProp, allRobotProp, lineInd, StayFormula):
     # Getting the subformula encoding the condition
-    Cond = parseCond(Cond,sensorProp,allRobotProp,"SysGoals",lineInd)
+    Cond = parseCond(Cond,sensorProp,regionList,allRobotProp,"SysGoals",lineInd)
     if Cond == '':
         # If could not parse the condition, return
         print 'ERROR(6): Could not parse the condition in line '+ str(lineInd)+'\n'
         return '', '', ''
 
     # parse the liveness requirement
-    ReqFormulaInfo = parseLiveness(Requirement,sensorProp,allRobotProp,lineInd)
+    ReqFormulaInfo = parseLiveness(Requirement,sensorProp,regionList,allRobotProp,lineInd)
     if ReqFormulaInfo['formula'] == '': failed = True
 
     # If not SysGoals, then it is an error
@@ -1172,7 +1185,7 @@ def parseToggle(EventProp,ToggleEvent,sensorProp,RobotProp,lineInd):
     PropList = sensorProp + RobotProp
     
     # Getting the subformula encoding the condition
-    ToggleEvent = parseCond(ToggleEvent,sensorProp,RobotProp,"SysTrans",lineInd)
+    ToggleEvent = parseCond(ToggleEvent,sensorProp,regionList,RobotProp,"SysTrans",lineInd)
     if ToggleEvent == '':
         # If could not parse the condition, return
         print 'ERROR(6): Could not parse the condition in line '+ str(lineInd)+'\n'
@@ -1306,6 +1319,17 @@ def replaceRegionName(formula,bitEncode,regionList):
             tempFormula = re.sub('\\bs\.'+prop+'\\b', bitEncode['current'][ind],tempFormula)
 
             #tempFormula = tempFormula.replace(prop, bitEncode['current'][ind])
+
+    # Handle next region sensor names
+    for nextProp in re.findall('(next\(e\.\w+\)|next\(\(e\.\w+\)\))',tempFormula):
+        prop = nextProp.replace('next((e.','')
+        prop = prop.replace('next(e.','')
+        prop = prop.replace(')','')
+
+        if prop in regionList:
+            ind = regionList.index(prop)
+            tempFormula = tempFormula.replace(nextProp, 'next('+bitEncode['env'][ind]+")")
+            # 'replace' is fine here because we are replacing next(region) and that cannot be a partial name
     
     # Handle region sensor names
     for prop in re.findall('e\.(\w+)',tempFormula):
@@ -1322,18 +1346,18 @@ def replaceRegionName(formula,bitEncode,regionList):
 def createStayFormula(regionNames, use_bits=True):
     if use_bits:
         numBits = int(math.ceil(math.log(len(regionNames),2)))
-        tempFormula = '( (next(s.bit0) <-> s.bit0) '
+        tempFormula = '( (next(s.bit0) <-> next(e.sbit0) '
         
         for bitNum in range(1,numBits):
 
             # Encoding the string
-            tempFormula = tempFormula + '& (next(s.bit'+ str(bitNum) +') <-> s.bit'+ str(bitNum) +') ' 
+            tempFormula = tempFormula + '& (next(s.bit'+ str(bitNum) +') <-> e.sbit'+ str(bitNum) +') ' 
         
         StayFormula = tempFormula + ')'
 
         return StayFormula
     else:
-        return "({})".format(" & ".join(["(s.{0} <-> next(s.{0}))".format(rn) for rn in regionNames]))
+        return "({})".format(" & ".join(["(s.{0} <-> next(e.s{0}))".format(rn) for rn in regionNames]))
 
 
 def bitEncoding(numRegions,numBits):

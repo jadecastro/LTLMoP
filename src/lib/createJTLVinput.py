@@ -73,16 +73,16 @@ def createTopologyFragment(adjData, regions, use_bits=True):
     for Origin in range(len(adjData)):
         # from region i we can stay in region i
         adjFormula = '\t\t\t []( ('
-        adjFormula = adjFormula + (envBitEnc[Origin] if use_bits else 'e.'+regions[Origin].name+'_rc')
+        adjFormula = adjFormula + ("next("+envBitEnc[Origin]+")" if use_bits else 'next(e.'+regions[Origin].name+'_rc)')
         adjFormula = adjFormula + ') -> ( ('
-        adjFormula = adjFormula + (nextBitEnc[Origin] if use_bits else "next(s."+regions[Origin].name+")")
+        adjFormula = adjFormula + ("next("+nextBitEnc[Origin]+")" if use_bits else "next(s."+regions[Origin].name+")")
         adjFormula = adjFormula + ')'
         
         for dest in range(len(adjData)):
             if adjData[Origin][dest]:
                 # not empty, hence there is a transition
                 adjFormula = adjFormula + '\n\t\t\t\t\t\t\t\t\t| ('
-                adjFormula = adjFormula + (nextBitEnc[dest] if use_bits else "next(s."+regions[dest].name+")")
+                adjFormula = adjFormula + ("next("+nextBitEnc[dest]+")" if use_bits else "next(s."+regions[dest].name+")")
                 adjFormula = adjFormula + ') '
 
         # closing this region
@@ -112,7 +112,7 @@ def createCompletionFragment(adjData, regions, use_bits=True):
         adjFormula = '\t\t\t []( ('
         adjFormula = adjFormula + (envBitEnc[Origin] if use_bits else 'e.'+regions[Origin].name+'_rc')
         adjFormula = adjFormula + ' & ' 
-        adjFormula = adjFormula + (nextBitEnc[Origin] if use_bits else "s."+regions[Origin].name)
+        adjFormula = adjFormula + (currBitEnc[Origin] if use_bits else "s."+regions[Origin].name)
         adjFormula = adjFormula + ') -> ( '
         adjFormula = adjFormula + 'next('+(envBitEnc[Origin] if use_bits else 'e.'+regions[Origin].name+'_rc')+')'
         adjFormula = adjFormula + ')'
@@ -125,7 +125,7 @@ def createCompletionFragment(adjData, regions, use_bits=True):
                 adjFormula = '\t\t\t []( ('
                 adjFormula = adjFormula + (envBitEnc[Origin] if use_bits else 'e.'+regions[Origin].name+'_rc')
                 adjFormula = adjFormula + ' & ' 
-                adjFormula = adjFormula + (nextBitEnc[dest] if use_bits else "s."+regions[dest].name)
+                adjFormula = adjFormula + (currBitEnc[dest] if use_bits else "s."+regions[dest].name)
                 adjFormula = adjFormula + ') -> ( '
                 adjFormula = adjFormula + 'next('+(envBitEnc[Origin] if use_bits else 'e.'+regions[Origin].name+'_rc')+')'
                 adjFormula = adjFormula + ') | ('
@@ -160,14 +160,14 @@ def createCompletionFairness(regions, use_bits=True):
         formula = '('
         formula = formula + (currBitEnc[Origin] if use_bits else 's.'+regions[Origin].name)
         formula = formula + ' & ' 
-        formula = formula + (envBitEnc[Origin] if use_bits else "next(e."+regions[Origin].name+"_rc)")
+        formula = formula + ("next("+envBitEnc[Origin]+")" if use_bits else "next(e."+regions[Origin].name+"_rc)")
         formula = formula + ')'
         completion.append(formula)
         
         formula =  '('
         formula += (currBitEnc[Origin] if use_bits else 's.'+regions[Origin].name)
         formula += ' & ' 
-        formula += (nextBitEnc[Origin] if use_bits else "! next(s."+regions[Origin].name+")")
+        formula += ("! ("+nextBitEnc[Origin]+")" if use_bits else "! next(s."+regions[Origin].name+")")
         formula += ')'
         change.append(formula)
 
