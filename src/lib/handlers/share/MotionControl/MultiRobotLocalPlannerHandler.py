@@ -423,7 +423,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         # save the data
         if (time.time() - self.timer) > 10:
             self.timer = time.time()
-            # self.session.run('simLocalPlanning_saveData();')
+            self.session.run('simLocalPlanning_saveData();')
 
         # send the v and w for the dynamic obstacles
         if self.numExogenousRobots > 1:
