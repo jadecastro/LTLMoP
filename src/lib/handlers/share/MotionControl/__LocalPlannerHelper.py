@@ -71,6 +71,13 @@ def initializeLocalPlanner(session, regions, regionTransitionFaces, obstaclePoin
         elif i == 1:
             session.run('vOut'+str(i+1)+' = 2;')
             session.run('wOut'+str(i+1)+' = 2;')
+        elif i == 2:
+            session.run('vOut'+str(i+1)+' = 1;')
+            session.run('wOut'+str(i+1)+' = 1;')
+        elif i == 3:
+            session.run('vOut'+str(i+1)+' = 2;')
+            session.run('wOut'+str(i+1)+' = 1;')
+        session.run('deadlockAgent'+str(i+1)+' = 0;')
         session.run('deadlockAgent'+str(i+1)+' = 0;')
 
     session.run('initializeAgentParameters();')
