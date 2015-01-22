@@ -61,7 +61,7 @@ Regions: # Stored as JSON string
                 210.0
             ], 
             [
-                105.0, 
+                175.0, 
                 210.0
             ], 
             [
@@ -234,11 +234,11 @@ Regions: # Stored as JSON string
                 0.0
             ], 
             [
-                490.0, 
+                540.0, 
                 0.0
             ], 
             [
-                490.0, 
+                540.0, 
                 210.0
             ], 
             [
@@ -262,7 +262,7 @@ Transitions: # Region 1 Name, Region 2 Name, Bidirectional transition faces (fac
 D	R	465.5	280.0	574.0	280.0
 D	B	574.0	210.0	465.5	210.0
 R	boundary	700.0	490.0	700.0	280.0
-R	T	385.0	490.0	490.0	490.0
+R	T	385.0	490.0	540.0	490.0
 L	boundary	0.0	490.0	0.0	210.0
 L	B	105.0	210.0	0.0	210.0
 L	T	105.0	490.0	0.0	490.0

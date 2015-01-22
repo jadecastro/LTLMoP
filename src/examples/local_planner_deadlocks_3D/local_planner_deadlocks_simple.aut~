@@ -1,0 +1,54 @@
+State 0 with rank (0,1) -> <rob2_T_rc:0, rob2_B_rc:1, rob2_L_rc:0, rob2_R_rc:0, rob2_D_rc:0, rob2_deadlock:0, rob2_T:0, rob2_B:1, rob2_L:0, rob2_R:0, rob2_D:0, m_rob2_deadlock:0>
+	With successors : 1, 2, 0
+State 1 with rank (0,1) -> <rob2_T_rc:0, rob2_B_rc:1, rob2_L_rc:0, rob2_R_rc:0, rob2_D_rc:0, rob2_deadlock:0, rob2_T:0, rob2_B:0, rob2_L:0, rob2_R:0, rob2_D:1, m_rob2_deadlock:0>
+	With successors : 3, 4, 5
+State 2 with rank (0,1) -> <rob2_T_rc:0, rob2_B_rc:1, rob2_L_rc:0, rob2_R_rc:0, rob2_D_rc:0, rob2_deadlock:0, rob2_T:0, rob2_B:0, rob2_L:1, rob2_R:0, rob2_D:0, m_rob2_deadlock:0>
+	With successors : 6, 7, 8
+State 3 with rank (0,1) -> <rob2_T_rc:0, rob2_B_rc:0, rob2_L_rc:0, rob2_R_rc:0, rob2_D_rc:1, rob2_deadlock:0, rob2_T:0, rob2_B:0, rob2_L:0, rob2_R:0, rob2_D:1, m_rob2_deadlock:0>
+	With successors : 3, 4, 5
+State 4 with rank (0,1) -> <rob2_T_rc:0, rob2_B_rc:0, rob2_L_rc:0, rob2_R_rc:0, rob2_D_rc:1, rob2_deadlock:0, rob2_T:0, rob2_B:0, rob2_L:0, rob2_R:1, rob2_D:0, m_rob2_deadlock:0>
+	With successors : 9, 10, 11
+State 5 with rank (0,1) -> <rob2_T_rc:0, rob2_B_rc:0, rob2_L_rc:0, rob2_R_rc:0, rob2_D_rc:1, rob2_deadlock:0, rob2_T:0, rob2_B:1, rob2_L:0, rob2_R:0, rob2_D:0, m_rob2_deadlock:0>
+	With successors : 1, 2, 0
+State 6 with rank (0,1) -> <rob2_T_rc:0, rob2_B_rc:0, rob2_L_rc:1, rob2_R_rc:0, rob2_D_rc:0, rob2_deadlock:0, rob2_T:0, rob2_B:0, rob2_L:1, rob2_R:0, rob2_D:0, m_rob2_deadlock:0>
+	With successors : 6, 7, 8
+State 7 with rank (0,1) -> <rob2_T_rc:0, rob2_B_rc:0, rob2_L_rc:1, rob2_R_rc:0, rob2_D_rc:0, rob2_deadlock:0, rob2_T:0, rob2_B:1, rob2_L:0, rob2_R:0, rob2_D:0, m_rob2_deadlock:0>
+	With successors : 12, 13
+State 8 with rank (0,1) -> <rob2_T_rc:0, rob2_B_rc:0, rob2_L_rc:1, rob2_R_rc:0, rob2_D_rc:0, rob2_deadlock:0, rob2_T:1, rob2_B:0, rob2_L:0, rob2_R:0, rob2_D:0, m_rob2_deadlock:0>
+	With successors : 14, 15, 16
+State 9 with rank (0,1) -> <rob2_T_rc:0, rob2_B_rc:0, rob2_L_rc:0, rob2_R_rc:1, rob2_D_rc:0, rob2_deadlock:0, rob2_T:0, rob2_B:0, rob2_L:0, rob2_R:0, rob2_D:1, m_rob2_deadlock:0>
+	With successors : 3, 4, 5
+State 10 with rank (0,1) -> <rob2_T_rc:0, rob2_B_rc:0, rob2_L_rc:0, rob2_R_rc:1, rob2_D_rc:0, rob2_deadlock:0, rob2_T:0, rob2_B:0, rob2_L:0, rob2_R:1, rob2_D:0, m_rob2_deadlock:0>
+	With successors : 9, 10, 11
+State 11 with rank (0,1) -> <rob2_T_rc:0, rob2_B_rc:0, rob2_L_rc:0, rob2_R_rc:1, rob2_D_rc:0, rob2_deadlock:0, rob2_T:1, rob2_B:0, rob2_L:0, rob2_R:0, rob2_D:0, m_rob2_deadlock:0>
+	With successors : 14, 15, 16
+State 12 with rank (0,1) -> <rob2_T_rc:0, rob2_B_rc:0, rob2_L_rc:1, rob2_R_rc:0, rob2_D_rc:0, rob2_deadlock:1, rob2_T:0, rob2_B:0, rob2_L:1, rob2_R:0, rob2_D:0, m_rob2_deadlock:1>
+	With successors : 17
+State 13 with rank (0,1) -> <rob2_T_rc:0, rob2_B_rc:0, rob2_L_rc:1, rob2_R_rc:0, rob2_D_rc:0, rob2_deadlock:1, rob2_T:1, rob2_B:0, rob2_L:0, rob2_R:0, rob2_D:0, m_rob2_deadlock:1>
+	With successors : 18, 19, 20
+State 14 with rank (0,1) -> <rob2_T_rc:1, rob2_B_rc:0, rob2_L_rc:0, rob2_R_rc:0, rob2_D_rc:0, rob2_deadlock:0, rob2_T:0, rob2_B:0, rob2_L:0, rob2_R:1, rob2_D:0, m_rob2_deadlock:0>
+	With successors : 21, 22
+State 15 with rank (0,1) -> <rob2_T_rc:1, rob2_B_rc:0, rob2_L_rc:0, rob2_R_rc:0, rob2_D_rc:0, rob2_deadlock:0, rob2_T:0, rob2_B:0, rob2_L:1, rob2_R:0, rob2_D:0, m_rob2_deadlock:0>
+	With successors : 6, 7, 8
+State 16 with rank (0,1) -> <rob2_T_rc:1, rob2_B_rc:0, rob2_L_rc:0, rob2_R_rc:0, rob2_D_rc:0, rob2_deadlock:0, rob2_T:1, rob2_B:0, rob2_L:0, rob2_R:0, rob2_D:0, m_rob2_deadlock:0>
+	With successors : 14, 15, 16
+State 17 with rank (1,1) -> <rob2_T_rc:0, rob2_B_rc:0, rob2_L_rc:1, rob2_R_rc:0, rob2_D_rc:0, rob2_deadlock:0, rob2_T:0, rob2_B:0, rob2_L:1, rob2_R:0, rob2_D:0, m_rob2_deadlock:1>
+	With successors : 17
+State 18 with rank (1,1) -> <rob2_T_rc:1, rob2_B_rc:0, rob2_L_rc:0, rob2_R_rc:0, rob2_D_rc:0, rob2_deadlock:0, rob2_T:0, rob2_B:0, rob2_L:0, rob2_R:1, rob2_D:0, m_rob2_deadlock:0>
+	With successors : 14, 19, 20
+State 19 with rank (1,1) -> <rob2_T_rc:1, rob2_B_rc:0, rob2_L_rc:0, rob2_R_rc:0, rob2_D_rc:0, rob2_deadlock:0, rob2_T:0, rob2_B:0, rob2_L:1, rob2_R:0, rob2_D:0, m_rob2_deadlock:0>
+	With successors : 23, 24, 25
+State 20 with rank (1,1) -> <rob2_T_rc:1, rob2_B_rc:0, rob2_L_rc:0, rob2_R_rc:0, rob2_D_rc:0, rob2_deadlock:0, rob2_T:1, rob2_B:0, rob2_L:0, rob2_R:0, rob2_D:0, m_rob2_deadlock:0>
+	With successors : 18, 19, 20
+State 21 with rank (0,1) -> <rob2_T_rc:1, rob2_B_rc:0, rob2_L_rc:0, rob2_R_rc:0, rob2_D_rc:0, rob2_deadlock:1, rob2_T:0, rob2_B:0, rob2_L:1, rob2_R:0, rob2_D:0, m_rob2_deadlock:1>
+	With successors : 23, 24, 25
+State 22 with rank (0,1) -> <rob2_T_rc:1, rob2_B_rc:0, rob2_L_rc:0, rob2_R_rc:0, rob2_D_rc:0, rob2_deadlock:1, rob2_T:1, rob2_B:0, rob2_L:0, rob2_R:0, rob2_D:0, m_rob2_deadlock:1>
+	With successors : 26
+State 23 with rank (1,1) -> <rob2_T_rc:0, rob2_B_rc:0, rob2_L_rc:1, rob2_R_rc:0, rob2_D_rc:0, rob2_deadlock:0, rob2_T:0, rob2_B:0, rob2_L:1, rob2_R:0, rob2_D:0, m_rob2_deadlock:0>
+	With successors : 23, 24, 25
+State 24 with rank (1,1) -> <rob2_T_rc:0, rob2_B_rc:0, rob2_L_rc:1, rob2_R_rc:0, rob2_D_rc:0, rob2_deadlock:0, rob2_T:0, rob2_B:1, rob2_L:0, rob2_R:0, rob2_D:0, m_rob2_deadlock:0>
+	With successors : 23, 7, 25
+State 25 with rank (1,1) -> <rob2_T_rc:0, rob2_B_rc:0, rob2_L_rc:1, rob2_R_rc:0, rob2_D_rc:0, rob2_deadlock:0, rob2_T:1, rob2_B:0, rob2_L:0, rob2_R:0, rob2_D:0, m_rob2_deadlock:0>
+	With successors : 23, 24, 8
+State 26 with rank (1,1) -> <rob2_T_rc:1, rob2_B_rc:0, rob2_L_rc:0, rob2_R_rc:0, rob2_D_rc:0, rob2_deadlock:0, rob2_T:1, rob2_B:0, rob2_L:0, rob2_R:0, rob2_D:0, m_rob2_deadlock:1>
+	With successors : 26

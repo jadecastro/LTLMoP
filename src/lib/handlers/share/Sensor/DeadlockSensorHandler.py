@@ -12,6 +12,9 @@ from struct import pack,unpack
 from numpy import *
 from scipy.linalg import norm
 from copy import deepcopy
+import logging
+
+import _pyvicon
 
 import lib.handlers.handlerTemplates as handlerTemplates
 
@@ -19,9 +22,9 @@ class DeadlockSensorHandler(handlerTemplates.SensorHandler):
     def __init__(self, executor, shared_data):
 
         # robot parameters
-        vMax = 0.5;
-        self.prefV = 0.6*vMax
-        self.stoppedStepsForDeadlock = 20  #~~10 seconds
+        vMax = 0.08;
+        self.prefV = 1*vMax
+        self.stoppedStepsForDeadlock = 1  #~~10 seconds
 
         # get the list of robots
         self.robotList = [robot.name for robot in executor.hsub.executing_config.robots]
@@ -31,7 +34,7 @@ class DeadlockSensorHandler(handlerTemplates.SensorHandler):
         self.pastRobotPose = {}
         self.pastTime      = {}
         self.deadlockAgent = {}
-        self.timesStoppedNotConvergedAgent  = {}
+        self.timesStoppedNotConvergedAgent = {}
         # Get references to handlers we'll need to communicate with
         for robot_name in self.robotList: # x must be a string
             self.drive_handler[robot_name]                  = executor.hsub.getHandlerInstanceByType(handlerTemplates.DriveHandler, robot_name)
@@ -46,6 +49,23 @@ class DeadlockSensorHandler(handlerTemplates.SensorHandler):
 
         self.rfi = executor.proj.rfi
 
+        # set up a vicon stream with the helmet
+        self.host = "10.0.0.102"
+        self.port = 800
+        self.x = "KUKAyouBot2:main body <t-X>"
+        self.y = "KUKAyouBot2:main body <t-Y>"
+        self.theta = "KUKAyouBot2:main body <a-Z>"
+        # self.x = "GPSReceiverHelmet-goodaxes:GPSReceiverHelmet01 <t-X>"
+        # self.y = "GPSReceiverHelmet-goodaxes:GPSReceiverHelmet01 <t-Y>"
+        # self.theta = "GPSReceiverHelmet-goodaxes:GPSReceiverHelmet01 <a-Z>"
+
+        self.streamer = _pyvicon.ViconStreamer()
+        self.streamer.connect(self.host,self.port)
+
+        self.streamer.selectStreams(["Time", self.x, self.y, self.theta])
+
+        self.streamer.startStreams()
+
     def deadlockRobot(self, robot_id, init_value, initial=False):
         """
         Return True iff the robot is in deadlock
@@ -55,9 +75,14 @@ class DeadlockSensorHandler(handlerTemplates.SensorHandler):
         """
 
         robot_name = self.robotList[robot_id]
-        print "robot_name: "+str(robot_name)
+        # print "robot_name: "+str(robot_name)
         # get the robot's current pose
         robotPose = self.pose_handler[robot_name].getPose()
+
+        # get helmet pose
+        (t0, x0, y0, o0) = self.streamer.getData()
+        (t0, x0, y0, o0) = [t0/100, x0/1000, y0/1000, o0]
+        self.poseHelmet = [x0, y0, o0]
 
         if initial:
             self.deadlockAgent[robot_name] = init_value
@@ -73,7 +98,9 @@ class DeadlockSensorHandler(handlerTemplates.SensorHandler):
             # print "self.prefV/5 : "+str(self.prefV/5)
 
             # check if velocity small
-            if (norm(vHColFree) < self.prefV/5): # could be in a deadlock?
+            if (norm(vHColFree) < self.prefV) and norm(self.poseHelmet[:2] - robotPose[:2]) < 0.8: # could be in a deadlock?
+                logging.debug("are we in deadlock?? "+str(robot_name))
+                print "are we in deadlock?? "+str(robot_name)
                 self.timesStoppedNotConvergedAgent[robot_name] += 1
             else:
                 self.timesStoppedNotConvergedAgent[robot_name] = max(0, self.timesStoppedNotConvergedAgent[robot_name] - 3)
@@ -82,10 +109,11 @@ class DeadlockSensorHandler(handlerTemplates.SensorHandler):
             deadlockAgent = False
             if (self.timesStoppedNotConvergedAgent[robot_name] > self.stoppedStepsForDeadlock):
                 deadlockAgent = True
+                self.timesStoppedNotConvergedAgent[robot_name]  = 0
 
             self.deadlockAgent[robot_name] = deadlockAgent
             self.pastRobotPose[robot_name] = deepcopy(robotPose)
             self.pastTime[robot_name] = time.time()
-            print "deadlockAgent: "+str(deadlockAgent)
+            logging.debug("deadlockAgent: "+str(deadlockAgent))
             return deadlockAgent
 

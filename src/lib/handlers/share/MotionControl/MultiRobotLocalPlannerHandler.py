@@ -38,16 +38,24 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         self.numRobots              = []    # number of robots: number of agents in the specification, controlled by the local planner
         self.numDynamicObstacles    = 0     # number of dynamic obstacles: obstacles whose velocities are internally- or externally-controlled and do NOT do collision avoidance
         self.numExogenousRobots     = 0     # number of exogenous agents: robots that are controlled by another (unknown) specification, with collision avoidance
-        self.robotType              = 1     # Set the robot type: iCreate (type 2) and NAO (type 3)
-        self.acceptanceFactor       = 3     # factor on the robot radius for achieving a goal point
+        self.robotType              = 1     # Set the robot type: quads (type 1) iCreate (type 2) and NAO (type 3)
+        self.acceptanceFactor       = 4     # factor on the robot radius for achieving a goal point
 
         self.scenario               = 2     # 1 = garbage collection, 2 = 3D quads
 
+        if self.scenario == 1:
+            self.numberOfStepsToApplyNewGoal = 4
+        elif self.scenario == 2:
+            self.numberOfStepsToApplyNewGoal = 10
+            self.acceptanceFactor       = 5     # factor on the robot radius for achieving a goal point
+
         self.scalingPixelsToMeters = scalingPixelsToMeters
+        self.updateWithPose     = {}
         self.forceUpdate        = False
         self.initial            = True
         self.goal               = {}
         self.previous_next_reg  = {}
+        self.previous_curr_reg  = {}
         self.pose               = {}
         self.poseExog           = {}
         self.goalPosition       = {}
@@ -63,23 +71,25 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         self.radius             = self.scalingPixelsToMeters*0.15
         self.trans_matrix       = mat([[0,1],[-1,0]])   # transformation matrix for find the normal to the vector
         self.timer              = time.time()
-        self.counter            = 0
 
         self.pose = OrderedDict()
         self.goalPositionList = OrderedDict()
         self.goalVelocityList = OrderedDict()
+        self.counter = OrderedDict()
 
         # get the list of robots
         self.robotList = [robot.name for robot in executor.hsub.executing_config.robots]
         if not self.numRobots == len(self.robotList):
             self.numRobots = len(self.robotList)
             # self.numRobots = 3
-            print "WARNING: changing the number of robots to match the config file"
+            print "WARNING: changing the number of robots to "+str(self.numRobots)+" to match the config file"
         for robot_name in self.robotList:
+            self.updateWithPose[robot_name] = False
             self.goalPosition[robot_name] = []
             self.goalVelocity[robot_name] = []
             self.goalPositionList[robot_name] = []
             self.goalVelocityList[robot_name] = []
+            self.counter[robot_name] = 0
 
         self.drive_handler = {}
         self.pose_handler  = {}
@@ -169,11 +179,15 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
 
         # set up vicon feed of helmet data
         elif self.numDynamicObstacles > 0:
+            print "Subscribing to the youbot..."
             self.host = "10.0.0.102"
             self.port = 800
-            self.x = "GPSReceiverHelmet-goodaxes:GPSReceiverHelmet01 <t-X>"
-            self.y = "GPSReceiverHelmet-goodaxes:GPSReceiverHelmet01 <t-Y>"
-            self.theta = "GPSReceiverHelmet-goodaxes:GPSReceiverHelmet01 <a-Z>"
+            self.x = "KUKAyouBot2:main body <t-X>"
+            self.y = "KUKAyouBot2:main body <t-Y>"
+            self.theta = "KUKAyouBot2:main body <a-Z>"
+            # self.x = "GPSReceiverHelmet-goodaxes:GPSReceiverHelmet01 <t-X>"
+            # self.y = "GPSReceiverHelmet-goodaxes:GPSReceiverHelmet01 <t-Y>"
+            # self.theta = "GPSReceiverHelmet-goodaxes:GPSReceiverHelmet01 <a-Z>"
 
             self.streamer = _pyvicon.ViconStreamer()
             self.streamer.connect(self.host,self.port)
@@ -183,6 +197,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
             self.streamer.startStreams()
 
             self.poseExog[0] = array([0.,0.,0.])
+            print "Subscribed..."
 
     def _stop(self):
         """
@@ -235,6 +250,9 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         if not self.previous_next_reg:
             for robot_name, current_reg in current_regIndices.iteritems():
                 self.previous_next_reg[robot_name] = []
+        if not self.previous_curr_reg:
+            for robot_name, current_reg in current_regIndices.iteritems():
+                self.previous_curr_reg[robot_name] = []
 
         for robot_name, current_reg in current_regIndices.iteritems():
             next_reg = next_regIndices[robot_name]
@@ -242,8 +260,8 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
             self.pose.update([(robot_name,self.pose_handler[robot_name].getPose())])
             # print "pose: "+str(self.pose[robot_name])
 
-            doUpdate[robot_name] = False            
-            if not self.previous_next_reg[robot_name] == next_reg:
+            doUpdate[robot_name] = False   
+            if not self.previous_curr_reg[robot_name] == current_reg or not self.previous_next_reg[robot_name] == next_reg:
                 # Find our current configuration
                 # self.pose.update([(robot_name,self.pose_handler[robot_name].getPose())])
                 # print "pose: "+str(self.pose[robot_name])
@@ -256,9 +274,9 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
                     time.sleep(1)
                     #return False not leaving yet until all robots are checked
 
-                if self.system_print == True:
-                    print "Next Region is " + str(self.rfi.regions[next_reg].name)
-                    print "Current Region is " + str(self.rfi.regions[current_reg].name)
+                # if self.system_print == True:
+                print "Next Region is " +str(robot_name)+str(self.rfi.regions[next_reg].name)
+                print "Current Region is " +str(robot_name)+str(self.rfi.regions[current_reg].name)
                 logging.debug("Next Region is " + str(self.rfi.regions[next_reg].name))
                 logging.debug("Current Region is " + str(self.rfi.regions[current_reg].name))
 
@@ -298,8 +316,13 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
                     i = 0
                     goal = 2*[[]]
                     while i < goalArrayNew.shape[1]:
-                        goal1 = goalArrayNew[:,i]-face_normalNew[:,i]*3*self.radius    ##original 2*self.radius
-                        goal2 = goalArrayNew[:,i]+face_normalNew[:,i]*3*self.radius    ##original 2*self.radius
+                        if self.robotType == 3:
+                            goal1 = goalArrayNew[:,i]-face_normalNew[:,i]*1.5*self.radius    ##original 2*self.radius
+                            goal2 = goalArrayNew[:,i]+face_normalNew[:,i]*1.5*self.radius    ##original 2*self.radius
+                        else:
+                            goal1 = goalArrayNew[:,i]-face_normalNew[:,i]*3*self.radius    ##original 2*self.radius
+                            goal2 = goalArrayNew[:,i]+face_normalNew[:,i]*3*self.radius    ##original 2*self.radius
+
                         if regionPolyOld.isInside(float(1)/self.scalingPixelsToMeters*goal1[0], float(1)/self.scalingPixelsToMeters*goal1[1]):
                             goal[0] = goal1
                             goal[1] = goal2
@@ -313,21 +336,30 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
                     for i in range(len(goal)):
                         self.goalPositionList[robot_name].append(goal[i])  #for now, assume there is only one face.
                         self.goalVelocityList[robot_name].append([0, 0])  # temporarily setting this to zero
-
+                    print "CHANGING REGIONS. contents of the position goal list: "+str(robot_name)+str(self.goalPositionList[robot_name])
+                    self.updateWithPose[robot_name] = False
+                    
                 else:
                     # self.goalPositionList[robot_name] = []
                     # self.goalVelocityList[robot_name] = []
-                    if len(self.goalPositionList[robot_name]) > 1:
+                    print "STAYING IN REGION. contents of the position goal list: "+str(robot_name)+str(self.goalPositionList[robot_name])+str(len(self.goalPositionList[robot_name]))
+                    if len(self.goalPositionList[robot_name]) > 0:
                         self.goalPositionList[robot_name].pop()
-                        self.goalVelocityList[robot_name].pop()
+                        self.goalVelocityList[robot_name].pop()  
+                    # else:
+                    self.goalPositionList[robot_name].append(self.pose[robot_name][:2]+[0.1,-0.1])
+                    self.goalVelocityList[robot_name].append([0, 0])  # temporarily setting this to zero
                     # goal = []
                     goal = self.goal[robot_name]  # TODO: fix the case of a self-loop in the initial region
-                
+                    doUpdate[robot_name] = True
+                    self.updateWithPose[robot_name] = True
+                    
 
                 self.goal[robot_name] = goal
 
                 # initialize the goal to the current pose, if the initial goal list is empty
                 if len(self.goalPositionList[robot_name]) == 0 and self.initial:
+                    print "Initial condition: STAYING IN REGION "+str(robot_name)
                     self.goalPositionList[robot_name].append(self.pose[robot_name][:2]+[0.1,-0.1])
                     # self.goalPositionList[robot_name].append(self.pose[robot_name][:2]+[40,-40])
                     self.goalVelocityList[robot_name].append([0, 0])
@@ -340,6 +372,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
                 self.next_regVertices[robot_name] = vertices
 
                 self.previous_next_reg[robot_name] = next_reg
+                self.previous_curr_reg[robot_name] = current_reg
 
                 """
                 if current_reg == next_reg and not last:
@@ -359,32 +392,56 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
             # print "current goal: "+str(self.goalPosition[robot_name])
             # print "list of goals: "+str(self.goal[robot_name])
             # print "next goal position: "+str(self.goalPositionList[robot_name])
+            # print "distance to goal:"+str(robot_name)
+            # print norm(mat(self.pose[robot_name][:2]).T - self.goalPosition[robot_name]) 
+            # print self.acceptanceFactor*self.radius
             if len(self.goalPosition[robot_name]) > 0:
                 if norm(mat(self.pose[robot_name][:2]).T - self.goalPosition[robot_name]) > self.acceptanceFactor*self.radius or len(self.goalPositionList[robot_name]) == 0:
                     pass
                 else:
+
                     doUpdate[robot_name] = True
             else: 
                 doUpdate[robot_name] = True
             if doUpdate[robot_name] or self.forceUpdate:
                 self.forceUpdate = False
                 print "updating goal for robot "+str(robot_name)+"!!!"
-                self.goalPosition[robot_name] = self.goalPositionList[robot_name].pop(0)
-                self.goalVelocity[robot_name] = self.goalVelocityList[robot_name].pop(0)
-                # print "current goal: "+str(self.goalPosition[robot_name])
-                # print "list of goals: "+str(self.goal[robot_name])
-                # print "next goal position: "+str(self.goalPositionList[robot_name])
-                if self.scenario == 2 and current_regIndices[robot_name] == next_regIndices[robot_name]:
-                    print "counter increment"
-                    self.counter += 1
-            if self.counter > 0 and current_regIndices[robot_name] == next_regIndices[robot_name]:
-                print "counter increment"
-                self.counter += 1
-            if self.counter > 4 and current_regIndices[robot_name] == next_regIndices[robot_name]:
-                self.counter = 0
-                self.goalPosition[robot_name] = self.pose[robot_name][:2]
+                # if not self.initial and current_regIndices[robot_name] == next_regIndices[robot_name]:
+                if not self.initial:
+                    print "starting counter "+str(robot_name)
+                    self.counter[robot_name] += 1
+                    doUpdate[robot_name] = False
+                else:
+                    self.goalPosition[robot_name] = self.goalPositionList[robot_name].pop(0)
+                    self.goalVelocity[robot_name] = self.goalVelocityList[robot_name].pop(0)
+               
+                    # print "current goal: "+str(self.goalPosition[robot_name])
+                    # print "list of goals: "+str(self.goal[robot_name])
+                    # print "next goal position: "+str(self.goalPositionList[robot_name])
+               
+                # if not self.initial and current_regIndices[robot_name] == next_regIndices[robot_name]:
+                #     print "counter increment"
+                #     self.counter += 1
+            if not self.initial and self.counter[robot_name]  > 0: #and current_regIndices[robot_name] == next_regIndices[robot_name]:
+                print "counter increment "+str(robot_name)
+                self.counter[robot_name]  += 1
+            if not self.initial and self.counter[robot_name]  > self.numberOfStepsToApplyNewGoal: #and current_regIndices[robot_name] == next_regIndices[robot_name]:
+                print "UPDATING GOAL. contents of the position goal list: "+str(robot_name)+str(self.goalPositionList[robot_name])
+                if self.updateWithPose[robot_name]:
+                    print " using current pose"+str(self.pose[robot_name][:2]+[0.01,-0.01])
+                    self.goalPosition[robot_name] = self.pose[robot_name][:2]+[0.01,-0.01] 
+                    self.goalVelocity[robot_name] = self.goalVelocityList[robot_name].pop(0)
+                    self.goalPositionList[robot_name].pop(0)
+                else:
+                    self.goalPosition[robot_name] = self.goalPositionList[robot_name].pop(0)
+                    self.goalVelocity[robot_name] = self.goalVelocityList[robot_name].pop(0)   
+
+                self.updateWithPose[robot_name] = False                
+                   
+                self.counter[robot_name] = 0
+                # self.goalPosition[robot_name] = self.pose[robot_name][:2]
                 doUpdate[robot_name] = True
-                print "new zgoal: "+str(self.goalPosition[robot_name] )
+                print "new zgoal: "+str(robot_name)+str(self.goalPosition[robot_name] )
 
             # print "goalPosition: ", self.goalPosition[robot_name]
 
@@ -423,7 +480,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         # save the data
         if (time.time() - self.timer) > 10:
             self.timer = time.time()
-            # self.session.run('simLocalPlanning_saveData();')
+            self.session.run('simLocalPlanning_saveData();')
 
         # send the v and w for the dynamic obstacles
         if self.numExogenousRobots > 1:
@@ -488,7 +545,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         #     self.executor.resume()
 
         for idx, robot_name in enumerate(self.robotList):
-            if self.scenario == 1 and current_regIndices[robot_name] == next_regIndices[robot_name]:
+            if (self.robotType == 1 or self.robotType == 3) and current_regIndices[robot_name] == next_regIndices[robot_name]:
                 v[idx] = 0.
                 w[idx] = 0.
 

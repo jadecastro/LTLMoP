@@ -1,0 +1,318 @@
+# This is a region definition file for the LTLMoP toolkit.
+# Format details are described at the beginning of each section below.
+# Note that all values are separated by *tabs*.
+
+Background: # Relative path of background image file
+RegionEditorProjectorTemplate.png
+
+CalibrationPoints: # Vertices to use for map calibration: (vertex_region_name, vertex_index)
+
+Regions: # Stored as JSON string
+[
+    {
+        "name": "A", 
+        "color": [
+            67, 
+            241, 
+            35
+        ], 
+        "holeList": [], 
+        "height": 0.0, 
+        "points": [
+            [
+                0.0, 
+                0.0
+            ], 
+            [
+                210.0, 
+                0.0
+            ], 
+            [
+                280.0, 
+                0.0
+            ], 
+            [
+                280.0, 
+                140.0
+            ], 
+            [
+                280.0, 
+                245.0
+            ], 
+            [
+                0.0, 
+                245.0
+            ]
+        ], 
+        "position": [
+            0.0, 
+            350.0
+        ], 
+        "type": "poly", 
+        "size": [
+            280.0, 
+            245.0
+        ]
+    }, 
+    {
+        "name": "B", 
+        "color": [
+            0, 
+            0, 
+            255
+        ], 
+        "holeList": [], 
+        "height": 0.0, 
+        "points": [
+            [
+                0.0, 
+                0.0
+            ], 
+            [
+                105.0, 
+                0.0
+            ], 
+            [
+                105.0, 
+                245.0
+            ], 
+            [
+                0.0, 
+                245.0
+            ], 
+            [
+                0.0, 
+                105.0
+            ] 
+        ], 
+        "position": [
+            280.0, 
+            245.0
+        ], 
+        "type": "poly", 
+        "size": [
+            105.0, 
+            245.0
+        ]
+    }, 
+    {
+        "name": "C", 
+        "color": [
+            255, 
+            0, 
+            255
+        ], 
+        "holeList": [], 
+        "height": 0.0, 
+        "points": [
+            [
+                0.0, 
+                0.0
+            ], 
+            [
+                105.0, 
+                0.0
+            ], 
+            [
+                280.0, 
+                0.0
+            ], 
+            [
+                280.0, 
+                105.0
+            ], 
+            [
+                210.0, 
+                105.0
+            ], 
+            [
+                0.0, 
+                105.0
+            ]
+        ], 
+        "position": [
+            0.0, 
+            245.0
+        ], 
+        "type": "poly", 
+        "size": [
+            280.0, 
+            105.0
+        ]
+    }, 
+    {
+        "name": "boundary", 
+        "color": [
+            255, 
+            0, 
+            255
+        ], 
+        "holeList": [], 
+        "height": 0.0, 
+        "points": [
+            [
+                0.0, 
+                0.0
+            ], 
+            [
+                490.0, 
+                0.0
+            ], 
+            [
+                490.0, 
+                595.0
+            ], 
+            [
+                0.0, 
+                595.0
+            ]
+        ], 
+        "position": [
+            0.0, 
+            0.0
+        ], 
+        "type": "poly", 
+        "size": [
+            490.0, 
+            595.0
+        ]
+    }, 
+    {
+        "name": "D1", 
+        "color": [
+            255, 
+            55, 
+            100
+        ], 
+        "holeList": [], 
+        "height": 0.0, 
+        "points": [
+            [
+                0.0, 
+                0.0
+            ], 
+            [
+                105.0, 
+                0.0
+            ], 
+            [
+                210.0, 
+                0.0
+            ], 
+            [
+                210.0, 
+                105.0
+            ], 
+            [
+                0.0, 
+                105.0
+            ]
+        ], 
+        "position": [
+            280.0, 
+            490.0
+        ], 
+        "type": "poly", 
+        "size": [
+            210.0, 
+            105.0
+        ]
+    }, 
+    {
+        "name": "D2", 
+        "color": [
+            55, 
+            255, 
+            100
+        ], 
+        "holeList": [], 
+        "height": 0.0, 
+        "points": [
+            [
+                0.0, 
+                0.0
+            ], 
+            [
+                210.0, 
+                0.0
+            ], 
+            [
+                210.0, 
+                105.0
+            ], 
+            [
+                105.0, 
+                105.0
+            ], 
+            [
+                0.0, 
+                105.0
+            ]
+        ], 
+        "position": [
+            280.0, 
+            0.0
+        ], 
+        "type": "poly", 
+        "size": [
+            210.0, 
+            105.0
+        ]
+    }, 
+    {
+        "name": "E", 
+        "color": [
+            255, 
+            255, 
+            0
+        ], 
+        "holeList": [], 
+        "height": 0.0, 
+        "points": [
+            [
+                0.0, 
+                0.0
+            ], 
+            [
+                280.0, 
+                0.0
+            ], 
+            [
+                280.0, 
+                105.0
+            ], 
+            [
+                280.0, 
+                245.0
+            ], 
+            [
+                105.0, 
+                245.0
+            ], 
+            [
+                0.0, 
+                245.0
+            ]
+        ], 
+        "position": [
+            0.0, 
+            0.0
+        ], 
+        "type": "poly", 
+        "size": [
+            280.0, 
+            245.0
+        ]
+    }
+]
+
+Transitions: # Region 1 Name, Region 2 Name, Bidirectional transition faces (face1_x1, face1_y1, face1_x2, face1_y2, face2_x1, ...)
+A	B	280.0	350.0	280.0	490.0
+A	C	175.0	350.0	280.0	350.0
+A	D1	280.0	490.0	280.0	595.0
+B	C	280.0	245.0	280.0	350.0
+B	D1	280.0	490.0	385.0	490.0
+D1	D2	490.0	0.0	105.0	595.0	490.0	490.0	490.0	595.0
+C	E	0.0	245.0	105.0	245.0
+D2	E	280.0	0.0	280.0	105.0
+

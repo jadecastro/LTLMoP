@@ -1,0 +1,94 @@
+# This is a configuration definition file in folder "/home/jon/Dropbox/Repos/LTLMoP/src/examples/local_planner/configs".
+# Format details are described at the beginning of each section below.
+
+
+======== General Config ========
+
+Actuator_Proposition_Mapping: # Mapping between actuator propositions and actuator handler functions
+
+
+Initial_Truths: # Initially true propositions
+
+
+Main_Robot: # The name of the robot used for moving in this config
+rob1
+
+Name: # Configuration name
+two_robots_local_planner
+
+Region_Tags: # Mapping from tag names to region groups, for quantification
+{}
+
+Sensor_Proposition_Mapping: # Mapping between sensor propositions and sensor handler functions
+rob12_deadlock = share.DummySensorHandler.buttonPress(button_name='rob12_deadlock', init_value=False)
+rob1_deadlock = share.DummySensorHandler.buttonPress(button_name='rob1_deadlock', init_value=False)
+rob1_A_rc = share.DummySensorHandler.inRegion(robotName=u'rob1', regionName=u'A')
+rob1_B_rc = share.DummySensorHandler.inRegion(robotName=u'rob1', regionName=u'B')
+rob1_C_rc = share.DummySensorHandler.inRegion(robotName=u'rob1', regionName=u'C')
+rob1_D1_rc = share.DummySensorHandler.inRegion(robotName=u'rob1', regionName=u'D1')
+rob1_D2_rc = share.DummySensorHandler.inRegion(robotName=u'rob1', regionName=u'D2')
+rob1_E_rc = share.DummySensorHandler.inRegion(robotName=u'rob1', regionName=u'E')
+rob2_deadlock = share.DummySensorHandler.buttonPress(button_name='rob2_deadlock', init_value=False)
+rob2_A_rc = share.DummySensorHandler.inRegion(robotName=u'rob2', regionName=u'A')
+rob2_B_rc = share.DummySensorHandler.inRegion(robotName=u'rob2', regionName=u'B')
+rob2_C_rc = share.DummySensorHandler.inRegion(robotName=u'rob2', regionName=u'C')
+rob2_D1_rc = share.DummySensorHandler.inRegion(robotName=u'rob2', regionName=u'D1')
+rob2_D2_rc = share.DummySensorHandler.inRegion(robotName=u'rob2', regionName=u'D2')
+rob2_E_rc = share.DummySensorHandler.inRegion(robotName=u'rob2', regionName=u'E')
+
+
+======== Robot1 Config ========
+
+CalibrationMatrix: # 3x3 matrix for converting coordinates, stored as lab->map
+array([[ 1, -0., 0. ],
+       [ 0., 1,  0. ],
+       [ 0., 0., 1. ]])
+
+DriveHandler: # Input value for robot drive handler, refer to file inside the handlers/drive folder
+share.Drive.HolonomicDriveHandler(multiplier=1.,maxspeed=100.0)
+
+InitHandler: # Input value for robot init handler, refer to the init file inside the handlers/robots/Type folder
+basicSim.BasicSimInitHandler(init_region="A",x=50.,y=0.)
+
+LocomotionCommandHandler: # Input value for robot locomotion command handler, refer to file inside the handlers/robots/Type folder
+basicSim.BasicSimLocomotionCommandHandler(speed=1.0)
+
+MotionControlHandler: # Input value for robot motion control handler, refer to file inside the handlers/motionControl folder
+share.MotionControl.MultiRobotLocalPlannerHandler(scalingPixelsToMeters=70.)
+
+PoseHandler: # Input value for robot pose handler, refer to file inside the handlers/pose folder
+share.Pose.LocalPlannerPoseHandler(robot_id=1,scalingPixelsToMeters=70.)
+
+RobotName: # Robot Name
+rob1
+
+Type: # Robot type
+basicSim
+
+======== Robot2 Config ========
+
+CalibrationMatrix: # 3x3 matrix for converting coordinates, stored as lab->map
+array([[ 1, -0., 0. ],
+       [ 0., 1,  0. ],
+       [ 0., 0., 1. ]])
+
+DriveHandler: # Input value for robot drive handler, refer to file inside the handlers/drive folder
+share.Drive.HolonomicDriveHandler(multiplier=1.,maxspeed=100.0)
+
+InitHandler: # Input value for robot init handler, refer to the init file inside the handlers/robots/Type folder
+basicSim.BasicSimInitHandler(init_region="A",x=0.,y=0.)
+
+LocomotionCommandHandler: # Input value for robot locomotion command handler, refer to file inside the handlers/robots/Type folder
+basicSim.BasicSimLocomotionCommandHandler(speed=1.0)
+
+MotionControlHandler: # Input value for robot motion control handler, refer to file inside the handlers/motionControl folder
+share.MotionControl.MultiRobotLocalPlannerHandler(scalingPixelsToMeters=70.)
+
+PoseHandler: # Input value for robot pose handler, refer to file inside the handlers/pose folder
+share.Pose.LocalPlannerPoseHandler(robot_id=0,scalingPixelsToMeters=70.)
+
+RobotName: # Robot Name
+rob2
+
+Type: # Robot type
+basicSim
