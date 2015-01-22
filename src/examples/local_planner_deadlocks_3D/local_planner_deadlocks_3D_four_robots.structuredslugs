@@ -247,6 +247,8 @@ rob1_D1_rc' -> !rob1_deadlock'
 rob2_D1_rc' -> !rob2_deadlock'
 rob1_D2_rc' -> !rob1_deadlock'
 rob2_D2_rc' -> !rob2_deadlock'
+rob1_A_rc' -> !rob1_deadlock'
+rob2_A_rc' -> !rob2_deadlock'
 
 #!rob1_deadlock
 #!rob2_deadlock
@@ -269,14 +271,16 @@ rob2_D2_rc' -> !rob2_deadlock'
 [SYS_TRANS]
 (rob1_A_rc') -> (rob1_A' | rob1_B' | rob1_C' | rob1_D1')
 (rob1_B_rc') -> (rob1_B' | rob1_A' | rob1_C' | rob1_D1')
-(rob1_C_rc') -> (rob1_C' | rob1_A' | rob1_B' | rob1_E')
+#(rob1_C_rc') -> (rob1_C' | rob1_A' | rob1_B' | rob1_E')
+(rob1_C_rc') -> (rob1_C' | rob1_A' | rob1_B')
 (rob1_D1_rc') -> (rob1_D1' | rob1_A' | rob1_B' | rob1_D2')
 (rob1_D2_rc') -> (rob1_D2' | rob1_E' | rob1_D1')
 (rob1_E_rc') -> (rob1_E' | rob1_C' | rob1_D2')
 
 (rob1_A_rc) -> (rob1_A | rob1_B | rob1_C | rob1_D1)
 (rob1_B_rc) -> (rob1_B | rob1_A | rob1_C | rob1_D1)
-(rob1_C_rc) -> (rob1_C | rob1_A | rob1_B | rob1_E)
+#(rob1_C_rc) -> (rob1_C | rob1_A | rob1_B | rob1_E)
+(rob1_C_rc) -> (rob1_C | rob1_A | rob1_B)
 (rob1_D1_rc) -> (rob1_D1 | rob1_A | rob1_B | rob1_D2)
 (rob1_D2_rc) -> (rob1_D2 | rob1_E | rob1_D1)
 (rob1_E_rc) -> (rob1_E | rob1_C | rob1_D2)
@@ -305,14 +309,16 @@ rob1_A | rob1_B | rob1_C | rob1_D1 | rob1_D2 | rob1_E
 
 (rob2_A_rc') -> (rob2_A' | rob2_B' | rob2_C' | rob2_D1')
 (rob2_B_rc') -> (rob2_B' | rob2_A' | rob2_C' | rob2_D1')
-(rob2_C_rc') -> (rob2_C' | rob2_A' | rob2_B' | rob2_E')
+#(rob2_C_rc') -> (rob2_C' | rob2_A' | rob2_B' | rob2_E')
+(rob2_C_rc') -> (rob2_C' | rob2_A' | rob2_B')
 (rob2_D1_rc') -> (rob2_D1' | rob2_A' | rob2_B' | rob2_D2')
 (rob2_D2_rc') -> (rob2_D2' | rob2_E' | rob2_D1')
 (rob2_E_rc') -> (rob2_E' | rob2_C' | rob2_D2')
 
 (rob2_A_rc) -> (rob2_A | rob2_B | rob2_C | rob2_D1)
 (rob2_B_rc) -> (rob2_B | rob2_A | rob2_C | rob2_D1)
-(rob2_C_rc) -> (rob2_C | rob2_A | rob2_B | rob2_E)
+#(rob2_C_rc) -> (rob2_C | rob2_A | rob2_B | rob2_E)
+(rob2_C_rc) -> (rob2_C | rob2_A | rob2_B)
 (rob2_D1_rc) -> (rob2_D1 | rob2_A | rob2_B | rob2_D2)
 (rob2_D2_rc) -> (rob2_D2 | rob2_E | rob2_D1)
 (rob2_E_rc) -> (rob2_E | rob2_C | rob2_D2)
@@ -390,7 +396,7 @@ rob3_A | rob3_B | rob3_C | rob3_D1 | rob3_D2 | rob3_E
 # REGION C
 (!m_rob1_deadlock2 & m_rob1_deadlock2' & rob1_C_rc & rob1_C_rc' & rob1_A) -> (!rob1_A' & !rob1_C')
 (!m_rob1_deadlock2 & m_rob1_deadlock2' & rob1_C_rc & rob1_C_rc' & rob1_B) -> (!rob1_B' & !rob1_C')
-(!m_rob1_deadlock2 & m_rob1_deadlock2' & rob1_C_rc & rob1_C_rc' & rob1_E) -> (!rob1_E' & !rob1_C')
+#(!m_rob1_deadlock2 & m_rob1_deadlock2' & rob1_C_rc & rob1_C_rc' & rob1_E) -> (!rob1_E' & !rob1_C')
 (!m_rob1_deadlock1 & m_rob1_deadlock1' & rob1_C_rc & rob1_C_rc' & rob1_C) -> (!rob1_C')
 (((m_rob1_deadlock2' & m_rob1_deadlock2 & !m_rob1_deadlock1') | (m_rob1_deadlock1' & m_rob1_deadlock1 & !m_rob1_deadlock2') | (m_rob1_deadlock1' & m_rob1_deadlock1 & m_rob1_deadlock2' & m_rob1_deadlock2)) & rob1_C_rc & rob1_C_rc') -> ((rob1_A & rob1_A') | (rob1_B & rob1_B') | (rob1_E & rob1_E'))
 
@@ -447,7 +453,7 @@ m_rob1_deadlock2 -> ((((rob1_A_rc & rob1_A_rc') | (rob1_B_rc & rob1_B_rc') | (ro
 # REGION C
 (!m_rob2_deadlock2 & m_rob2_deadlock2' & rob2_C_rc & rob2_C_rc' & rob2_A) -> (!rob2_A' & !rob2_C')
 (!m_rob2_deadlock2 & m_rob2_deadlock2' & rob2_C_rc & rob2_C_rc' & rob2_B) -> (!rob2_B' & !rob2_C')
-(!m_rob2_deadlock2 & m_rob2_deadlock2' & rob2_C_rc & rob2_C_rc' & rob2_E) -> (!rob2_E' & !rob2_C')
+#(!m_rob2_deadlock2 & m_rob2_deadlock2' & rob2_C_rc & rob2_C_rc' & rob2_E) -> (!rob2_E' & !rob2_C')
 (!m_rob2_deadlock1 & m_rob2_deadlock1' & rob2_C_rc & rob2_C_rc' & rob2_C) -> (!rob2_C')
 (((m_rob2_deadlock2' & m_rob2_deadlock2 & !m_rob2_deadlock1') | (m_rob2_deadlock1' & m_rob2_deadlock1 & !m_rob2_deadlock2') | (m_rob2_deadlock1' & m_rob2_deadlock1 & m_rob2_deadlock2' & m_rob2_deadlock2)) & rob2_C_rc & rob2_C_rc') -> ((rob2_A & rob2_A') | (rob2_B & rob2_B') | (rob2_E & rob2_E'))
 
