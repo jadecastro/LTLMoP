@@ -62,23 +62,27 @@ def initializeLocalPlanner(session, regions, regionTransitionFaces, obstaclePoin
     elif scenario == 2:
         session.run('[obstacle_rel, wallConstraintsXYZ, region_doors] = create_map_3d(scenario_type);')
 
-    for i in range(numRobots):
+    for i in range(numRobots+numExogenousRobots):
         session.run('agentType('+str(i+1)+') = '+str(robotType)+';')
-        # put initial values into the variables we will be querying
-        if i == 0:
-            session.run('vOut'+str(i+1)+' = 1;')
-            session.run('wOut'+str(i+1)+' = 2;')
-        elif i == 1:
-            session.run('vOut'+str(i+1)+' = 2;')
-            session.run('wOut'+str(i+1)+' = 2;')
-        elif i == 2:
-            session.run('vOut'+str(i+1)+' = 1;')
-            session.run('wOut'+str(i+1)+' = 1;')
-        elif i == 3:
-            session.run('vOut'+str(i+1)+' = 2;')
-            session.run('wOut'+str(i+1)+' = 1;')
-        session.run('deadlockAgent'+str(i+1)+' = 0;')
-        session.run('deadlockAgent'+str(i+1)+' = 0;')
+        if scenario == 2:
+            # put initial values into the variables we will be querying
+            if i == 0:
+                session.run('vOut'+str(i+1)+' = 1;')
+                session.run('wOut'+str(i+1)+' = 2;')
+            elif i == 1:
+                session.run('vOut'+str(i+1)+' = 1;')
+                session.run('wOut'+str(i+1)+' = 6;')
+            elif i == 2:
+                session.run('vOut'+str(i+1)+' = 2;')
+                session.run('wOut'+str(i+1)+' = 1;')
+            elif i == 3:
+                session.run('vOut'+str(i+1)+' = 2;')
+                session.run('wOut'+str(i+1)+' = 2;')
+            session.run('deadlockAgent'+str(i+1)+' = 0;')
+
+    if robotType == 3:
+        # force the third one to be a Create
+        session.run('agentType(3) = 2;')
 
     session.run('initializeAgentParameters();')
     session.run('view(2);')
@@ -90,7 +94,7 @@ def initializeLocalPlanner(session, regions, regionTransitionFaces, obstaclePoin
     for i in range(numRobots+numExogenousRobots):
         session.run('allowed_regions('+str(i+1)+',:) = [0, 0];')
 
-    # print "obstacle_rel: "+str(session.getvalue('obstacle_rel'))
+    print "here"
     # print "wallConstraintsXYZ: "+str(session.getvalue('wallConstraintsXYZ'))
 
     
@@ -140,9 +144,15 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, poseExog, 
             # nextRegNbr[0] = regionNumbers[nextRegName]
             session.putvalue('id_region_1',np.float_(currNbr))
             session.putvalue('id_region_2',np.float_(nextNbr))
-            session.run('allowed_regions('+str(i+1)+',:) = [0., 0.];') #[id_region_1, id_region_2];')
-            # logging.debug("  id_region_1 (matlab): "+str(session.getvalue('id_region_1')))
-            # logging.debug("  id_region_2 (matlab): "+str(session.getvalue('id_region_2')))
+            if scenario == 1:
+                session.run('allowed_regions('+str(i+1)+',:) = [0, 0];') 
+            elif scenario == 2:
+                session.run('allowed_regions('+str(i+1)+',:) = [id_region_1, id_region_2];')
+
+            logging.debug("  id_region_1 (matlab): "+str(session.getvalue('id_region_1')))
+            logging.debug("  id_region_2 (matlab): "+str(session.getvalue('id_region_2')))
+            print "  id_region_1 (matlab): "+str(session.getvalue('id_region_1'))
+            print "  id_region_2 (matlab): "+str(session.getvalue('id_region_2'))
 
             # print 'robot '+str(i)+', curr:'+str(currNbr)
             # print 'robot '+str(i)+', next:'+str(nextNbr)

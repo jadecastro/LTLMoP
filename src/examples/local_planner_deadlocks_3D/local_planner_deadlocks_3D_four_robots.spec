@@ -19,8 +19,10 @@ CurrentConfigName:
 four_robots_local_planner
 
 Customs: # List of custom propositions
-m_rob1_deadlock
-m_rob2_deadlock
+m_rob1_deadlock1
+m_rob1_deadlock2
+m_rob2_deadlock1
+m_rob2_deadlock2
 
 RegionFile: # Relative path of region description file
 local_planner_deadlocks_3D_four_robots.regions
