@@ -151,8 +151,8 @@ rob2_deadlock' -> (!rob12_deadlock' & !rob1_deadlock')
 # Added assumptions
 #rob1_T_rc' -> !rob1_deadlock'
 #rob2_T_rc' -> !rob2_deadlock'
-#rob1_B_rc' -> !rob1_deadlock'
-#rob2_B_rc' -> !rob2_deadlock'
+rob1_B_rc' -> !rob1_deadlock'
+rob2_B_rc' -> !rob2_deadlock'
 #rob1_L_rc' -> !rob1_deadlock'
 #rob2_L_rc' -> !rob2_deadlock'
 rob1_D_rc' -> !rob1_deadlock'

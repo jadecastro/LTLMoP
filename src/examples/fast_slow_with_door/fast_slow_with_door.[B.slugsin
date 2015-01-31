@@ -1,0 +1,67 @@
+[INPUT]
+r1_rc
+r2_rc
+doorstep_rc
+door
+#free
+#free
+
+[OUTPUT]
+r1
+r2
+#m_free
+#m_free
+
+[ENV_TRANS]
+#restricts completion
+| ! & r1_rc r1 r1_rc'
+| ! & r2_rc r2 r2_rc'
+| ! & & r1_rc r2 doorstep_rc | & r1_rc' doorstep_rc' & r2_rc' ! doorstep_rc'
+| ! & & r2_rc r1 doorstep_rc | & r2_rc' doorstep_rc' & r1_rc' ! doorstep_rc'
+#(r1_rc) & (r2) & !doorstep_rc -> ((r1_rc'))
+#(r2_rc) & (r1) & !doorstep_rc -> ((r2_rc'))
+#(r1_rc & r1 & !doorstep_rc) -> !doorstep_rc'
+#(r2_rc & r2 & !doorstep_rc) -> !doorstep_rc'
+| ! r1_rc' ! r2_rc'
+| ! r2_rc' ! r1_rc'
+| r1_rc' r2_rc'
+#doorstep_rc' -> !door'
+# additional assumption enforcing that, if "free" proposition is true, then deadlock cannot happen for the remaining duration in the region
+#m_free -> ! door'
+#((r1_rc & !r1_rc') | (r2_rc & !r2_rc')) -> !free'
+
+[ENV_INIT]
+& & & r1_rc ! r2_rc ! door ! doorstep_rc
+
+[SYS_TRANS]
+| ! r1_rc' | r1' r2'
+| ! r2_rc' | r2' r1'
+| ! r1' ! r2'
+| ! r2' ! r1'
+| r1' r2'
+| ! & & door' r1_rc' ! doorstep_rc' ! doorstep_rc'
+| ! & & door' r2_rc' ! doorstep_rc' ! doorstep_rc'
+# setting/resetting the "free" status
+#free' -> m_free'
+#m_free -> (m_free' <-> ((r1_rc & r1_rc') | (r2_rc & r2_rc')))
+#(r1_rc' & !door' & !doorstep_rc') -> r2'
+#(r2_rc' & !door' & !doorstep_rc') -> r1'
+
+[SYS_INIT]
+& r1 ! r2
+
+[ENV_LIVENESS]
+#fairness on completion
+#((r2 & r2_rc' & doorstep_rc) | (r1 & r1_rc' & doorstep_rc) | (r1 & r2_rc' & doorstep_rc') | (r2 & r1_rc' & doorstep_rc') | (r1 & !r1') | (r2 & !r2'))
+# | (r1 & r1' & !doorstep_rc) | (r2 & r2' & !doorstep_rc))
+! door
+#free
+
+[SYS_LIVENESS]
+r1_rc
+r2_rc
+#r1_rc & !door & !doorstep_rc & r2
+#r2_rc & !door & !doorstep_rc & r1
+# uncomment only to check if realizability is due to Env == False
+0
+

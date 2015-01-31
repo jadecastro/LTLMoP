@@ -92,7 +92,7 @@ def initializeLocalPlanner(session, regions, regionTransitionFaces, obstaclePoin
 
     # initially set the allowed regions to zero (no constraints)
     for i in range(numRobots+numExogenousRobots):
-        session.run('allowed_regions('+str(i+1)+',:) = [0, 0];')
+        session.run('status.allowed_regions('+str(i+1)+',:) = [0, 0];')
 
     print "here"
     # print "wallConstraintsXYZ: "+str(session.getvalue('wallConstraintsXYZ'))
@@ -145,9 +145,10 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, poseExog, 
             session.putvalue('id_region_1',np.float_(currNbr))
             session.putvalue('id_region_2',np.float_(nextNbr))
             if scenario == 1:
-                session.run('allowed_regions('+str(i+1)+',:) = [0, 0];') 
+                # session.run('status.allowed_regions('+str(i+1)+',:) = [0, 0];') 
+                session.run('status.allowed_regions('+str(i+1)+',:) = [id_region_1, id_region_2];')
             elif scenario == 2:
-                session.run('allowed_regions('+str(i+1)+',:) = [id_region_1, id_region_2];')
+                session.run('status.allowed_regions('+str(i+1)+',:) = [id_region_1, id_region_2];')
 
             logging.debug("  id_region_1 (matlab): "+str(session.getvalue('id_region_1')))
             logging.debug("  id_region_2 (matlab): "+str(session.getvalue('id_region_2')))
