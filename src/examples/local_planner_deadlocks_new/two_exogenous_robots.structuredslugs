@@ -1,0 +1,141 @@
+[INPUT]
+rob1_T_rc
+rob1_B_rc
+rob1_L_rc
+rob1_R_rc
+rob1_D_rc
+
+rob2_T_rc
+rob2_B_rc
+rob2_L_rc
+rob2_R_rc
+rob2_D_rc
+
+[OUTPUT]
+
+rob1_T
+rob1_B
+rob1_L
+rob1_R
+rob1_D
+
+rob2_T
+rob2_B
+rob2_L
+rob2_R
+rob2_D
+
+[ENV_TRANS]
+#restricts completion
+(rob1_T_rc) & (rob1_T) -> (rob1_T_rc')
+(rob1_B_rc) & (rob1_B) -> (rob1_B_rc')
+(rob1_L_rc) & (rob1_L) -> (rob1_L_rc')
+(rob1_R_rc) & (rob1_R) -> (rob1_R_rc')
+(rob1_D_rc) & (rob1_D) -> (rob1_D_rc')
+
+(rob1_T_rc) & (rob1_L) -> ((rob1_T_rc') | (rob1_L_rc'))
+(rob1_T_rc) & (rob1_R) -> ((rob1_T_rc') | (rob1_R_rc'))
+
+(rob1_B_rc) & (rob1_L) -> ((rob1_B_rc') | (rob1_L_rc'))
+(rob1_B_rc) & (rob1_D) -> ((rob1_B_rc') | (rob1_D_rc'))
+
+(rob1_L_rc) & (rob1_T) -> ((rob1_L_rc') | (rob1_T_rc'))
+(rob1_L_rc) & (rob1_B) -> ((rob1_L_rc') | (rob1_B_rc'))
+
+(rob1_R_rc) & (rob1_T) -> ((rob1_R_rc') | (rob1_T_rc'))
+(rob1_R_rc) & (rob1_D) -> ((rob1_R_rc') | (rob1_D_rc'))
+
+(rob1_D_rc) & (rob1_R) -> ((rob1_D_rc') | (rob1_R_rc'))
+(rob1_D_rc) & (rob1_B) -> ((rob1_D_rc') | (rob1_B_rc'))
+
+rob1_T_rc' -> ! (rob1_B_rc' | rob1_L_rc' | rob1_R_rc' | rob1_D_rc')
+rob1_B_rc' -> ! (rob1_T_rc' | rob1_L_rc' | rob1_R_rc' | rob1_D_rc')
+rob1_L_rc' -> ! (rob1_T_rc' | rob1_B_rc' | rob1_R_rc' | rob1_D_rc')
+rob1_R_rc' -> ! (rob1_T_rc' | rob1_B_rc' | rob1_L_rc' | rob1_D_rc')
+rob1_D_rc' -> ! (rob1_T_rc' | rob1_B_rc' | rob1_L_rc' | rob1_R_rc')
+rob1_T_rc' | rob1_B_rc' | rob1_L_rc' | rob1_R_rc' | rob1_D_rc'
+
+(rob2_T_rc) & (rob2_T) -> (rob2_T_rc')
+(rob2_B_rc) & (rob2_B) -> (rob2_B_rc')
+(rob2_L_rc) & (rob2_L) -> (rob2_L_rc')
+(rob2_R_rc) & (rob2_R) -> (rob2_R_rc')
+(rob2_D_rc) & (rob2_D) -> (rob2_D_rc')
+
+(rob2_T_rc) & (rob2_L) -> ((rob2_T_rc') | (rob2_L_rc'))
+(rob2_T_rc) & (rob2_R) -> ((rob2_T_rc') | (rob2_R_rc'))
+
+(rob2_B_rc) & (rob2_L) -> ((rob2_B_rc') | (rob2_L_rc'))
+(rob2_B_rc) & (rob2_D) -> ((rob2_B_rc') | (rob2_D_rc'))
+
+(rob2_L_rc) & (rob2_T) -> ((rob2_L_rc') | (rob2_T_rc'))
+(rob2_L_rc) & (rob2_B) -> ((rob2_L_rc') | (rob2_B_rc'))
+
+(rob2_R_rc) & (rob2_T) -> ((rob2_R_rc') | (rob2_T_rc'))
+(rob2_R_rc) & (rob2_D) -> ((rob2_R_rc') | (rob2_D_rc'))
+
+(rob2_D_rc) & (rob2_R) -> ((rob2_D_rc') | (rob2_R_rc'))
+(rob2_D_rc) & (rob2_B) -> ((rob2_D_rc') | (rob2_B_rc'))
+
+rob2_T_rc' -> ! (rob2_B_rc' | rob2_L_rc' | rob2_R_rc' | rob2_D_rc')
+rob2_B_rc' -> ! (rob2_T_rc' | rob2_L_rc' | rob2_R_rc' | rob2_D_rc')
+rob2_L_rc' -> ! (rob2_T_rc' | rob2_B_rc' | rob2_R_rc' | rob2_D_rc')
+rob2_R_rc' -> ! (rob2_T_rc' | rob2_B_rc' | rob2_L_rc' | rob2_D_rc')
+rob2_D_rc' -> ! (rob2_T_rc' | rob2_B_rc' | rob2_L_rc' | rob2_R_rc')
+rob2_T_rc' | rob2_B_rc' | rob2_L_rc' | rob2_R_rc' | rob2_D_rc'
+
+[ENV_LIVENESS]
+#fairness on completion
+((rob1_T & rob1_T_rc') | (rob1_B & rob1_B_rc') | (rob1_L & rob1_L_rc') | (rob1_R & rob1_R_rc') | (rob1_D & rob1_D_rc') | (rob1_T & !rob1_T') | (rob1_B & !rob1_B') | (rob1_L & !rob1_L') | (rob1_R & !rob1_R') | (rob1_D & !rob1_D') ) & ((rob2_T & (rob2_T_rc')) | (rob2_B & (rob2_B_rc')) | (rob2_L & (rob2_L_rc')) | (rob2_R & (rob2_R_rc')) | (rob2_D & (rob2_D_rc')) | (rob2_T & !rob2_T') | (rob2_B & !rob2_B') | (rob2_L & !rob2_L') | (rob2_R & !rob2_R') | (rob2_D & !rob2_D') )
+
+
+[ENV_INIT]
+(rob1_T_rc) & (!rob1_B_rc) & (!rob1_L_rc) & (!rob1_R_rc) & (!rob1_D_rc) & (!rob2_T_rc) & (rob2_B_rc) & (!rob2_L_rc) & (!rob2_R_rc) & (!rob2_D_rc)
+
+
+[SYS_TRANS]
+#ROBOT 1
+(rob1_T_rc') -> (rob1_T' | rob1_L' | rob1_R')
+(rob1_B_rc') -> (rob1_B' | rob1_L' | rob1_D')
+(rob1_L_rc') -> (rob1_L' | rob1_T' | rob1_B')
+(rob1_R_rc') -> (rob1_R' | rob1_T' | rob1_D')
+(rob1_D_rc') -> (rob1_D' | rob1_R' | rob1_B')
+
+rob1_T' -> ! (rob1_B' | rob1_L' | rob1_R' | rob1_D')
+rob1_B' -> ! (rob1_T' | rob1_L' | rob1_R' | rob1_D')
+rob1_L' -> ! (rob1_T' | rob1_B' | rob1_R' | rob1_D')
+rob1_R' -> ! (rob1_T' | rob1_B' | rob1_L' | rob1_D')
+rob1_D' -> ! (rob1_T' | rob1_B' | rob1_L' | rob1_R')
+rob1_T' | rob1_B' | rob1_L' | rob1_R' | rob1_D'
+
+#ROBOT 2
+(rob2_T_rc') -> (rob2_T' | rob2_L' | rob2_R')
+(rob2_B_rc') -> (rob2_B' | rob2_L' | rob2_D')
+(rob2_L_rc') -> (rob2_L' | rob2_T' | rob2_B')
+(rob2_R_rc') -> (rob2_R' | rob2_T' | rob2_D')
+(rob2_D_rc') -> (rob2_D' | rob2_R' | rob2_B')
+
+rob2_T' -> ! (rob2_B' | rob2_L' | rob2_R' | rob2_D')
+rob2_B' -> ! (rob2_T' | rob2_L' | rob2_R' | rob2_D')
+rob2_L' -> ! (rob2_T' | rob2_B' | rob2_R' | rob2_D')
+rob2_R' -> ! (rob2_T' | rob2_B' | rob2_L' | rob2_D')
+rob2_D' -> ! (rob2_T' | rob2_B' | rob2_L' | rob2_R')
+rob2_T' | rob2_B' | rob2_L' | rob2_R' | rob2_D'
+
+# coordination
+rob1_D_rc' -> !rob2_D_rc'
+rob2_D_rc' -> !rob1_D_rc'
+
+
+[SYS_LIVENESS]
+rob1_T_rc
+rob2_T_rc
+rob1_B_rc
+rob2_B_rc
+
+# uncomment only to check if realizability is due to Env == False
+#0
+
+[SYS_INIT]
+rob1_T & !rob1_B & !rob1_L & !rob1_R & !rob1_D & !rob2_T & rob2_B & !rob2_L & !rob2_R & !rob2_D
+
+

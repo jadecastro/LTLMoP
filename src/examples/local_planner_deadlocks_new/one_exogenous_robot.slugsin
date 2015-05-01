@@ -1,0 +1,33 @@
+[INPUT]
+rob1_T_rc
+rob1_B_rc
+
+[OUTPUT]
+rob1_T
+rob1_B
+
+[ENV_TRANS]
+#restricts completion
+| ! & rob1_T_rc rob1_T rob1_T_rc'
+| ! & rob1_B_rc rob1_T rob1_T_rc'
+
+[ENV_INIT]
+& rob1_T_rc ! rob1_B_rc
+
+[SYS_TRANS]
+| ! rob1_T_rc' rob1_T'
+| ! rob1_B_rc' rob1_T'
+! rob1_B
+
+[SYS_INIT]
+& rob1_T ! rob1_B
+
+[ENV_LIVENESS]
+#fairness on completion
+rob1_T_rc
+
+[SYS_LIVENESS]
+rob1_T_rc
+# uncomment only to check if realizability is due to Env == False
+#0
+
