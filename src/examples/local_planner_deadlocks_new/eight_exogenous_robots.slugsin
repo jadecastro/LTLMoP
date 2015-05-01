@@ -1,0 +1,309 @@
+[INPUT]
+rob1_T_rc
+rob1_B_rc
+rob1_L_rc
+rob1_R_rc
+rob1_D_rc
+rob2_T_rc
+rob2_B_rc
+rob2_L_rc
+rob2_R_rc
+rob2_D_rc
+rob3_T_rc
+rob3_B_rc
+rob3_L_rc
+rob3_R_rc
+rob3_D_rc
+rob4_T_rc
+rob4_B_rc
+rob4_L_rc
+rob4_R_rc
+rob4_D_rc
+rob5_T_rc
+rob5_B_rc
+rob5_L_rc
+rob5_R_rc
+rob5_D_rc
+rob6_T_rc
+rob6_B_rc
+rob6_L_rc
+rob6_R_rc
+rob6_D_rc
+rob7_T_rc
+rob7_B_rc
+rob7_L_rc
+rob7_R_rc
+rob7_D_rc
+rob8_T_rc
+rob8_B_rc
+rob8_L_rc
+rob8_R_rc
+rob8_D_rc
+
+[OUTPUT]
+rob1_T
+rob1_B
+rob1_L
+rob1_R
+rob1_D
+rob2_T
+rob2_B
+rob2_L
+rob2_R
+rob2_D
+rob3_T
+rob3_B
+rob3_L
+rob3_R
+rob3_D
+rob4_T
+rob4_B
+rob4_L
+rob4_R
+rob4_D
+rob5_T
+rob5_B
+rob5_L
+rob5_R
+rob5_D
+rob6_T
+rob6_B
+rob6_L
+rob6_R
+rob6_D
+rob7_T
+rob7_B
+rob7_L
+rob7_R
+rob7_D
+rob8_T
+rob8_B
+rob8_L
+rob8_R
+rob8_D
+
+[ENV_TRANS]
+#restricts completion
+#1
+| ! & rob1_T_rc rob1_T rob1_T_rc'
+| ! & rob1_B_rc rob1_B rob1_B_rc'
+| ! & rob1_L_rc rob1_L rob1_L_rc'
+| ! & rob1_T_rc rob1_L | rob1_T_rc' rob1_L_rc'
+| ! & rob1_B_rc rob1_L | rob1_B_rc' rob1_L_rc'
+| ! & rob1_L_rc rob1_T | rob1_L_rc' rob1_T_rc'
+| ! & rob1_L_rc rob1_B | rob1_L_rc' rob1_B_rc'
+| ! rob1_T_rc' ! | rob1_B_rc' rob1_L_rc'
+| ! rob1_B_rc' ! | rob1_T_rc' rob1_L_rc'
+| ! rob1_L_rc' ! | rob1_T_rc' rob1_B_rc'
+| | rob1_T_rc' rob1_B_rc' rob1_L_rc'
+& ! rob1_R_rc' ! rob1_D_rc'
+#2
+| ! & rob2_T_rc rob2_T rob2_T_rc'
+| ! & rob2_B_rc rob2_B rob2_B_rc'
+| ! & rob2_L_rc rob2_L rob2_L_rc'
+| ! & rob2_T_rc rob2_L | rob2_T_rc' rob2_L_rc'
+| ! & rob2_B_rc rob2_L | rob2_B_rc' rob2_L_rc'
+| ! & rob2_L_rc rob2_T | rob2_L_rc' rob2_T_rc'
+| ! & rob2_L_rc rob2_B | rob2_L_rc' rob2_B_rc'
+| ! rob2_T_rc' ! | rob2_B_rc' rob2_L_rc'
+| ! rob2_B_rc' ! | rob2_T_rc' rob2_L_rc'
+| ! rob2_L_rc' ! | rob2_T_rc' rob2_B_rc'
+| | rob2_T_rc' rob2_B_rc' rob2_L_rc'
+& ! rob2_R_rc' ! rob2_D_rc'
+#3
+| ! & rob3_T_rc rob3_T rob3_T_rc'
+| ! & rob3_B_rc rob3_B rob3_B_rc'
+| ! & rob3_L_rc rob3_L rob3_L_rc'
+| ! & rob3_T_rc rob3_L | rob3_T_rc' rob3_L_rc'
+| ! & rob3_B_rc rob3_L | rob3_B_rc' rob3_L_rc'
+| ! & rob3_L_rc rob3_T | rob3_L_rc' rob3_T_rc'
+| ! & rob3_L_rc rob3_B | rob3_L_rc' rob3_B_rc'
+| ! rob3_T_rc' ! | rob3_B_rc' rob3_L_rc'
+| ! rob3_B_rc' ! | rob3_T_rc' rob3_L_rc'
+| ! rob3_L_rc' ! | rob3_T_rc' rob3_B_rc'
+| | rob3_T_rc' rob3_B_rc' rob3_L_rc'
+& ! rob3_R_rc' ! rob3_D_rc'
+# 4
+| ! & rob4_T_rc rob4_T rob4_T_rc'
+| ! & rob4_B_rc rob4_B rob4_B_rc'
+| ! & rob4_L_rc rob4_L rob4_L_rc'
+| ! & rob4_T_rc rob4_L | rob4_T_rc' rob4_L_rc'
+| ! & rob4_B_rc rob4_L | rob4_B_rc' rob4_L_rc'
+| ! & rob4_L_rc rob4_T | rob4_L_rc' rob4_T_rc'
+| ! & rob4_L_rc rob4_B | rob4_L_rc' rob4_B_rc'
+| ! rob4_T_rc' ! | rob4_B_rc' rob4_L_rc'
+| ! rob4_B_rc' ! | rob4_T_rc' rob4_L_rc'
+| ! rob4_L_rc' ! | rob4_T_rc' rob4_B_rc'
+| | rob4_T_rc' rob4_B_rc' rob4_L_rc'
+& ! rob4_R_rc' ! rob4_D_rc'
+# 5
+| ! & rob5_T_rc rob5_T rob5_T_rc'
+| ! & rob5_R_rc rob5_R rob5_R_rc'
+| ! & rob5_T_rc rob5_R | rob5_T_rc' rob5_R_rc'
+| ! & rob5_R_rc rob5_T | rob5_R_rc' rob5_T_rc'
+| ! rob5_T_rc' ! rob5_R_rc'
+| ! rob5_R_rc' ! rob5_T_rc'
+| rob5_T_rc' rob5_R_rc'
+& & ! rob5_B_rc' ! rob5_L_rc' ! rob5_D_rc'
+# 6
+| ! & rob6_T_rc rob6_T rob6_T_rc'
+| ! & rob6_R_rc rob6_R rob6_R_rc'
+| ! & rob6_T_rc rob6_R | rob6_T_rc' rob6_R_rc'
+| ! & rob6_R_rc rob6_T | rob6_R_rc' rob6_T_rc'
+| ! rob6_T_rc' ! rob6_R_rc'
+| ! rob6_R_rc' ! rob6_T_rc'
+| rob6_T_rc' rob6_R_rc'
+& & ! rob6_B_rc' ! rob6_L_rc' ! rob6_D_rc'
+# 7
+| ! & rob7_T_rc rob7_T rob7_T_rc'
+| ! & rob7_R_rc rob7_R rob7_R_rc'
+| ! & rob7_T_rc rob7_R | rob7_T_rc' rob7_R_rc'
+| ! & rob7_R_rc rob7_T | rob7_R_rc' rob7_T_rc'
+| ! rob7_T_rc' ! rob7_R_rc'
+| ! rob7_R_rc' ! rob7_T_rc'
+| rob7_T_rc' rob7_R_rc'
+& & ! rob7_B_rc' ! rob7_L_rc' ! rob7_D_rc'
+# 8
+| ! & rob8_T_rc rob8_T rob8_T_rc'
+| ! & rob8_R_rc rob8_R rob8_R_rc'
+| ! & rob8_T_rc rob8_R | rob8_T_rc' rob8_R_rc'
+| ! & rob8_R_rc rob8_T | rob8_R_rc' rob8_T_rc'
+| ! rob8_T_rc' ! rob8_R_rc'
+| ! rob8_R_rc' ! rob8_T_rc'
+| rob8_T_rc' rob8_R_rc'
+& & ! rob8_B_rc' ! rob8_L_rc' ! rob8_D_rc'
+#******
+# Mutual exlusion
+#rob1_T_rc -> ! rob2_T_rc & ! rob3_T_rc & ! rob4_T_rc
+#rob1_B_rc -> ! rob2_B_rc & ! rob3_B_rc & ! rob4_B_rc
+#rob1_L_rc -> ! rob2_L_rc & ! rob3_L_rc & ! rob4_L_rc
+#rob1_R_rc -> ! rob2_R_rc & ! rob3_R_rc & ! rob4_R_rc
+#rob1_D_rc -> ! rob2_D_rc & ! rob3_D_rc & ! rob4_D_rc
+#rob2_T_rc -> ! rob1_T_rc & ! rob3_T_rc & ! rob4_T_rc
+#rob2_B_rc -> ! rob1_B_rc & ! rob3_B_rc & ! rob4_B_rc
+#rob2_L_rc -> ! rob1_L_rc & ! rob3_L_rc & ! rob4_L_rc
+#rob2_R_rc -> ! rob1_R_rc & ! rob3_R_rc & ! rob4_R_rc
+#rob2_D_rc -> ! rob1_D_rc & ! rob3_D_rc & ! rob4_D_rc
+#rob3_T_rc -> ! rob1_T_rc & ! rob2_T_rc & ! rob4_T_rc
+#rob3_B_rc -> ! rob1_B_rc & ! rob2_B_rc & ! rob4_B_rc
+#rob3_L_rc -> ! rob1_L_rc & ! rob2_L_rc & ! rob4_L_rc
+#rob3_R_rc -> ! rob1_R_rc & ! rob2_R_rc & ! rob4_R_rc
+#rob3_D_rc -> ! rob1_D_rc & ! rob2_D_rc & ! rob4_D_rc
+#rob4_T_rc -> ! rob1_T_rc & ! rob2_T_rc & ! rob3_T_rc
+#rob4_B_rc -> ! rob1_B_rc & ! rob2_B_rc & ! rob3_B_rc
+#rob4_L_rc -> ! rob1_L_rc & ! rob2_L_rc & ! rob3_L_rc
+#rob4_R_rc -> ! rob1_R_rc & ! rob2_R_rc & ! rob3_R_rc
+#rob4_D_rc -> ! rob1_D_rc & ! rob2_D_rc & ! rob3_D_rc
+#******
+
+[ENV_INIT]
+& & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & rob1_T_rc ! rob1_B_rc ! rob1_L_rc ! rob1_R_rc ! rob1_D_rc rob2_T_rc ! rob2_B_rc ! rob2_L_rc ! rob2_R_rc ! rob2_D_rc rob3_T_rc ! rob3_B_rc ! rob3_L_rc ! rob3_R_rc ! rob3_D_rc rob4_T_rc ! rob4_B_rc ! rob4_L_rc ! rob4_R_rc ! rob4_D_rc rob5_T_rc ! rob5_B_rc ! rob5_L_rc ! rob5_R_rc ! rob5_D_rc rob6_T_rc ! rob6_B_rc ! rob6_L_rc ! rob6_R_rc ! rob6_D_rc rob7_T_rc ! rob7_B_rc ! rob7_L_rc ! rob7_R_rc ! rob7_D_rc rob8_T_rc ! rob8_B_rc ! rob8_L_rc ! rob8_R_rc ! rob8_D_rc
+
+[SYS_TRANS]
+#ROBOT 1
+| ! rob1_T_rc' | rob1_T' rob1_L'
+| ! rob1_B_rc' | rob1_B' rob1_L'
+| ! rob1_L_rc' | | rob1_L' rob1_T' rob1_B'
+| ! rob1_T' ! | rob1_B' rob1_L'
+| ! rob1_B' ! | rob1_T' rob1_L'
+| ! rob1_L' ! | rob1_T' rob1_B'
+| | rob1_T' rob1_B' rob1_L'
+& ! rob1_R' ! rob1_D'
+#ROBOT 2
+| ! rob2_T_rc' | rob2_T' rob2_L'
+| ! rob2_B_rc' | rob2_B' rob2_L'
+| ! rob2_L_rc' | | rob2_L' rob2_T' rob2_B'
+| ! rob2_T' ! | rob2_B' rob2_L'
+| ! rob2_B' ! | rob2_T' rob2_L'
+| ! rob2_L' ! | rob2_T' rob2_B'
+| | rob2_T' rob2_B' rob2_L'
+& ! rob2_R' ! rob2_D'
+#ROBOT 3
+| ! rob3_T_rc' | rob3_T' rob3_L'
+| ! rob3_B_rc' | rob3_B' rob3_L'
+| ! rob3_L_rc' | | rob3_L' rob3_T' rob3_B'
+| ! rob3_T' ! | rob3_B' rob3_L'
+| ! rob3_B' ! | rob3_T' rob3_L'
+| ! rob3_L' ! | rob3_T' rob3_B'
+| | rob3_T' rob3_B' rob3_L'
+& ! rob3_R' ! rob3_D'
+#ROBOT 4
+| ! rob4_T_rc' | rob4_T' rob4_L'
+| ! rob4_B_rc' | rob4_B' rob4_L'
+| ! rob4_L_rc' | | rob4_L' rob4_T' rob4_B'
+| ! rob4_T' ! | rob4_B' rob4_L'
+| ! rob4_B' ! | rob4_T' rob4_L'
+| ! rob4_L' ! | rob4_T' rob4_B'
+| | rob4_T' rob4_B' rob4_L'
+& ! rob4_R' ! rob4_D'
+#ROBOT 5
+| ! rob5_T_rc' | rob5_T' rob5_R'
+| ! rob5_R_rc' | rob5_R' rob5_T'
+| ! rob5_T' ! rob5_R'
+| ! rob5_R' ! rob5_T'
+| rob5_T' rob5_R'
+& & ! rob5_B' ! rob5_L' ! rob5_D'
+#ROBOT 6
+| ! rob6_T_rc' | rob6_T' rob6_R'
+| ! rob6_R_rc' | rob6_R' rob6_T'
+| ! rob6_T' ! rob6_R'
+| ! rob6_R' ! rob6_T'
+| rob6_T' rob6_R'
+& & ! rob6_B' ! rob6_L' ! rob6_D'
+#ROBOT 7
+| ! rob7_T_rc' | rob7_T' rob7_R'
+| ! rob7_R_rc' | rob7_R' rob7_T'
+| ! rob7_T' ! rob7_R'
+| ! rob7_R' ! rob7_T'
+| rob7_T' rob7_R'
+& & ! rob7_B' ! rob7_L' ! rob7_D'
+#ROBOT 8
+| ! rob8_T_rc' | rob8_T' rob8_R'
+| ! rob8_R_rc' | rob8_R' rob8_T'
+| ! rob8_T' ! rob8_R'
+| ! rob8_R' ! rob8_T'
+| rob8_T' rob8_R'
+& & ! rob8_B' ! rob8_L' ! rob8_D'
+#******
+# Mutual exlusion
+#rob1_T_rc -> ! rob2_T & ! rob3_T & ! rob4_T
+#rob1_B_rc -> ! rob2_B & ! rob3_B & ! rob4_B
+#rob1_L_rc -> ! rob2_L & ! rob3_L & ! rob4_L
+#rob1_R_rc -> ! rob2_R & ! rob3_R & ! rob4_R
+#rob1_D_rc -> ! rob2_D & ! rob3_D & ! rob4_D
+#rob2_T_rc -> ! rob1_T & ! rob3_T & ! rob4_T
+#rob2_B_rc -> ! rob1_B & ! rob3_B & ! rob4_B
+#rob2_L_rc -> ! rob1_L & ! rob3_L & ! rob4_L
+#rob2_R_rc -> ! rob1_R & ! rob3_R & ! rob4_R
+#rob2_D_rc -> ! rob1_D & ! rob3_D & ! rob4_D
+#rob3_T_rc -> ! rob1_T & ! rob2_T & ! rob4_T
+#rob3_B_rc -> ! rob1_B & ! rob2_B & ! rob4_B
+#rob3_L_rc -> ! rob1_L & ! rob2_L & ! rob4_L
+#rob3_R_rc -> ! rob1_R & ! rob2_R & ! rob4_R
+#rob3_D_rc -> ! rob1_D & ! rob2_D & ! rob4_D
+#rob4_T_rc -> ! rob1_T & ! rob2_T & ! rob3_T
+#rob4_B_rc -> ! rob1_B & ! rob2_B & ! rob3_B
+#rob4_L_rc -> ! rob1_L & ! rob2_L & ! rob3_L
+#rob4_R_rc -> ! rob1_R & ! rob2_R & ! rob3_R
+#rob4_D_rc -> ! rob1_D & ! rob2_D & ! rob3_D
+#******
+
+[SYS_INIT]
+& & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & rob1_T ! rob1_B ! rob1_L ! rob1_R ! rob1_D rob2_T ! rob2_B ! rob2_L ! rob2_R ! rob2_D rob3_T ! rob3_B ! rob3_L ! rob3_R ! rob3_D rob4_T ! rob4_B ! rob4_L ! rob4_R ! rob4_D rob5_T ! rob5_B ! rob5_L ! rob5_R ! rob5_D rob6_T ! rob6_B ! rob6_L ! rob6_R ! rob6_D rob7_T ! rob7_B ! rob7_L ! rob7_R ! rob7_D rob8_T ! rob8_B ! rob8_L ! rob8_R ! rob8_D
+
+[ENV_LIVENESS]
+#fairness on completion
+& & & & & & & | | | | | & rob1_T rob1_T_rc' & rob1_B rob1_B_rc' & rob1_L rob1_L_rc' & rob1_T ! rob1_T' & rob1_B ! rob1_B' & rob1_L ! rob1_L' | | | | | & rob2_T rob2_T_rc' & rob2_B rob2_B_rc' & rob2_L rob2_L_rc' & rob2_T ! rob2_T' & rob2_B ! rob2_B' & rob2_L ! rob2_L' | | | | | & rob3_T rob3_T_rc' & rob3_B rob3_B_rc' & rob3_L rob3_L_rc' & rob3_T ! rob3_T' & rob3_B ! rob3_B' & rob3_L ! rob3_L' | | | | | & rob4_T rob4_T_rc' & rob4_B rob4_B_rc' & rob4_L rob4_L_rc' & rob4_T ! rob4_T' & rob4_B ! rob4_B' & rob4_L ! rob4_L' | | | & rob5_T rob5_T_rc' & rob5_R rob5_R_rc' & rob5_T ! rob5_T' & rob5_R ! rob5_R' | | | & rob6_T rob6_T_rc' & rob6_R rob6_R_rc' & rob6_T ! rob6_T' & rob6_R ! rob6_R' | | | & rob7_T rob7_T_rc' & rob7_R rob7_R_rc' & rob7_T ! rob7_T' & rob7_R ! rob7_R' | | | & rob8_T rob8_T_rc' & rob8_R rob8_R_rc' & rob8_T ! rob8_T' & rob8_R ! rob8_R'
+
+[SYS_LIVENESS]
+rob1_B_rc
+rob2_B_rc
+rob3_B_rc
+rob4_B_rc
+rob5_R_rc
+rob6_R_rc
+rob7_R_rc
+rob8_R_rc
+# uncomment only to check if realizability is due to Env == False
+#0
+

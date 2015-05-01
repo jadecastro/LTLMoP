@@ -37,14 +37,15 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         """
         self.numRobots              = []    # number of robots: number of agents in the specification, controlled by the local planner
         self.numDynamicObstacles    = 0     # number of dynamic obstacles: obstacles whose velocities are internally- or externally-controlled and do NOT do collision avoidance
-        self.numExogenousRobots     = 0     # number of exogenous agents: robots that are controlled by another (unknown) specification, with collision avoidance
+        self.extDynamicObstacles    = False # externally defined pose?
+        self.numExogenousRobots     = 8     # number of exogenous agents: robots that are controlled by another (unknown) specification, with collision avoidance
         self.robotType              = 2     # Set the robot type: quads (type 1) iCreate (type 2) and NAO (type 3)
         self.acceptanceFactor       = 4     # factor on the robot radius for achieving a goal point
 
-        self.scenario               = 1     # 1 = garbage collection, 2 = 3D quads
+        self.scenario               = 1     # 1 = garbage collection, 2 = 3D quads, 3 = benchmarking
 
-        if self.scenario == 1:
-            self.numberOfStepsToApplyNewGoal = 4
+        if self.scenario == 1 or self.scenario == 3:
+            self.numberOfStepsToApplyNewGoal = 6
         elif self.scenario == 2:
             self.numberOfStepsToApplyNewGoal = 10
             self.acceptanceFactor       = 5     # factor on the robot radius for achieving a goal point
@@ -122,6 +123,8 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
             testSetOfRegions.append([Point(0,0),Point(0,700),Point(700,0),Point(700,700)])
         if self.scenario == 2:
             testSetOfRegions.append([Point(0,0),Point(0,595),Point(490,0),Point(490,595)])
+        if self.scenario == 3:
+            testSetOfRegions.append([Point(0,100),Point(0,561),Point(537,561),Point(537,100)])
         for region in testSetOfRegions:
             regionPoints = self.getRegionVertices(region)
             print regionPoints 
@@ -140,6 +143,16 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
             obstacles.append([Point(105,210),Point(105,490),Point(385,210),Point(385,490)])
         if self.scenario == 2:
             obstacles.append([Point(280,105),Point(280,245),Point(385,105),Point(385,245)])
+        if self.scenario == 3:
+            obstacles.append([Point(128,427),Point(220,181),Point(342,223),Point(459,329),Point(284,471)])
+            obstacles.append([Point(238,71),Point(430,79),Point(430,0),Point(238,0),Point(238,0)])
+            obstacles.append([Point(430,79),Point(549,231),Point(580,231),Point(580,0),Point(430,0)])
+            obstacles.append([Point(549,231),Point(507,373),Point(507,600),Point(580,600),Point(580,231)])
+            obstacles.append([Point(507,373),Point(315,532),Point(315,600),Point(507,600),Point(507,600)])
+            obstacles.append([Point(315,532),Point(97,576),Point(97,600),Point(315,600),Point(315,600)])
+            obstacles.append([Point(97,576),Point(12,477),Point(0,477),Point(0,600),Point(97,600)])
+            obstacles.append([Point(12,477),Point(49,76),Point(49,0),Point(0,0),Point(0,477)])
+            obstacles.append([Point(49,76),Point(238,71),Point(238,0),Point(49,0),Point(49,0)])
         # obstacles = [r for r in self.rfi.regions if r.name.startswith('o')]   # TODO: hard-coding. decomposed region file doesn't store obstacles.
         obstaclePoints = []
         for region in obstacles:
@@ -178,7 +191,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
             self.c.connect(address)
 
         # set up vicon feed of helmet data
-        elif self.numDynamicObstacles > 0:
+        elif self.extDynamicObstacles and self.numDynamicObstacles > 0:
             print "Subscribing to the youbot..."
             self.host = "10.0.0.102"
             self.port = 800
@@ -204,7 +217,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         Properly terminates all threads/computations in the handler. Leave no trace behind.
         """
 
-        session.run('simLocalPlanning_saveData();')
+        # session.run('simLocalPlanning_saveData();')
         logging.debug("Closing the connection...") 
         self.c.close()
 
@@ -257,12 +270,10 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         for robot_name, current_reg in current_regIndices.iteritems():
             next_reg = next_regIndices[robot_name]
 
-            self.pose.update([(robot_name,self.pose_handler[robot_name].getPose())])
-            # print "pose: "+str(self.pose[robot_name])
-
             doUpdate[robot_name] = False   
             if not self.previous_curr_reg[robot_name] == current_reg or not self.previous_next_reg[robot_name] == next_reg:
                 # Find our current configuration
+                self.pose.update([(robot_name,self.pose_handler[robot_name].getPose())])
                 # self.pose.update([(robot_name,self.pose_handler[robot_name].getPose())])
                 # print "pose: "+str(self.pose[robot_name])
 
@@ -399,7 +410,6 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
                 if norm(mat(self.pose[robot_name][:2]).T - self.goalPosition[robot_name]) > self.acceptanceFactor*self.radius or len(self.goalPositionList[robot_name]) == 0:
                     pass
                 else:
-
                     doUpdate[robot_name] = True
             else: 
                 doUpdate[robot_name] = True
@@ -449,7 +459,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         if self.numExogenousRobots > 1:
             try:
                 # Receive data from the server
-                response = pickle.loads(self.c.recv(1024))
+                response = pickle.loads(self.c.recv(2048))
                 # print "Got message {}".format(response)
 
             except socket.error, msg:
@@ -461,7 +471,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
                 self.goalPositionExog[i] = response[i][1]
                 self.goalVelocityExog[i] = [0.,0.]
 
-        elif self.numDynamicObstacles > 0:
+        elif self.extDynamicObstacles and self.numDynamicObstacles > 0:
             (t0, x0, y0, o0) = self.streamer.getData()
             (t0, x0, y0, o0) = [t0/100, x0/1000, y0/1000, o0]
             if x0 == 0. and y0 == 0:
@@ -473,14 +483,19 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
             self.goalPositionExog[0] = [0.,0.]
             self.goalVelocityExog[0] = [0.,0.]
 
+        elif self.numDynamicObstacles > 0:
+            self.poseExog[0] = array([0.,0.,0.])
+            self.goalPositionExog[0] = [0.,0.]
+            self.goalVelocityExog[0] = [0.,0.]
+
         # Run algorithm to find a velocity vector (global frame) to take the robot to the next region
         v, w, vd, wd, deadAgent = LocalPlanner.executeLocalPlanner(self.session, self.pose, self.goalPosition, self.goalVelocity, self.poseExog, self.goalPositionExog, self.goalVelocityExog, \
-            doUpdate, self.rfi.regions, current_regIndices, next_regIndices, self.coordmap_lab2map, self.scalingPixelsToMeters, self.numDynamicObstacles, self.scenario)
+            doUpdate, self.rfi.regions, current_regIndices, next_regIndices, self.coordmap_lab2map, self.scalingPixelsToMeters, self.numDynamicObstacles, self.extDynamicObstacles, self.scenario)
 
         # save the data
         if (time.time() - self.timer) > 10:
             self.timer = time.time()
-            self.session.run('simLocalPlanning_saveData();')
+            self.session.run('simLocalPlanning_saveData(param, rParam, rStates, rCmd, gState, status, allData, map);')
 
         # send the v and w for the dynamic obstacles
         if self.numExogenousRobots > 1:
@@ -545,7 +560,8 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         #     self.executor.resume()
 
         for idx, robot_name in enumerate(self.robotList):
-            if (self.robotType == 1 or self.robotType == 3) and current_regIndices[robot_name] == next_regIndices[robot_name]:
+            # if (self.robotType == 1 or self.robotType == 3) and current_regIndices[robot_name] == next_regIndices[robot_name]:
+            if (self.robotType == 1) and current_regIndices[robot_name] == next_regIndices[robot_name]:
                 v[idx] = 0.
                 w[idx] = 0.
 

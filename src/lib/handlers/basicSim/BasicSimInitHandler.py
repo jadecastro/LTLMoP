@@ -8,6 +8,8 @@ import lib.simulator.basic.basicSimulator as basicSimulator
 
 import lib.handlers.handlerTemplates as handlerTemplates
 
+import rospy
+
 class BasicSimInitHandler(handlerTemplates.InitHandler):
     def __init__(self, executor, init_region, x=0., y=0., theta=0., absolute=False):
         """
@@ -35,8 +37,11 @@ class BasicSimInitHandler(handlerTemplates.InitHandler):
         #initialize the simulator
         self.simulator =  basicSimulator.basicSimulator([center[0],center[1],theta])
 
+        # rospy.init_node('LTLMoPHandlers')
+
     def getSharedData(self):
         # Return a dictionary of any objects that will need to be shared with
         # other handlers
         return {'BasicSimulator':self.simulator}
+
 

@@ -26,14 +26,16 @@ def initializeLocalPlanner(session, regions, regionTransitionFaces, obstaclePoin
 
     # Initialize the local planner
     session.run('cd '+pathToMatlabLocalPlanner)
-    if scenario == 1:
+    if scenario == 1 or scenario == 3:
         session.run('settingsHadas = 1;')
         session.run('isFirstCall = 1;')
     elif scenario == 2:
         session.run('settingsHadas = 2;')
 
     session.run('nB = '+str(numRobots+numExogenousRobots+numDynamicObstacles)+';')
-    session.run('simLocalPlanning_initialize();')
+    print session.getvalue('settingsHadas')
+    print session.getvalue('nB')
+    session.run('[rParam, param, agentTypeDef, debugSettings] = simLocalPlanning_initialize(settingsHadas, nB);')
 
     # Set robot parameters for use in the current Matlab session
     rRadius = []
@@ -57,8 +59,8 @@ def initializeLocalPlanner(session, regions, regionTransitionFaces, obstaclePoin
         session.run('obstaclePoints{'+str(i+1)+'} = obstaclePointsNew;')
 
     # Set the region/obstacle vertices
-    if scenario == 1:
-        session.run('[obstacle_rel, wallConstraintsXYZ, region_doors] = create_map_3d_from_2d_input(limitsMap, obstaclePoints, regionTransitionFaces);')
+    if scenario == 1 or scenario == 3:
+        session.run('[map] = create_map_3d_from_2d_input(limitsMap, obstaclePoints, regionTransitionFaces);')
     elif scenario == 2:
         session.run('[obstacle_rel, wallConstraintsXYZ, region_doors] = create_map_3d(scenario_type);')
 
@@ -84,7 +86,7 @@ def initializeLocalPlanner(session, regions, regionTransitionFaces, obstaclePoin
         # force the third one to be a Create
         session.run('agentType(3) = 2;')
 
-    session.run('initializeAgentParameters();')
+    session.run('[rParam, rStates, rCmd, gState, status, param, allData] = initializeAgentParameters(rParam, param, agentTypeDef, map);')
     session.run('view(2);')
     session.run('parameters.n_dynamicObstacle = '+str(numDynamicObstacles)+';')
     if numDynamicObstacles > 0:
@@ -94,14 +96,14 @@ def initializeLocalPlanner(session, regions, regionTransitionFaces, obstaclePoin
     for i in range(numRobots+numExogenousRobots):
         session.run('status.allowed_regions('+str(i+1)+',:) = [0, 0];')
 
-    print "here"
+    # print "here"
     # print "wallConstraintsXYZ: "+str(session.getvalue('wallConstraintsXYZ'))
 
     
     # return matlab session
     # return session
 
-def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, poseExog, goalPositionExog, goalVelocityExog, doUpdate, regions, curr, next, coordmap_lab2map, scalingPixelsToMeters, numDynamicObstacles, scenario):
+def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, poseExog, goalPositionExog, goalVelocityExog, doUpdate, regions, curr, next, coordmap_lab2map, scalingPixelsToMeters, numDynamicObstacles, extDynamicObstacles, scenario):
     """
     pose  = {'rob1':[-1 ,.5],'rob2':[1,1],'rob3':[3.5 , -1]}
     next_regIndices = {'rob1': 2,'rob2':3,'rob3':3}
@@ -144,9 +146,9 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, poseExog, 
             # nextRegNbr[0] = regionNumbers[nextRegName]
             session.putvalue('id_region_1',np.float_(currNbr))
             session.putvalue('id_region_2',np.float_(nextNbr))
-            if scenario == 1:
-                # session.run('status.allowed_regions('+str(i+1)+',:) = [0, 0];') 
-                session.run('status.allowed_regions('+str(i+1)+',:) = [id_region_1, id_region_2];')
+            if scenario == 1 or scenario == 3:
+                session.run('status.allowed_regions('+str(i+1)+',:) = [0, 0];') 
+                # session.run('status.allowed_regions('+str(i+1)+',:) = [id_region_1, id_region_2];')
             elif scenario == 2:
                 session.run('status.allowed_regions('+str(i+1)+',:) = [id_region_1, id_region_2];')
 
@@ -189,13 +191,16 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, poseExog, 
     w = {}
     deadAgent = []
     for i, poseLoc in enumerate(poseDic.iteritems()):
-        # logging.debug('v = ' + str(session.getvalue('vOut'+str(i+1))))
+        logging.debug('v ')
+        logging.debug('v = ' + str(session.getvalue('vOut'+str(i+1))))
         # logging.debug('w = ' + str(session.getvalue('wOut'+str(i+1))))
 
         v[i] = 1*scalingPixelsToMeters*session.getvalue('vOut'+str(i+1))
         w[i] = 1*session.getvalue('wOut'+str(i+1)) #0.25*session.getvalue('wOut'+str(i+1))
         # deadAgent.append(session.getvalue('deadlockAgent'+str(i+1)))
         # print "Deadlock status (agent "+str(i)+") :"+str(deadAgent[i])
+    #v[0] = 0.2*scalingPixelsToMeters*session.getvalue('vOut'+str(0+1))
+    #w[0] = 1*session.getvalue('wOut'+str(0+1)) #0.25*session.getvalue('wOut'+str(i+1))
 
     vd = {}
     wd = {}

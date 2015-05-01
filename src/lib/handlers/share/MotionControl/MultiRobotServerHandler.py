@@ -36,7 +36,7 @@ class MultiRobotServerHandler(handlerTemplates.MotionControlHandler):
         scalingPixelsToMeters (float): Scaling factor between RegionEditor map and Javier's map
         """
 
-        self.numExogenousRobots     = 2    # number of exogenous agents: robots that are controlled by another (unknown) specification, with collision avoidance
+        self.numExogenousRobots     = 8    # number of exogenous agents: robots that are controlled by another (unknown) specification, with collision avoidance
         self.acceptanceFactor       = 4     # factor on the robot radius for achieving a goal point
 
         self.scalingPixelsToMeters = scalingPixelsToMeters
@@ -193,7 +193,7 @@ class MultiRobotServerHandler(handlerTemplates.MotionControlHandler):
                             face_normal[robot_name]   = hstack((face_normal[robot_name],vstack((normal[0,0],normal[0,1]))))
                             
                         if transFace is None:
-                            print "ERROR: Unable to find transition face between regions %s and %s.  Please check the decomposition (try viewing projectname_decomposed.regions in RegionEditor or a text editor)." % (self.proj.rfi.regions[current_reg].name, self.proj.rfi.regions[next_reg].name)
+                            print "ERROR: Unable to find transition face between regions %s and %s.  Please check the decomposition (try viewing projectname_decomposed.regions in RegionEditor or a text editor)." % (self.rfi.regions[current_reg].name, self.rfi.regions[next_reg].name)
 
                     goalArrayNew = mat(goalArray[robot_name])
                     face_normalNew = mat(face_normal[robot_name])
@@ -202,8 +202,8 @@ class MultiRobotServerHandler(handlerTemplates.MotionControlHandler):
                     i = 0
                     goal = 2*[[]]
                     while i < goalArrayNew.shape[1]:
-                        goal1 = goalArrayNew[:,i]-face_normalNew[:,i]*3*self.radius    ##original 2*self.radius
-                        goal2 = goalArrayNew[:,i]+face_normalNew[:,i]*3*self.radius    ##original 2*self.radius
+                        goal1 = goalArrayNew[:,i]-face_normalNew[:,i]*10*self.radius    ##original 2*self.radius
+                        goal2 = goalArrayNew[:,i]+face_normalNew[:,i]*10*self.radius    ##original 2*self.radius
                         if regionPolyOld.isInside(float(1)/self.scalingPixelsToMeters*goal1[0], float(1)/self.scalingPixelsToMeters*goal1[1]):
                             goal[0] = goal1
                             goal[1] = goal2
@@ -267,7 +267,7 @@ class MultiRobotServerHandler(handlerTemplates.MotionControlHandler):
                 print "updating goal for robot "+str(robot_name)+"!!!"
                 # if not self.initial and current_regIndices[robot_name] == next_regIndices[robot_name]:
                 if not self.initial:
-                    print "counter increment"
+                    print "starting counter "+str(robot_name)
                     self.counter[robot_name] += 1
                     doUpdate[robot_name] = False
                 else:
@@ -284,16 +284,17 @@ class MultiRobotServerHandler(handlerTemplates.MotionControlHandler):
             if not self.initial and self.counter[robot_name]  > 0: #and current_regIndices[robot_name] == next_regIndices[robot_name]:
                 print "counter increment"
                 self.counter[robot_name]  += 1
-            if not self.initial and self.counter[robot_name]  > 4: #and current_regIndices[robot_name] == next_regIndices[robot_name]:
+            if not self.initial and self.counter[robot_name]  > 20: #and current_regIndices[robot_name] == next_regIndices[robot_name]:
                 self.goalPosition[robot_name] = self.goalPositionList[robot_name].pop(0)
                 self.goalVelocity[robot_name] = self.goalVelocityList[robot_name].pop(0)
 
                 self.counter[robot_name] = 0
                 # self.goalPosition[robot_name] = self.pose[robot_name][:2]
                 doUpdate[robot_name] = True
-                print "new zgoal: "+str(self.goalPosition[robot_name] )
+                print robot_name +"new zgoal: "+str(self.goalPosition[robot_name] )
 
             # prepare the message to be sent to the client
+            print robot_name +"zgoal: "+str(self.goalPosition[robot_name] )
             self.message.append([list(self.pose[robot_name]), self.goalPosition[robot_name].reshape(-1,).tolist()[0]])
 
         try:
@@ -303,7 +304,7 @@ class MultiRobotServerHandler(handlerTemplates.MotionControlHandler):
 
             # Receive a response: v and w arrays
             if not self.numExogenousRobots == 1:
-                self.response = pickle.loads(self.client.recv(1024))
+                self.response = pickle.loads(self.client.recv(2048))
                 # print 'Received: "%s"' % self.response
 
                 v = self.response[0]
@@ -315,9 +316,9 @@ class MultiRobotServerHandler(handlerTemplates.MotionControlHandler):
 
             # set the velocities
             for idx, robot_name in enumerate(self.robotList):
-                if current_regIndices[robot_name] == next_regIndices[robot_name]:
-                    v[idx] = 0.
-                    w[idx] = 0.
+                # if current_regIndices[robot_name] == next_regIndices[robot_name]:
+                #     v[idx] = 0.
+                #     w[idx] = 0.
                 
                 logging.debug(robot_name + '-v:' + str(v[idx]) + ' w:' + str(w[idx]))
                 self.drive_handler[robot_name].setVelocity(v[idx], w[idx], self.pose[robot_name][2])
