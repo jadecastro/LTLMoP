@@ -430,7 +430,6 @@ rob2_T | rob2_B | rob2_L | rob2_R | rob2_D
 
 #******
 
-
 [SYS_LIVENESS]
 #all_visited
 
