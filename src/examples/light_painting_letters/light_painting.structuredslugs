@@ -1,0 +1,178 @@
+[INPUT]
+rob1_A_rc
+rob1_B_rc
+rob1_C_rc
+rob1_D_rc
+rob1_E_rc
+rob1_F_rc
+rob1_G_rc
+rob1_H_rc
+rob1_I_rc
+
+letterE
+letterH
+
+#rob1_F_E_rc
+
+[OUTPUT]
+rob1_A
+rob1_B
+rob1_C
+rob1_D
+rob1_E
+rob1_F
+rob1_G
+rob1_H
+rob1_I
+
+m_rob1_F
+m_rob1_D
+m_rob1_H
+
+#rob1_F_E
+
+[ENV_TRANS]
+# iter 1
+#rob1_F & rob1_F_rc' -> !rob1_F_E_rc'
+#rob1_F_rc & !rob1_F_E_rc & rob1_E -> rob1_F_rc'
+#rob1_F_rc & rob1_F_E_rc & rob1_E -> (rob1_F_E_rc' | rob1_E_rc')
+#!rob1_E -> !rob1_F_E_rc'
+#!rob1_F_rc' -> !rob1_F_E_rc'
+
+#restricts completion
+(rob1_A_rc) & (rob1_A) -> (rob1_A_rc')
+(rob1_B_rc) & (rob1_B) -> (rob1_B_rc')
+(rob1_C_rc) & (rob1_C) -> (rob1_C_rc')
+(rob1_D_rc) & (rob1_D) -> (rob1_D_rc')
+(rob1_E_rc) & (rob1_E) -> (rob1_E_rc')
+(rob1_F_rc) & (rob1_F) -> (rob1_F_rc')
+(rob1_G_rc) & (rob1_G) -> (rob1_G_rc')
+(rob1_H_rc) & (rob1_H) -> (rob1_H_rc')
+(rob1_I_rc) & (rob1_I) -> (rob1_I_rc')
+
+(rob1_A_rc) & (rob1_B) -> ((rob1_A_rc') | (rob1_B_rc'))
+(rob1_A_rc) & (rob1_H) -> ((rob1_A_rc') | (rob1_H_rc'))
+
+(rob1_B_rc) & (rob1_A) -> ((rob1_B_rc') | (rob1_A_rc'))
+(rob1_B_rc) & (rob1_D) -> ((rob1_B_rc') | (rob1_D_rc'))
+(rob1_B_rc) & (rob1_I) -> ((rob1_B_rc') | (rob1_I_rc'))
+
+(rob1_C_rc) & (rob1_B) -> ((rob1_C_rc') | (rob1_B_rc'))
+(rob1_C_rc) & (rob1_D) -> ((rob1_C_rc') | (rob1_D_rc'))
+
+(rob1_D_rc) & (rob1_C) -> ((rob1_D_rc') | (rob1_C_rc'))
+(rob1_D_rc) & (rob1_E) -> ((rob1_D_rc') | (rob1_E_rc'))
+
+(rob1_E_rc) & (rob1_D) -> ((rob1_E_rc') | (rob1_D_rc'))
+(rob1_E_rc) & (rob1_F) -> ((rob1_E_rc') | (rob1_F_rc'))
+
+(rob1_F_rc) & (rob1_G) -> ((rob1_F_rc') | (rob1_G_rc'))
+(rob1_F_rc) & (rob1_E) -> ((rob1_F_rc') | (rob1_E_rc'))
+(rob1_F_rc) & (rob1_I) -> ((rob1_F_rc') | (rob1_I_rc'))
+
+(rob1_G_rc) & (rob1_F) -> ((rob1_G_rc') | (rob1_F_rc'))
+(rob1_G_rc) & (rob1_H) -> ((rob1_G_rc') | (rob1_H_rc'))
+
+(rob1_H_rc) & (rob1_G) -> ((rob1_H_rc') | (rob1_G_rc'))
+(rob1_H_rc) & (rob1_A) -> ((rob1_H_rc') | (rob1_A_rc'))
+
+(rob1_I_rc) & (rob1_B) -> ((rob1_I_rc') | (rob1_B_rc'))
+(rob1_I_rc) & (rob1_F) -> ((rob1_I_rc') | (rob1_F_rc'))
+
+rob1_A_rc' -> ! (rob1_B_rc' | rob1_C_rc' | rob1_D_rc' | rob1_E_rc' | rob1_F_rc' | rob1_G_rc' | rob1_H_rc' | rob1_I_rc')
+rob1_B_rc' -> ! (rob1_A_rc' | rob1_C_rc' | rob1_D_rc' | rob1_E_rc' | rob1_F_rc' | rob1_G_rc' | rob1_H_rc' | rob1_I_rc')
+rob1_C_rc' -> ! (rob1_A_rc' | rob1_B_rc' | rob1_D_rc' | rob1_E_rc' | rob1_F_rc' | rob1_G_rc' | rob1_H_rc' | rob1_I_rc')
+rob1_D_rc' -> ! (rob1_A_rc' | rob1_B_rc' | rob1_C_rc' | rob1_E_rc' | rob1_F_rc' | rob1_G_rc' | rob1_H_rc' | rob1_I_rc')
+rob1_E_rc' -> ! (rob1_A_rc' | rob1_B_rc' | rob1_C_rc' | rob1_D_rc' | rob1_F_rc' | rob1_G_rc' | rob1_H_rc' | rob1_I_rc')
+rob1_F_rc' -> ! (rob1_A_rc' | rob1_B_rc' | rob1_C_rc' | rob1_D_rc' | rob1_E_rc' | rob1_G_rc' | rob1_H_rc' | rob1_I_rc')
+rob1_G_rc' -> ! (rob1_A_rc' | rob1_B_rc' | rob1_C_rc' | rob1_D_rc' | rob1_E_rc' | rob1_F_rc' | rob1_H_rc' | rob1_I_rc')
+rob1_H_rc' -> ! (rob1_A_rc' | rob1_B_rc' | rob1_C_rc' | rob1_D_rc' | rob1_E_rc' | rob1_F_rc' | rob1_G_rc' | rob1_I_rc')
+rob1_I_rc' -> ! (rob1_A_rc' | rob1_B_rc' | rob1_C_rc' | rob1_D_rc' | rob1_E_rc' | rob1_F_rc' | rob1_G_rc' | rob1_H_rc')
+rob1_A_rc' | rob1_B_rc' | rob1_C_rc' | rob1_D_rc' | rob1_E_rc' | rob1_F_rc' | rob1_G_rc' | rob1_H_rc' | rob1_I_rc'
+
+!rob1_A & (rob1_F_rc | m_rob1_F) -> !letterE'
+!rob1_E & (rob1_D_rc | rob1_H_rc | m_rob1_D | m_rob1_H) -> !letterH'
+
+# mutex for the user input
+letterH' -> !letterE'
+letterE' -> !letterH'
+
+
+[ENV_LIVENESS]
+#fairness on completion
+((rob1_A & rob1_A_rc') | (rob1_B & rob1_B_rc') | (rob1_C & rob1_C_rc') | (rob1_D & rob1_D_rc') | (rob1_E & rob1_E_rc') | (rob1_F & rob1_F_rc') | (rob1_G & rob1_G_rc') | (rob1_H & rob1_H_rc') | (rob1_I & rob1_I_rc') | (rob1_A & !rob1_A') | (rob1_B & !rob1_B') | (rob1_C & !rob1_C') | (rob1_D & !rob1_D') | (rob1_E & !rob1_E') | (rob1_F & !rob1_F') | (rob1_G & !rob1_G') | (rob1_H & !rob1_H') | (rob1_I & !rob1_I'))
+
+#   modify conditions such that when activating R3 and innside/outside Irob1_C region, eventually complete.  rob1_Add conditions that we cannot wait in R3.
+#((R1 & R1_rc') | (R2 & R2_rc') | (R3 & R2IC3 & R3_rc' & !door') | (R3 & !R2IC3 & R2IC3' & !door') | (R1 & !R1') | (R2 & !R2' & !door') | (R3 & !R3' & !door') | (R3_rc & R3 & R3') )
+
+
+[ENV_INIT]
+#!rob1_F_E_rc
+
+(rob1_A_rc) & (!rob1_B_rc) & (!rob1_C_rc) & (!rob1_D_rc) & (!rob1_E_rc) & (!rob1_F_rc) & (!rob1_G_rc) & (!rob1_H_rc) & (!rob1_I_rc) & (!letterH) & (!letterE)
+
+
+[SYS_TRANS]
+# iter 1
+#rob1_F_rc' & rob1_F_E_rc' -> rob1_E'
+
+(rob1_A_rc') -> (rob1_A' | rob1_B' | rob1_H')
+(rob1_B_rc') -> (rob1_B' | rob1_A' | rob1_C' | rob1_I')
+(rob1_C_rc') -> (rob1_C' | rob1_B' | rob1_D')
+(rob1_D_rc') -> (rob1_D' | rob1_C' | rob1_E')
+(rob1_E_rc') -> (rob1_E' | rob1_D' | rob1_F')
+(rob1_F_rc') -> (rob1_F' | rob1_E' | rob1_G' | rob1_I')
+(rob1_G_rc') -> (rob1_G' | rob1_F' | rob1_H')
+(rob1_H_rc') -> (rob1_H' | rob1_G' | rob1_A')
+(rob1_I_rc') -> (rob1_I' | rob1_B' | rob1_F')
+
+rob1_A' -> ! (rob1_B' | rob1_C' | rob1_D' | rob1_E' | rob1_F' | rob1_G' | rob1_H' | rob1_I')
+rob1_B' -> ! (rob1_A' | rob1_C' | rob1_D' | rob1_E' | rob1_F' | rob1_G' | rob1_H' | rob1_I')
+rob1_C' -> ! (rob1_A' | rob1_B' | rob1_D' | rob1_E' | rob1_F' | rob1_G' | rob1_H' | rob1_I')
+rob1_D' -> ! (rob1_A' | rob1_B' | rob1_C' | rob1_E' | rob1_F' | rob1_G' | rob1_H' | rob1_I')
+rob1_E' -> ! (rob1_A' | rob1_B' | rob1_C' | rob1_D' | rob1_F' | rob1_G' | rob1_H' | rob1_I')
+rob1_F' -> ! (rob1_A' | rob1_B' | rob1_C' | rob1_D' | rob1_E' | rob1_G' | rob1_H' | rob1_I')
+rob1_G' -> ! (rob1_A' | rob1_B' | rob1_C' | rob1_D' | rob1_E' | rob1_F' | rob1_H' | rob1_I')
+rob1_H' -> ! (rob1_A' | rob1_B' | rob1_C' | rob1_D' | rob1_E' | rob1_F' | rob1_G' | rob1_I')
+rob1_H' -> ! (rob1_A' | rob1_B' | rob1_C' | rob1_D' | rob1_E' | rob1_F' | rob1_G' | rob1_H')
+rob1_A' | rob1_B' | rob1_C' | rob1_D' | rob1_E' | rob1_F' | rob1_G' | rob1_H' | rob1_I'
+
+
+letterE' -> (!rob1_F_rc')
+letterH' -> (!rob1_D_rc' & !rob1_H')
+
+# activation rules for the memprops
+!m_rob1_F & rob1_F_rc -> m_rob1_F'
+!m_rob1_D & rob1_D_rc -> m_rob1_D'
+!m_rob1_H & rob1_H_rc -> m_rob1_H'
+
+m_rob1_F & !rob1_E -> m_rob1_F'
+m_rob1_D & !rob1_A -> m_rob1_D'
+m_rob1_H & !rob1_A -> m_rob1_H'
+
+# deactivating the memprops
+rob1_E_rc -> !m_rob1_F
+rob1_A_rc -> !m_rob1_D
+rob1_A_rc -> !m_rob1_H
+
+[SYS_LIVENESS]
+letterE -> rob1_E_rc
+letterE -> rob1_I_rc
+letterE -> rob1_G_rc
+
+letterH -> rob1_A_rc
+letterH -> rob1_C_rc
+letterH -> rob1_G_rc
+letterH -> rob1_E_rc
+
+
+# uncomment only to check if realizability is due to rob1_Env == false
+#0
+
+[SYS_INIT]
+#!rob1_F_E
+
+rob1_A & !rob1_B & !rob1_C & !rob1_D & !rob1_E & !rob1_F & !rob1_G & !rob1_H & !rob1_I & !m_rob1_F & !m_rob1_D & !m_rob1_H
+
+
+
