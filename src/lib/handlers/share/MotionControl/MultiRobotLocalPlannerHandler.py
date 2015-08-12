@@ -38,7 +38,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         self.numRobots              = []    # number of robots: number of agents in the specification, controlled by the local planner
         self.numDynamicObstacles    = 0     # number of dynamic obstacles: obstacles whose velocities are internally- or externally-controlled and do NOT do collision avoidance
         self.extDynamicObstacles    = False # externally defined pose?
-        self.numExogenousRobots     = 8     # number of exogenous agents: robots that are controlled by another (unknown) specification, with collision avoidance
+        self.numExogenousRobots     = 0     # number of exogenous agents: robots that are controlled by another (unknown) specification, with collision avoidance
         self.robotType              = 2     # Set the robot type: quads (type 1) iCreate (type 2) and NAO (type 3)
         self.acceptanceFactor       = 4     # factor on the robot radius for achieving a goal point
 

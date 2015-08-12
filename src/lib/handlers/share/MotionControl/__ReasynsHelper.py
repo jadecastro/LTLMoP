@@ -27,7 +27,7 @@ def initializeController(session, regions, scalingPixelsToMeters, limitsMap):
     session.run('initExecute();')
     print str(session.getvalue('errorMsg'))
 
-    session.run('[v,w,errorMsg,acLastData] = executeControllersSingleStep(aut,ac_trans,ac_inward,pose,[],id_region_1,id_region_2,acLastData);')
+    session.run('[v,w,errorMsg,acLastData] = executeControllersSingleStep(aut,sys,ac_trans,ac_inward,pose,[],id_region_1,id_region_2,acLastData);')
     print str(session.getvalue('errorMsg'))
 
     # session.putvalue('rRob',robotRadius)
@@ -89,7 +89,7 @@ def executeController(session, poseDic, regions, curr, next, coordmap_lab2map, s
 
     # Execute one step of the local planner and collect velocity components
     try:
-        session.run('[v,w,errorMsg,acLastData] = executeControllersSingleStep(aut,ac_trans,ac_inward,pose,[],id_region_1,id_region_2,acLastData);')
+        session.run('[v,w,errorMsg,acLastData] = executeControllersSingleStep(aut,sys,ac_trans,ac_inward,pose,[],id_region_1,id_region_2,acLastData);')
     except:
         print "WARNING: Matlab execute function experienced an error!!"
 
@@ -101,7 +101,7 @@ def executeController(session, poseDic, regions, curr, next, coordmap_lab2map, s
         # logging.debug('v = ' + str(session.getvalue('vOut'+str(i+1))))
         # logging.debug('w = ' + str(session.getvalue('wOut'+str(i+1))))
 
-        v[i] = 2*scalingPixelsToMeters*session.getvalue('v')
+        v[i] = 1*scalingPixelsToMeters*session.getvalue('v')
         w[i] = 1*session.getvalue('w') #0.25*session.getvalue('wOut'+str(i+1))
         # deadAgent.append(session.getvalue('deadlockAgent'+str(i+1)))
         # print "Deadlock status (agent "+str(i)+") :"+str(deadAgent[i])
