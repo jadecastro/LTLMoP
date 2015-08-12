@@ -20,8 +20,7 @@ light_painting
 
 Customs: # List of custom propositions
 m_rob1_F
-m_rob1_D
-m_rob1_H
+m_rob1_D_H
 
 RegionFile: # Relative path of region description file
 light_painting.regions

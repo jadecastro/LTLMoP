@@ -26,8 +26,7 @@ rob1_H
 rob1_I
 
 m_rob1_F
-m_rob1_D
-m_rob1_H
+m_rob1_D_H
 
 #rob1_F_E
 
@@ -54,7 +53,7 @@ m_rob1_H
 (rob1_A_rc) & (rob1_H) -> ((rob1_A_rc') | (rob1_H_rc'))
 
 (rob1_B_rc) & (rob1_A) -> ((rob1_B_rc') | (rob1_A_rc'))
-(rob1_B_rc) & (rob1_D) -> ((rob1_B_rc') | (rob1_D_rc'))
+(rob1_B_rc) & (rob1_C) -> ((rob1_B_rc') | (rob1_C_rc'))
 (rob1_B_rc) & (rob1_I) -> ((rob1_B_rc') | (rob1_I_rc'))
 
 (rob1_C_rc) & (rob1_B) -> ((rob1_C_rc') | (rob1_B_rc'))
@@ -90,12 +89,14 @@ rob1_H_rc' -> ! (rob1_A_rc' | rob1_B_rc' | rob1_C_rc' | rob1_D_rc' | rob1_E_rc' 
 rob1_I_rc' -> ! (rob1_A_rc' | rob1_B_rc' | rob1_C_rc' | rob1_D_rc' | rob1_E_rc' | rob1_F_rc' | rob1_G_rc' | rob1_H_rc')
 rob1_A_rc' | rob1_B_rc' | rob1_C_rc' | rob1_D_rc' | rob1_E_rc' | rob1_F_rc' | rob1_G_rc' | rob1_H_rc' | rob1_I_rc'
 
-!rob1_A & (rob1_F_rc | m_rob1_F) -> !letterE'
-!rob1_E & (rob1_D_rc | rob1_H_rc | m_rob1_D | m_rob1_H) -> !letterH'
+# define conditions under which the user should not be allowed to control the letter to be displayed
+(rob1_F_rc | m_rob1_F) -> !letterE
+(rob1_D_rc | rob1_H_rc | m_rob1_D_H) -> !letterH
 
 # mutex for the user input
 letterH' -> !letterE'
 letterE' -> !letterH'
+m_rob1_F | m_rob1_D_H -> (letterE' | letterH')
 
 
 [ENV_LIVENESS]
@@ -109,7 +110,7 @@ letterE' -> !letterH'
 [ENV_INIT]
 #!rob1_F_E_rc
 
-(rob1_A_rc) & (!rob1_B_rc) & (!rob1_C_rc) & (!rob1_D_rc) & (!rob1_E_rc) & (!rob1_F_rc) & (!rob1_G_rc) & (!rob1_H_rc) & (!rob1_I_rc) & (!letterH) & (!letterE)
+(!rob1_A_rc) & (!rob1_B_rc) & (!rob1_C_rc) & (!rob1_D_rc) & (rob1_E_rc) & (!rob1_F_rc) & (!rob1_G_rc) & (!rob1_H_rc) & (!rob1_I_rc) & (!letterH) & (!letterE)
 
 
 [SYS_TRANS]
@@ -134,36 +135,41 @@ rob1_E' -> ! (rob1_A' | rob1_B' | rob1_C' | rob1_D' | rob1_F' | rob1_G' | rob1_H
 rob1_F' -> ! (rob1_A' | rob1_B' | rob1_C' | rob1_D' | rob1_E' | rob1_G' | rob1_H' | rob1_I')
 rob1_G' -> ! (rob1_A' | rob1_B' | rob1_C' | rob1_D' | rob1_E' | rob1_F' | rob1_H' | rob1_I')
 rob1_H' -> ! (rob1_A' | rob1_B' | rob1_C' | rob1_D' | rob1_E' | rob1_F' | rob1_G' | rob1_I')
-rob1_H' -> ! (rob1_A' | rob1_B' | rob1_C' | rob1_D' | rob1_E' | rob1_F' | rob1_G' | rob1_H')
+rob1_I' -> ! (rob1_A' | rob1_B' | rob1_C' | rob1_D' | rob1_E' | rob1_F' | rob1_G' | rob1_H')
 rob1_A' | rob1_B' | rob1_C' | rob1_D' | rob1_E' | rob1_F' | rob1_G' | rob1_H' | rob1_I'
 
+# prevent the robot from garbling up the letters
+letterE -> (!rob1_F_rc')
+letterH -> (!rob1_D_rc' & !rob1_H_rc')
 
-letterE' -> (!rob1_F_rc')
-letterH' -> (!rob1_D_rc' & !rob1_H')
+# to simplify the automaton, stay in place if none of the letters are set.
+!letterE & !letterH -> ((rob1_A_rc -> rob1_A) & (rob1_B_rc -> rob1_B) & (rob1_C_rc -> rob1_C) & (rob1_D_rc -> rob1_D) & (rob1_E_rc -> rob1_E) & (rob1_F_rc -> rob1_F) & (rob1_G_rc -> rob1_G) & (rob1_H_rc -> rob1_H) & (rob1_H_rc -> rob1_H))
 
 # activation rules for the memprops
 !m_rob1_F & rob1_F_rc -> m_rob1_F'
-!m_rob1_D & rob1_D_rc -> m_rob1_D'
-!m_rob1_H & rob1_H_rc -> m_rob1_H'
+!m_rob1_D_H & rob1_D_rc -> m_rob1_D_H'
+!m_rob1_D_H & rob1_H_rc -> m_rob1_D_H'
+
+!m_rob1_F & !rob1_F_rc -> !m_rob1_F'
+!m_rob1_D_H & !rob1_D_rc & !rob1_H_rc -> !m_rob1_D_H'
 
 m_rob1_F & !rob1_E -> m_rob1_F'
-m_rob1_D & !rob1_A -> m_rob1_D'
-m_rob1_H & !rob1_A -> m_rob1_H'
+m_rob1_D_H & !rob1_E -> m_rob1_D_H'
 
-# deactivating the memprops
+# deactivating the memprops once the 'home' region(s) have been reached
 rob1_E_rc -> !m_rob1_F
-rob1_A_rc -> !m_rob1_D
-rob1_A_rc -> !m_rob1_H
+rob1_E_rc -> !m_rob1_D_H
+
 
 [SYS_LIVENESS]
 letterE -> rob1_E_rc
 letterE -> rob1_I_rc
 letterE -> rob1_G_rc
 
-letterH -> rob1_A_rc
-letterH -> rob1_C_rc
-letterH -> rob1_G_rc
 letterH -> rob1_E_rc
+letterH -> rob1_G_rc
+letterH -> rob1_C_rc
+letterH -> rob1_A_rc
 
 
 # uncomment only to check if realizability is due to rob1_Env == false
@@ -172,7 +178,7 @@ letterH -> rob1_E_rc
 [SYS_INIT]
 #!rob1_F_E
 
-rob1_A & !rob1_B & !rob1_C & !rob1_D & !rob1_E & !rob1_F & !rob1_G & !rob1_H & !rob1_I & !m_rob1_F & !m_rob1_D & !m_rob1_H
+!rob1_A & !rob1_B & !rob1_C & !rob1_D & rob1_E & !rob1_F & !rob1_G & !rob1_H & !rob1_I & !m_rob1_F & !m_rob1_D_H
 
 
 
