@@ -27,7 +27,7 @@ def initializeController(session, regions, scalingPixelsToMeters, limitsMap):
     session.run('initExecute();')
     print str(session.getvalue('errorMsg'))
 
-    session.run('[v,w,errorMsg,acLastData] = executeControllersSingleStep(aut,sys,ac_trans,ac_inward,pose,[],id_region_1,id_region_2,acLastData);')
+    session.run('[vx,vy,w,errorMsg,acLastData] = executeControllersSingleStep(aut,sys,ac_trans,ac_inward,pose,[],id_region_1,id_region_2,acLastData);')
     print str(session.getvalue('errorMsg'))
 
     # session.putvalue('rRob',robotRadius)
@@ -52,7 +52,7 @@ def executeController(session, poseDic, regions, curr, next, coordmap_lab2map, s
         roboName = poseLoc[0]
 
         # Set the current pose: PYTHON: pose, MATLAB: zAux  (size d x n)  
-        # poseNew = np.float_(np.hstack([float(1)/scalingPixelsToMeters*np.array(coordmap_lab2map(poseLoc[1][0:2])), poseLoc[1][2]]))
+        #pose = np.float_(np.hstack([float(1)/scalingPixelsToMeters*np.array(coordmap_lab2map(poseLoc[1][0:2])), poseLoc[1][2]]))
         pose = np.float_(np.hstack([float(1)/scalingPixelsToMeters*poseLoc[1][0:2], poseLoc[1][2]]))
         # poseNew = np.float_(poseLoc[1])
         session.putvalue('pose',pose)
@@ -89,26 +89,28 @@ def executeController(session, poseDic, regions, curr, next, coordmap_lab2map, s
 
     # Execute one step of the local planner and collect velocity components
     try:
-        session.run('[v,w,errorMsg,acLastData] = executeControllersSingleStep(aut,sys,ac_trans,ac_inward,pose,[],id_region_1,id_region_2,acLastData);')
+        session.run('[vx,vy,w,errorMsg,acLastData] = executeControllersSingleStep(aut,sys,ac_trans,ac_inward,pose,[],id_region_1,id_region_2,acLastData);')
     except:
         print "WARNING: Matlab execute function experienced an error!!"
 
     logging.debug("  Matlab error: "+str(session.getvalue('errorMsg')))
     # print str(session.getvalue('errorMsg'))
-    v = {}
+    vx = {}
+    vy = {}
     w = {}
     for i, poseLoc in enumerate(poseDic.iteritems()):
         # logging.debug('v = ' + str(session.getvalue('vOut'+str(i+1))))
         # logging.debug('w = ' + str(session.getvalue('wOut'+str(i+1))))
 
-        v[i] = 1*scalingPixelsToMeters*session.getvalue('v')
+        vx[i] = 1*scalingPixelsToMeters*session.getvalue('vx')
+        vy[i] = 1*scalingPixelsToMeters*session.getvalue('vy')
         w[i] = 1*session.getvalue('w') #0.25*session.getvalue('wOut'+str(i+1))
         # deadAgent.append(session.getvalue('deadlockAgent'+str(i+1)))
         # print "Deadlock status (agent "+str(i)+") :"+str(deadAgent[i])
 
 
     # return velocities
-    return v, w
+    return vx, vy, w
 
 def closeInterface(session):
     """

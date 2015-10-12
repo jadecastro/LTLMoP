@@ -129,7 +129,7 @@ class ExecutorStrategyExtensions(object):
             #logging.debug(robot.name + ": "+str(sensor_region))
             sensor_region_names = [k for k, v in  sensor_region.iteritems() if v]
 
-            if len(sensor_region_names) == 1:
+            if len(sensor_region_names) >= 1:
                 sensor_region_name = sensor_region_names[0].replace('_rc','').replace(robot.name+"_",'')
                 decomposed_region_names[robot.name] = self.proj.regionMapping[sensor_region_name]
             else:
@@ -157,10 +157,19 @@ class ExecutorStrategyExtensions(object):
             logging.error("Could not find a suitable state to transition to!")
             #logging.error('State:' +self.strategy.current_state.state_id +' sensor_state:' + str(sensor_state) )
             #logging.info("decomposed_region_names" + str(decomposed_region_names))
+            print 'failure:'
+            print self.next_state
+            print self.strategy.current_state
+            print sensor_state
+            print self.strategy.findTransitionableStates(sensor_state, from_state= self.strategy.current_state)
             return
 
         # See if we're beginning a new transition
         if next_states != self.last_next_states:
+            print 'next and last next:'
+            print self.next_state
+            print self.last_next_states
+
             # NOTE: The last_next_states comparison is also to make sure we don't
             # choose a different random next-state each time, in the case of multiple choices
             self.last_next_states = next_states
@@ -170,6 +179,8 @@ class ExecutorStrategyExtensions(object):
                 next_states.remove(self.strategy.current_state)
 
             self.next_state = random.choice(next_states)
+            print 'next states:'
+            print self.next_state
             # find next region
             #############################################################################
             ############## not looking self.strategy.getPropValue('region')##############
@@ -242,6 +253,12 @@ class ExecutorStrategyExtensions(object):
             self.arrived = self.hsub.gotoRegionMultiRobot(self.current_region, self.next_region)
 
         # Check for completion of motion
+        if self.arrived:
+            print 'arrived:'
+            print self.next_state
+            print self.strategy.current_state
+            print sensor_state
+            print self.strategy.findTransitionableStates(sensor_state, from_state= self.strategy.current_state)
         if self.arrived and self.next_state != self.strategy.current_state:
             if self.transition_contains_motion:
                 for robot in self.hsub.executing_config.robots:

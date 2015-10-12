@@ -19,7 +19,7 @@ class basicSimulator:
 
         print "(Basic Simulator) Initializing Basic Simulator..."
         self.pose = array(init_pose) # current pose
-        self.curVel = array([0.0,0.0]) # current velocity
+        self.curVel = array([0.0,0.0,0.0]) # current velocity
         self.time = 0.0 # used to calculate time elapsed
         self.inertia = 1 # scale from 0 to 1, the bigger the scale the smaller the "inertia" is
         self.setVel_called = False
@@ -54,9 +54,11 @@ class basicSimulator:
                 # print 'basicSim inputs v:' + str(self.curVel[0]) + ' w:' + str(self.curVel[1])
                 time_span = (self.timer_func()-self.time)
                 time_span = time_span*10**ceil(log10(0.03/time_span))
-                vel = self.curVel[0]*array([cos(self.pose[2]), sin(self.pose[2])])
+                vel = self.curVel[0]*array([cos(self.pose[2]), sin(self.pose[2])])  # x-component of the velocity
+                vel += self.curVel[1]*array([-sin(self.pose[2]), cos(self.pose[2])])  # y-component of the velocity
+                #print 'basic sim x/y velocity : '+str(vel)
                 deltaCartesian = vel*time_span
-                deltaOrientation = self.curVel[1]*time_span
+                deltaOrientation = self.curVel[2]*time_span
                 self.pose[0:2] = self.pose[0:2]+deltaCartesian
                 self.pose[2] = self.pose[2]+deltaOrientation
                 self.setVel_called=False

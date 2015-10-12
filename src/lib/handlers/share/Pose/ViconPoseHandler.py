@@ -48,6 +48,8 @@ class ViconPoseHandler(handlerTemplates.PoseHandler):
 
         (t, x, y, o) = self.s.getData()
         (t, x, y, o) = [t/100, x/1000, y/1000, o]
+        print x
+        print y
 
         # print "x:"+str(x)+"  y:"+str(y)+"  th:"+str(o)
 

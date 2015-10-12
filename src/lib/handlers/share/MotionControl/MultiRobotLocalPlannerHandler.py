@@ -281,7 +281,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
                 # TODO: this should probably go in posehandler?
                 if math.isnan(self.pose[robot_name][2]):
                     print "WARNING: No Vicon data! Pausing."
-                    self.drive_handler[robot_name].setVelocity(0, 0)  # So let's stop
+                    self.drive_handler[robot_name].setVelocity(0, 0, 0)  # So let's stop
                     time.sleep(1)
                     #return False not leaving yet until all robots are checked
 
@@ -566,7 +566,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
                 w[idx] = 0.
 
             logging.debug(robot_name + '-v:' + str(v[idx]) + ' w:' + str(w[idx]))
-            self.drive_handler[robot_name].setVelocity(v[idx], w[idx], self.pose[robot_name][2])
+            self.drive_handler[robot_name].setVelocity(v[idx], 0, w[idx], self.pose[robot_name][2])
 
             #logging.debug("pose:" + str(pose))
             departed[robot_name] = not is_inside([self.pose[robot_name][0], self.pose[robot_name][1]], self.current_regVertices[robot_name])

@@ -147,7 +147,7 @@ class ReasynsHandler(handlerTemplates.MotionControlHandler):
                 # TODO: this should probably go in posehandler?
                 if math.isnan(self.pose[robot_name][2]):
                     print "WARNING: No Vicon data! Pausing."
-                    self.drive_handler[robot_name].setVelocity(0, 0)  # So let's stop
+                    self.drive_handler[robot_name].setVelocity(0, 0, 0)  # So let's stop
                     time.sleep(1)
                     #return False not leaving yet until all robots are checked
 
@@ -183,7 +183,7 @@ class ReasynsHandler(handlerTemplates.MotionControlHandler):
                 """
 
         # Run algorithm to find a velocity vector (global frame) to take the robot to the next region
-        v, w = Reasyns.executeController(self.session, self.pose, self.rfi.regions, current_regIndices, next_regIndices, self.coordmap_lab2map, self.scalingPixelsToMeters, doUpdate)
+        vx, vy, w = Reasyns.executeController(self.session, self.pose, self.rfi.regions, current_regIndices, next_regIndices, self.coordmap_lab2map, self.scalingPixelsToMeters, doUpdate)
 
         # save the data
         if (time.time() - self.timer) > 10:
@@ -193,13 +193,18 @@ class ReasynsHandler(handlerTemplates.MotionControlHandler):
 
         for idx, robot_name in enumerate(self.robotList):
 
-            logging.debug(robot_name + '-v:' + str(v[idx]) + ' w:' + str(w[idx]))
-            self.drive_handler[robot_name].setVelocity(v[idx], w[idx], self.pose[robot_name][2])
+            logging.debug(robot_name + '-vx:' + str(vx[idx]) + '-vy:' + str(vy[idx]) + ' w:' + str(w[idx]))
+            self.drive_handler[robot_name].setVelocity(vx[idx], vy[idx], w[idx], self.pose[robot_name][2])
 
             #logging.debug("pose:" + str(pose))
             departed[robot_name] = not is_inside([self.pose[robot_name][0], self.pose[robot_name][1]], self.current_regVertices[robot_name])
             # Figure out whether we've reached the destination region
-            arrived[robot_name] = is_inside([self.pose[robot_name][0], self.pose[robot_name][1]], self.next_regVertices[robot_name])
+            # arrived[robot_name] = is_inside([self.pose[robot_name][0], self.pose[robot_name][1]], self.next_regVertices[robot_name])
+            arrived[robot_name] = False
+            for ireg in range(len(self.rfi.regions)):
+                if ireg != current_reg:
+                    vertices = mat(map(self.coordmap_map2lab, [x for x in self.rfi.regions[ireg].getPoints()])).T
+                    arrived[robot_name] |= is_inside([self.pose[robot_name][0], self.pose[robot_name][1]], vertices)
 
             if departed[robot_name] and (not arrived[robot_name]) and (time.time()-self.last_warning) > 0.5:
                 #print "WARNING: Left current region but not in expected destination region"

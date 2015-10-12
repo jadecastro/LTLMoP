@@ -354,7 +354,7 @@ class HandlerSubsystem:
         handler_instance = self.getHandlerInstanceByName(robot_config.getHandlerOfRobot(handler_type_class).name, robot_name)
         return handler_instance
 
-    def setVelocity(self, x, y):
+    def setVelocity(self, x, y, z):
         """
         a wrapper function that set the velocity to the drive handler of the main robot
         """
@@ -365,9 +365,9 @@ class HandlerSubsystem:
             raise ValueError("Cannot set Velocity, because no drive handler instance is found for the main robot")
 
         # set the velocity
-        drive_handler_instance.setVelocity(x, y)
+        drive_handler_instance.setVelocity(x, y, z)
     
-    def setVelocityMultiRobot(self, x, y):
+    def setVelocityMultiRobot(self, x, y, z):
         """
         a wrapper function that set the velocity to the drive handler of all robots
         """
@@ -379,7 +379,7 @@ class HandlerSubsystem:
                 raise ValueError("Cannot set Velocity, because no drive handler instance is found for the main robot")
 
             # set the velocity
-            drive_handler_instance.setVelocity(x, y)
+            drive_handler_instance.setVelocity(x, y, z)
 
     def gotoRegion(self, current_region, next_region):
         """

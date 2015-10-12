@@ -29,11 +29,12 @@ class HolonomicDriveHandler(handlerTemplates.DriveHandler):
         self.mul = multiplier
         self.max = maxspeed
 
-    def setVelocity(self, x, y, theta=0):
-        x = min(x*self.mul,self.max)
-        y = max(min(y,2),-2)
+    def setVelocity(self, vx, vy, w, theta=0):
+        vx = max(min(vx*self.mul,self.max),-self.max)
+        vy = max(min(vy*self.mul,self.max),-self.max)
+        w = max(min(w,2),-2)
 
         #print "VEL:%f,%f" % tuple(self.coordmap([x, y]))
         # print 'Drive handler inputs x:' + str(x) + ' y:' + str(y)
-        self.loco.sendCommand([x,y])
+        self.loco.sendCommand([vx,vy,w])
 

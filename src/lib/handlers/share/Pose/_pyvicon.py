@@ -118,6 +118,9 @@ class ViconStreamer:
         msg = self._receive(1*4)
         length = struct.unpack("<1L", msg)
 
+        #print "streams!!"
+        #print self._streamNames
+
         if header[0] == 1:
             # info packet
             strs = []
@@ -161,7 +164,8 @@ if __name__ == "__main__":
         s.printStreamInfo()
         sys.exit(0)
 
-    streams = s.selectStreams(["Time", "Nao:Nao <t-X>", "Nao:Nao <t-Y>", "Nao:Nao <a-Z>"])
+    #streams = s.selectStreams(["Time", "Nao:Nao <t-X>", "Nao:Nao <t-Y>", "Nao:Nao <a-Z>"])
+    streams = s.selectStreams(["Time", "KUKAyouBot2:main body <t-X>", "KUKAyouBot2:main body <t-Y>", "KUKAyouBot2:main body <a-Z>"])
     
     s.startStreams(verbose=False)
 
