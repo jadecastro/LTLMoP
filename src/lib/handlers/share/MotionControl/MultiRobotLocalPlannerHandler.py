@@ -36,7 +36,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         scalingPixelsToMeters (float): Scaling factor between RegionEditor map and Javier's map
         """
         self.numRobots              = []    # number of robots: number of agents in the specification, controlled by the local planner
-        self.numDynamicObstacles    = 0     # number of dynamic obstacles: obstacles whose velocities are internally- or externally-controlled and do NOT do collision avoidance
+        self.numDynamicObstacles    = 2     # number of dynamic obstacles: obstacles whose velocities are internally- or externally-controlled and do NOT do collision avoidance
         self.extDynamicObstacles    = False # externally defined pose?
         self.numExogenousRobots     = 0     # number of exogenous agents: robots that are controlled by another (unknown) specification, with collision avoidance
         self.robotType              = 2     # Set the robot type: quads (type 1) iCreate (type 2) and NAO (type 3)
@@ -483,14 +483,15 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
             self.goalPositionExog[0] = [0.,0.]
             self.goalVelocityExog[0] = [0.,0.]
 
-        elif self.numDynamicObstacles > 0:
-            self.poseExog[0] = array([0.,0.,0.])
-            self.goalPositionExog[0] = [0.,0.]
-            self.goalVelocityExog[0] = [0.,0.]
+        elif self.numDynamicObstacles > 0 and self.initial: 
+            for i in range(self.numDynamicObstacles):
+                self.poseExog[i] = array([100.+100.*i,100.,0.])
+                self.goalPositionExog[i] = [0.,0.]
+                self.goalVelocityExog[i] = [0.,0.]
 
         # Run algorithm to find a velocity vector (global frame) to take the robot to the next region
         v, w, vd, wd, deadAgent = LocalPlanner.executeLocalPlanner(self.session, self.pose, self.goalPosition, self.goalVelocity, self.poseExog, self.goalPositionExog, self.goalVelocityExog, \
-            doUpdate, self.rfi.regions, current_regIndices, next_regIndices, self.coordmap_lab2map, self.scalingPixelsToMeters, self.numDynamicObstacles, self.extDynamicObstacles, self.scenario)
+            doUpdate, self.rfi.regions, current_regIndices, next_regIndices, self.coordmap_lab2map, self.scalingPixelsToMeters, self.numDynamicObstacles, self.extDynamicObstacles, self.scenario, self.initial)
 
         # save the data
         if (time.time() - self.timer) > 10:

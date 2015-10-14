@@ -90,7 +90,7 @@ def initializeLocalPlanner(session, regions, regionTransitionFaces, obstaclePoin
     session.run('view(2);')
     session.run('parameters.n_dynamicObstacle = '+str(numDynamicObstacles)+';')
     if numDynamicObstacles > 0:
-        session.run('parameters.dynamicObstacleVelocityControlled = 1;')
+        session.run('parameters.dynamicObstacleVelocityControlled = 0;')
 
     # initially set the allowed regions to zero (no constraints)
     for i in range(numRobots+numExogenousRobots):
@@ -103,7 +103,7 @@ def initializeLocalPlanner(session, regions, regionTransitionFaces, obstaclePoin
     # return matlab session
     # return session
 
-def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, poseExog, goalPositionExog, goalVelocityExog, doUpdate, regions, curr, next, coordmap_lab2map, scalingPixelsToMeters, numDynamicObstacles, extDynamicObstacles, scenario):
+def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, poseExog, goalPositionExog, goalVelocityExog, doUpdate, regions, curr, next, coordmap_lab2map, scalingPixelsToMeters, numDynamicObstacles, extDynamicObstacles, scenario, flgInitial):
     """
     pose  = {'rob1':[-1 ,.5],'rob2':[1,1],'rob3':[3.5 , -1]}
     next_regIndices = {'rob1': 2,'rob2':3,'rob3':3}
@@ -113,6 +113,7 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, poseExog, 
 
     for i, poseLoc in enumerate(poseDic.iteritems()):
         roboName = poseLoc[0]
+        # print '*** i = ',i
 
         # Set the current pose: PYTHON: pose, MATLAB: zAux  (size d x n)  
         # poseNew = np.float_(np.hstack([float(1)/scalingPixelsToMeters*np.array(coordmap_lab2map(poseLoc[1][0:2])), poseLoc[1][2]]))
@@ -161,24 +162,27 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, poseExog, 
             # print 'robot '+str(i)+', next:'+str(nextNbr)
         logging.debug("  zGoalNew"+str(i+1)+" (matlab): "+str(session.getvalue('zGoalNew'+str(i+1))))
 
-    for i in range(len(poseExog)):
-        # Set the current pose: PYTHON: pose, MATLAB: zAux  (size d x n)  
-        # poseNew = np.float_(np.hstack([float(1)/scalingPixelsToMeters*np.array(coordmap_lab2map(poseLoc[1][0:2])), poseLoc[1][2]]))
-        poseNew = np.float_(np.hstack([float(1)/scalingPixelsToMeters*(poseExog[i][0:2]), poseExog[i][2]]))
-        # poseNew = np.float_(poseLoc[1])
-        session.putvalue('poseNew'+str(numRobots+i+1),poseNew)
-        # logging.debug("  poseNew"+str(numRobots+i+1)+" (matlab): "+str(session.getvalue('poseNew'+str(numRobots+i+1))))
+    if flgInitial or (numDynamicObstacles == 0 or extDynamicObstacles):
+        for i in range(len(poseExog)):
+            # print "**** Updating dynamic obstacle poses ... \n\n"
+            # print '*** i = ',numRobots+i+1
+            # Set the current pose: PYTHON: pose, MATLAB: zAux  (size d x n)  
+            # poseNew = np.float_(np.hstack([float(1)/scalingPixelsToMeters*np.array(coordmap_lab2map(poseLoc[1][0:2])), poseLoc[1][2]]))
+            poseNew = np.float_(np.hstack([float(1)/scalingPixelsToMeters*(poseExog[i][0:2]), poseExog[i][2]]))
+            # poseNew = np.float_(poseLoc[1])
+            session.putvalue('poseNew'+str(numRobots+i+1),poseNew)
+            # logging.debug("  poseNew"+str(numRobots+i+1)+" (matlab): "+str(session.getvalue('poseNew'+str(numRobots+i+1))))
 
-        doUpdateExog = 1  # TODO: faster to bring in the flag every time step?
+            doUpdateExog = 1  # TODO: faster to bring in the flag every time step?
 
-        if doUpdateExog:
-            # Set the goal position: PYTHON: goalPosition, MATLAB: zGoal  (size 2 x n)
-            # session.putvalue('zGoalNew'+str(i+1),float(1)/scalingPixelsToMeters*np.float_(np.array(coordmap_lab2map(goalPosition[roboName]))))
-            session.putvalue('zGoalNew'+str(numRobots+i+1),float(1)/scalingPixelsToMeters*np.float_(goalPositionExog[i]))
-            # logging.debug("  zGoalNew"+str(numRobots+i+1)+" (matlab): "+str(session.getvalue('zGoalNew'+str(numRobots+i+1))))
-            # session.run('id_region_1 = allowed_regions('+str(numRobots+i+1)+',1); id_region_2 = allowed_regions('+str(numRobots+i+1)+',2);')
-            # logging.debug("  id_region_1 (matlab): "+str(session.getvalue('id_region_1')))
-            # logging.debug("  id_region_2 (matlab): "+str(session.getvalue('id_region_2')))
+            if doUpdateExog:
+                # Set the goal position: PYTHON: goalPosition, MATLAB: zGoal  (size 2 x n)
+                # session.putvalue('zGoalNew'+str(i+1),float(1)/scalingPixelsToMeters*np.float_(np.array(coordmap_lab2map(goalPosition[roboName]))))
+                session.putvalue('zGoalNew'+str(numRobots+i+1),float(1)/scalingPixelsToMeters*np.float_(goalPositionExog[i]))
+                # logging.debug("  zGoalNew"+str(numRobots+i+1)+" (matlab): "+str(session.getvalue('zGoalNew'+str(numRobots+i+1))))
+                # session.run('id_region_1 = allowed_regions('+str(numRobots+i+1)+',1); id_region_2 = allowed_regions('+str(numRobots+i+1)+',2);')
+                # logging.debug("  id_region_1 (matlab): "+str(session.getvalue('id_region_1')))
+                # logging.debug("  id_region_2 (matlab): "+str(session.getvalue('id_region_2')))
 
 
     # Execute one step of the local planner and collect velocity components
