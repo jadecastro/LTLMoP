@@ -23,7 +23,7 @@ class Display(wx.Frame):
     
     def __init__(self, *args, **kwds):
         kwds["style"] = wx.DEFAULT_FRAME_STYLE
-        wx.Frame.__init__(self, *args, **kwds)
+        wx.Frame.__init__(self, *args, size = (1220, 750))
         
         #global variable, to be used later
         global PANEL
@@ -31,8 +31,6 @@ class Display(wx.Frame):
         PANEL.SetBackgroundColour('#4f5049')
         global BIG_BOX
         BIG_BOX = wx.BoxSizer(wx.HORIZONTAL)
-        
-        
         
         #opening the region file
         self.compiler = SpecCompiler(sys.argv[1])
@@ -58,13 +56,23 @@ class Display(wx.Frame):
         
         
         region_map.Bind(wx.EVT_PAINT, self.drawMap)
+        self.Bind(wx.EVT_LEFT_DOWN, self.onMapClick)
+        
         #import and display region file here
         #relevant regions will be greyed out or highlighted
     
     def drawMap(self, event):
         mapRenderer.drawMap(region_map, self.proj.rfi, scaleToFit=True)
-        
     
+    
+    def onMapClick(self, event):
+        x = event.GetX()/self.mapScale
+        y = event.GetY()/self.mapScale
+        for region in enumerate(self.proj.rfi.regions):
+            if region.objectContainsPoint(x, y):
+               self.Bind(wx.EVT_LEFT_DOWN, self.open_file)
+        
+        event.Skip()
     
     def control_panel(self):
         '''responsible for the control panel'''
@@ -88,10 +96,17 @@ class Display(wx.Frame):
                     border = 10)
         title = wx.StaticText(r_details,-1, 'Region Details', style = wx.ALIGN_TOP)
         
+        self.Bind(wx.EVT_LISTBOX, self.open_file)
         
         #contains restrictions that the user has to follow while
         #in a/ clicking on a particular region
         #depends on the 'map' and 'list of regions'
+    
+    def open_file(self, event):
+        f = open("C:\LTLMoP\src\input.txt", 'r')
+        text = wx.StaticText(r_details, -1, f.read())
+        f.close()
+        event.skip()
     
     def list_of_regions(self):
         region_list = wx.Panel(self, pos = (410, 400), size = (390, 300),
