@@ -82,7 +82,28 @@ class Display(wx.Frame):
                 region.color = regions.Color(wx.Colour(255,0,0))
                 adj = regions.RegionFileInterface(region).recalcAdjacency()
                 print adj
-                mapRenderer.DrawableRegion(region).draw(selected = True, scale=1.0, showAlignmentPoints=True, highlight=True, deemphasize=False)
+
+                memory = False
+                target = PANEL
+                if memory:
+                    dc = wx.MemoryDC()
+                    dc.SelectObject(target)
+                    pdc = dc
+                else:
+                    pdc = wx.PaintDC(target)
+                    try:
+                        dc = wx.GCDC(pdc)
+                    except:
+                        dc = pdc
+
+                    if isinstance(target, wx.ScrolledWindow):
+                        target.PrepareDC(dc)
+
+                dc.BeginDrawing()
+
+                dc.Clear()
+                pdc = dc
+                mapRenderer.DrawableRegion(region).draw(dc, pdc, selected = True, scale=1.0, showAlignmentPoints=True, highlight=True, deemphasize=False)
         event.Skip()
     
     def sensors(self):
