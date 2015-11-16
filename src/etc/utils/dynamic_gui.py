@@ -102,7 +102,7 @@ class Display(wx.Frame):
                 dc.BeginDrawing()
 
                 dc.Clear()
-                pdc = dc
+                pdc = dc 
                 mapRenderer.DrawableRegion(region).draw(dc, pdc, selected = True, scale=1.0, showAlignmentPoints=True, highlight=True, deemphasize=False)
         event.Skip()
     
