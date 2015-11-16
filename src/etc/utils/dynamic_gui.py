@@ -2,6 +2,7 @@
 import wx
 import copy, sys
 import os, os.path
+import json
 
 p = os.path.abspath(__file__)
 t = ""
@@ -15,6 +16,7 @@ sys.path.append(os.path.join(p,"src","lib"))
 
 from specCompiler import SpecCompiler
 import mapRenderer
+import regions
 
 
 #creating the main GUI
@@ -41,7 +43,7 @@ class Display(wx.Frame):
         self.map()
         self.region_details()
         self.list_of_regions()
-        self.control_panel()
+        self.sensors()
         self.guidelines()
         
         
@@ -55,37 +57,57 @@ class Display(wx.Frame):
         title = wx.StaticText(region_map,-1, 'Region Map', style = wx.ALIGN_TOP)
         
         
-        region_map.Bind(wx.EVT_PAINT, self.drawMap)
-        self.Bind(wx.EVT_LEFT_DOWN, self.onMapClick)
+        region_map.Bind(wx.EVT_PAINT, self.draw_Map)
+        region_map.Bind(wx.EVT_LEFT_DOWN, self.onMapClick)
         
         #import and display region file here
         #relevant regions will be greyed out or highlighted
     
-    def drawMap(self, event):
+    def draw_Map(self, event):
+        '''draws the map to the screen'''
         mapRenderer.drawMap(region_map, self.proj.rfi, scaleToFit=True)
     
     
     def onMapClick(self, event):
+        size = region_map.GetSize()
+        self.mapBitmap = wx.EmptyBitmap(size.x, size.y)
+        self.mapScale = mapRenderer.drawMap(self.mapBitmap, self.proj.rfi, scaleToFit=True, drawLabels=True, memory=True)
+        
         x = event.GetX()/self.mapScale
         y = event.GetY()/self.mapScale
-        for region in enumerate(self.proj.rfi.regions):
+        for i, region in enumerate(self.proj.rfi.regions):
             if region.objectContainsPoint(x, y):
-               self.Bind(wx.EVT_LEFT_DOWN, self.open_file)
-        
+                print "selected region is "+ region.name
+                #print regions.RegionFileInterface(region).getBoundingBox()
+                region.color = regions.Color(wx.Colour(255,0,0))
+                adj = regions.RegionFileInterface(region).recalcAdjacency()
+                print adj
+                mapRenderer.DrawableRegion(region).draw(selected = True, scale=1.0, showAlignmentPoints=True, highlight=True, deemphasize=False)
         event.Skip()
     
-    def control_panel(self):
-        '''responsible for the control panel'''
-        c_panel = wx.Panel(self, pos = (640, 10), size = (550, 380),
+    def sensors(self):
+        '''responsible for the showing the sensors that the robot has'''
+        s_panel = wx.Panel(self, pos = (640, 10), size = (550, 380),
                               style = wx.SIMPLE_BORDER,name = 'Control Panel')
-        BIG_BOX.Add(c_panel, proportion = 1,flag = wx.ALL|wx.EXPAND, border = 10)
-        title = wx.StaticText(c_panel,-1, 'Control Panel', style = wx.ALIGN_TOP)
+        BIG_BOX.Add(s_panel, proportion = 1,flag = wx.ALL|wx.EXPAND, border = 10)
+        title = wx.StaticText(s_panel,-1, 'Sensors / Moves', style = wx.ALIGN_TOP)
+        
+        #sizer = wx.BoxSizer(wx.VERTICAL)
+        x = 0
+        y = 0
+        
+        for sensor in self.proj.all_sensors:
+            s_button = wx.Button(s_panel, -1, label = sensor, pos = (x + 10, y +10))
+            y = y+ 10 + s_button.GetDefaultSize().y
+            #sizer.Add(s_button, 0, wx.ALL, 5)
+        
+        
+        #s_panel.SetSizer(sizer)
         
         #Create differnt movement related button here
         #these buttons control the Robot
         #it is the ONLY place where the robot can be controlled
         #relevant buttons will be greyed
-    
     
     def region_details(self):
         '''responsible for region details box'''
@@ -96,16 +118,21 @@ class Display(wx.Frame):
                     border = 10)
         title = wx.StaticText(r_details,-1, 'Region Details', style = wx.ALIGN_TOP)
         
-        self.Bind(wx.EVT_LISTBOX, self.open_file)
+        self.Bind(wx.EVT_LISTBOX_DCLICK, self.open_file)
         
         #contains restrictions that the user has to follow while
         #in a/ clicking on a particular region
         #depends on the 'map' and 'list of regions'
     
     def open_file(self, event):
-        f = open("C:\LTLMoP\src\input.txt", 'r')
-        text = wx.StaticText(r_details, -1, f.read())
-        f.close()
+        '''p = os.path.join("C:\LTLMoP\src\examples","box_pushing_holonomic.json")
+        with open(p, 'r+') as json_file:
+            data = json.load(json_file)
+            json_file.close'''
+        for region in self.proj.rfi.regions:
+            if (list_box_regions.GetString(list_box_regions.GetSelection())== region.name):
+                text = wx.StaticText(r_details, -1, region.info)
+        #f.close()
         event.skip()
     
     def list_of_regions(self):
@@ -113,11 +140,11 @@ class Display(wx.Frame):
                               style = wx.SIMPLE_BORDER,name = 'region_list')
         global list_box_regions
         list_box_regions = wx.ListBox(region_list, wx.ID_ANY, size = (390, 300),
-                                      style = wx.LB_SINGLE)
+                                      style = wx.LB_SINGLE, name = "List of regions")
         title = wx.StaticText(region_list,-1, 'List Of Regions', style = wx.ALIGN_TOP)
         BIG_BOX.Add(region_list, proportion = 1,flag = wx.ALL|wx.EXPAND,
                     border = 10)
-        title = wx.StaticText(region_list,-1, 'List Of Regions', style = wx.ALIGN_TOP)
+        
         
         for region in self.proj.rfi.regions:
             if not (region.isObstacle or region.name.lower() == "boundary"):
