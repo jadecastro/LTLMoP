@@ -303,7 +303,7 @@ def modifySpec(specFile, regionFile):
             else:
                 lines[mode].append(line)
     # print lines["[SYS_TRANS]"]
-    lines["[SYS_TRANS]"].extend(doorConstraintStatements)
+    #lines["[SYS_TRANS]"].extend(doorConstraintStatements)   # COMMENTED because isn't realizable despite revisions (terminates with no cuts)??
     lines["[SYS_TRANS]"].extend(capacityConstraintStatements)
     lines["[OUTPUT]"].extend(addedOutputPropositions)
     lines["[SYS_TRANS]"].extend(widthConstraintStatements)

@@ -21,8 +21,14 @@ two_robots_local_planner
 Customs: # List of custom propositions
 m_rob1_deadlock1
 m_rob1_deadlock2
+m_rob1_deadlock3
 m_rob2_deadlock1
 m_rob2_deadlock2
+m_rob2_deadlock3
+m_rob1_B
+m_rob2_B
+m_rob1_T
+m_rob2_T
 
 RegionFile: # Relative path of region description file
 local_planner_deadlocks_two_robots.regions

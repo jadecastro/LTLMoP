@@ -33,8 +33,8 @@ def initializeLocalPlanner(session, regions, regionTransitionFaces, obstaclePoin
         session.run('settingsHadas = 2;')
 
     session.run('nB = '+str(numRobots+numExogenousRobots+numDynamicObstacles)+';')
-    print session.getvalue('settingsHadas')
-    print session.getvalue('nB')
+    print "mode: "+str(session.getvalue('settingsHadas'))
+    print "total number of robots: "+str(session.getvalue('nB'))
     session.run('[rParam, param, agentTypeDef, debugSettings] = simLocalPlanning_initialize(settingsHadas, nB);')
 
     # Set robot parameters for use in the current Matlab session
@@ -88,9 +88,14 @@ def initializeLocalPlanner(session, regions, regionTransitionFaces, obstaclePoin
 
     session.run('[rParam, rStates, rCmd, gState, status, param, allData] = initializeAgentParameters(rParam, param, agentTypeDef, map);')
     session.run('view(2);')
-    session.run('parameters.n_dynamicObstacle = '+str(numDynamicObstacles)+';')
+    if True:
+        session.run('param.nB_controlledLTLMoP = nB - '+str(numDynamicObstacles)+';')
+        session.run('param.n_dynamicObstacle = 0;')
+    else:
+        session.run('param.nB_controlledLTLMoP = 0;')
+        session.run('param.n_dynamicObstacle = '+str(numDynamicObstacles)+';')
     if numDynamicObstacles > 0:
-        session.run('parameters.dynamicObstacleVelocityControlled = 0;')
+        session.run('param.dynamicObstacleVelocityControlled = 0;')
 
     # initially set the allowed regions to zero (no constraints)
     for i in range(numRobots+numExogenousRobots):
@@ -99,6 +104,7 @@ def initializeLocalPlanner(session, regions, regionTransitionFaces, obstaclePoin
     # print "here"
     # print "wallConstraintsXYZ: "+str(session.getvalue('wallConstraintsXYZ'))
 
+    # session.run('simLocalPlanning_saveData(param, rParam, rStates, rCmd, gState, status, allData, map);')
     
     # return matlab session
     # return session
@@ -186,6 +192,7 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, poseExog, 
 
 
     # Execute one step of the local planner and collect velocity components
+    # session.run('simLocalPlanning_saveData(param, rParam, rStates, rCmd, gState, status, allData, map);')
     try:
         session.run('doStep_wrapper();')
     except:
