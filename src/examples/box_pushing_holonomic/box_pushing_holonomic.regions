@@ -125,3 +125,12 @@ Regions: # Stored as JSON string
 ]
 
 Transitions: # Region 1 Name, Region 2 Name, Bidirectional transition faces (face1_x1, face1_y1, face1_x2, face1_y2, face2_x1, ...)
+A	E	80.0	80.0	80.0	110.0
+A	B	80.0	80.0	120.0	80.0
+B	E	80.0	40.0	80.0	80.0
+C	E	0.0	140.0	50.0	140.0
+D	E	0.0	20.0	50.0	20.0
+E_C	E	0.0	122.2240	45.1680	135.4440
+E_D	E	0.0	28.1608	43.8600	23.7852
+E_C	C	0.0	140.0	42.8640	140.0
+E_D	D	0.9031	20.0	42.2600	20.0

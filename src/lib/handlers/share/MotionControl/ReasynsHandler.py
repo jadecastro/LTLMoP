@@ -192,6 +192,7 @@ class ReasynsHandler(handlerTemplates.MotionControlHandler):
 
 
         for idx, robot_name in enumerate(self.robotList):
+            current_reg = current_regIndices[robot_name]
 
             logging.debug(robot_name + '-vx:' + str(vx[idx]) + '-vy:' + str(vy[idx]) + ' w:' + str(w[idx]))
             self.drive_handler[robot_name].setVelocity(vx[idx], vy[idx], w[idx], self.pose[robot_name][2])
