@@ -1,9 +1,14 @@
 #!/usr/bin/env python
-import wx
-import copy, sys
-import os, os.path
-import json
 
+import wx
+import wx.grid
+import wx.lib.buttons, wx.lib.delayedresult
+import sys, os, re, copy
+import numpy
+import threading
+import textwrap
+
+# Climb the tree to find out where we are
 p = os.path.abspath(__file__)
 t = ""
 while t != "src":
@@ -14,157 +19,191 @@ while t != "src":
 
 sys.path.append(os.path.join(p,"src","lib"))
 
-from specCompiler import SpecCompiler
+import strategy
+import project
 import mapRenderer
-import regions
+from specCompiler import SpecCompiler
 
 
-#creating the main GUI
-class Display(wx.Frame):
-    '''The main application window'''
-    
+class MainGui(wx.Frame):
     def __init__(self, *args, **kwds):
         kwds["style"] = wx.DEFAULT_FRAME_STYLE
-        wx.Frame.__init__(self, *args, size = (1220, 750))
+        wx.Frame.__init__(self, *args, **kwds)
         
-        #global variable, to be used later
-        global PANEL
-        PANEL = wx.Panel(self)
-        PANEL.SetBackgroundColour('#4f5049')
-        global BIG_BOX
-        BIG_BOX = wx.BoxSizer(wx.HORIZONTAL)
+        self.layout()
         
-        #opening the region file
+        self.env_buttons = []
+        
+        #load region file and display it
         self.compiler = SpecCompiler(sys.argv[1])
         self.proj = copy.deepcopy(self.compiler.proj)
         self.proj.rfi = self.proj.loadRegionFile(decomposed= False)
+        self.Bind(wx.EVT_SIZE, self.onResize, self)
+        #self.region_map_window.Bind(wx.EVT_PAINT, self.onPaint)
+        self.region_map_window.Bind(wx.EVT_PAINT, self.draw_Map)
         
+        #various initialisations
+        self.env_buttons = []
+        self.prev_region = None
+        self.current_region = None
+        self.invalid_regions = []
+        self.sensorStates = {}
+        self.region_map_window.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
+        self.mapBitmap = None
         
-        self.map()
-        self.region_details()
-        self.list_of_regions()
-        self.sensors()
-        self.guidelines()
+        self.displayRegionList()
+        self.Bind(wx.EVT_LISTBOX_DCLICK, self.displayRegionDetails)
+        self.region_map_window.Bind(wx.EVT_LEFT_DOWN, self.onMapClick)
         
-        
-    def map(self):
-        '''responsible for the box that displays the map'''
-        global region_map
-        region_map = wx.Panel(self, pos = (10, 10), size = (550, 380),
-                              style = wx.SIMPLE_BORDER,name = 'Region Map')
-        BIG_BOX.Add(region_map, proportion = 1,flag = wx.ALL|wx.EXPAND,
-                border = 10)
-        title = wx.StaticText(region_map,-1, 'Region Map', style = wx.ALIGN_TOP)
-        
-        
-        region_map.Bind(wx.EVT_PAINT, self.draw_Map)
-        region_map.Bind(wx.EVT_LEFT_DOWN, self.onMapClick)
-        
-        #import and display region file here
-        #relevant regions will be greyed out or highlighted
+        self.populateToggleButtons(self.sizer_env, self.env_buttons, self.proj.enabled_sensors)
     
     def draw_Map(self, event):
         '''draws the map to the screen'''
-        mapRenderer.drawMap(region_map, self.proj.rfi, scaleToFit=True)
-    
-    
-    def onMapClick(self, event):
-        size = region_map.GetSize()
-        self.mapBitmap = wx.EmptyBitmap(size.x, size.y)
-        self.mapScale = mapRenderer.drawMap(self.mapBitmap, self.proj.rfi, scaleToFit=True, drawLabels=True, memory=True)
+        mapRenderer.drawMap(self.region_map_window, self.proj.rfi, scaleToFit=True)
         
-        x = event.GetX()/self.mapScale
-        y = event.GetY()/self.mapScale
-        for i, region in enumerate(self.proj.rfi.regions):
-            if region.objectContainsPoint(x, y):
-                print "selected region is "+ region.name
-                #print regions.RegionFileInterface(region).getBoundingBox()
-                region.color = regions.Color(wx.Colour(255,0,0))
-                adj = regions.RegionFileInterface(region).recalcAdjacency()
-                print adj
-                mapRenderer.DrawableRegion(region).draw(selected = True, scale=1.0, showAlignmentPoints=True, highlight=True, deemphasize=False)
+        #self.onResize()
         event.Skip()
     
-    def sensors(self):
-        '''responsible for the showing the sensors that the robot has'''
-        s_panel = wx.Panel(self, pos = (640, 10), size = (550, 380),
-                              style = wx.SIMPLE_BORDER,name = 'Control Panel')
-        BIG_BOX.Add(s_panel, proportion = 1,flag = wx.ALL|wx.EXPAND, border = 10)
-        title = wx.StaticText(s_panel,-1, 'Sensors / Moves', style = wx.ALIGN_TOP)
-        
-        #sizer = wx.BoxSizer(wx.VERTICAL)
-        x = 0
-        y = 0
-        
-        for sensor in self.proj.all_sensors:
-            s_button = wx.Button(s_panel, -1, label = sensor, pos = (x + 10, y +10))
-            y = y+ 10 + s_button.GetDefaultSize().y
-            #sizer.Add(s_button, 0, wx.ALL, 5)
-        
-        
-        #s_panel.SetSizer(sizer)
-        
-        #Create differnt movement related button here
-        #these buttons control the Robot
-        #it is the ONLY place where the robot can be controlled
-        #relevant buttons will be greyed
+    def onResize(self, event=None):
+        size = self.region_map_window.GetSize()
+        self.mapBitmap = wx.EmptyBitmap(size.x, size.y)
+        if self.current_region is not None:
+            hl = [self.current_region.name]
+        else:
+            hl = []
+
+        self.mapScale = mapRenderer.drawMap(self.mapBitmap, self.proj.rfi, scaleToFit=True, drawLabels=True, memory=True,
+                                            highlightList=hl, deemphasizeList=[r.name for r in self.invalid_regions])
+
+        self.Refresh()
+        self.Update()
+
+        if event is not None:
+            event.Skip()
+
     
-    def region_details(self):
-        '''responsible for region details box'''
-        global r_details
-        r_details = wx.Panel(self, pos = (10, 400), size = (390, 300),
-                              style = wx.SIMPLE_BORDER, name = 'Region Details')
-        BIG_BOX.Add(r_details, proportion = 1, flag = wx.ALL|wx.EXPAND,
-                    border = 10)
-        title = wx.StaticText(r_details,-1, 'Region Details', style = wx.ALIGN_TOP)
+    def displayRegionList(self):
         
-        self.Bind(wx.EVT_LISTBOX_DCLICK, self.open_file)
-        
-        #contains restrictions that the user has to follow while
-        #in a/ clicking on a particular region
-        #depends on the 'map' and 'list of regions'
-    
-    def open_file(self, event):
-        '''p = os.path.join("C:\LTLMoP\src\examples","box_pushing_holonomic.json")
-        with open(p, 'r+') as json_file:
-            data = json.load(json_file)
-            json_file.close'''
+        self.list_box_regions.Append(' ')
         for region in self.proj.rfi.regions:
-            if (list_box_regions.GetString(list_box_regions.GetSelection())== region.name):
-                text = wx.StaticText(r_details, -1, region.info)
-        #f.close()
-        event.skip()
+            if not (region.isObstacle or region.name.lower() == "boundary"):
+                self.list_box_regions.Append(region.name)
     
-    def list_of_regions(self):
-        region_list = wx.Panel(self, pos = (410, 400), size = (390, 300),
-                              style = wx.SIMPLE_BORDER,name = 'region_list')
-        global list_box_regions
-        list_box_regions = wx.ListBox(region_list, wx.ID_ANY, size = (390, 300),
-                                      style = wx.LB_SINGLE, name = "List of regions")
-        title = wx.StaticText(region_list,-1, 'List Of Regions', style = wx.ALIGN_TOP)
-        BIG_BOX.Add(region_list, proportion = 1,flag = wx.ALL|wx.EXPAND,
-                    border = 10)
+    def displayRegionDetails(self, event):
         
+        for region in self.proj.rfi.regions:
+            if (self.list_box_regions.GetString(self.list_box_regions.GetSelection())== region.name):
+                try:
+                    self.about_the_region.SetLabel("About the region: " + region.info)
+                
+                except:
+                    self.about_the_region.SetLabel("About the region: Did you click the right button? Please select something else")
+                    
+        event.skip()
+
+    def onMapClick(self, event):
+        x = event.GetX()/self.mapScale
+        y = event.GetY()/self.mapScale
         
         for region in self.proj.rfi.regions:
             if not (region.isObstacle or region.name.lower() == "boundary"):
-                list_box_regions.Append(region.name)
+                if (region.objectContainsPoint(x, y)):
                 
-        #extract list of regions from the region file
+                    self.prev_region = self.current_region
+                    self.current_region = region
+                    #need a way to determine invalid regions
+                
+                    self.old_region_name.SetLabel("Previous Region: " + self.prev_region.name)
+                    self.present_region_name.SetLabel("Current Region: " + self.current_region.name)
+
+                #self.applySafetyConstraints()
+
+        self.onResize() # Force map redraw
+        event.Skip()
     
     
+    def populateToggleButtons(self, target_sizer, button_container, button_names):
+        for bn in button_names:
+            # Create the new button and add it to the sizer
+            name = textwrap.fill(bn, 100)
+            button_container.append(wx.lib.buttons.GenToggleButton(self.window_pane_1, -1, name))
+            target_sizer.Add(button_container[-1], 1, wx.EXPAND, 0)
+
+            button_container[-1].SetFont(wx.Font(14, wx.DEFAULT, wx.NORMAL, wx.BOLD, 0, ""))
+
+            self.window_pane_1.Layout() # Update the frame
+            self.Refresh()
     
-    def guidelines(self):
-        guidelines = wx.Panel(self, pos = (810, 400), size = (390, 300),
-                              style = wx.SIMPLE_BORDER,name = 'Guidelines')
-        BIG_BOX.Add(guidelines, proportion = 1,flag = wx.ALL|wx.EXPAND,
-                    border = 10)
-        title = wx.StaticText(guidelines,-1, 'Guidelines', style = wx.ALIGN_TOP)
     
-    
-if __name__ == '__main__':
-    main_gui = wx.PySimpleApp()
-    output = Display(None, -1, "Display Screen")
-    output.Centre()
-    output.Show()
-    main_gui.MainLoop()
+    def layout(self):   
+        #defines the layout of the GUI
+        
+        self.window = wx.SplitterWindow(self, wx.ID_ANY, style=wx.SP_3D | wx.SP_BORDER)
+        self.window_pane_1 = wx.Panel(self.window, wx.ID_ANY)
+        self.window_pane_2 = wx.Panel(self.window, wx.ID_ANY)
+        
+        self.region_map_window = wx.Panel(self.window_pane_1, wx.ID_ANY, style=wx.SUNKEN_BORDER | wx.TAB_TRAVERSAL)
+        #self.sensors_window = wx.Panel(self.window_pane_1, wx.ID_ANY, style = wx.SIMPLE_BORDER)
+        self.list_box_regions = wx.ListBox(self.window_pane_2, wx.ID_ANY, style = wx.LB_SINGLE)
+        self.guidelines_window = wx.Panel(self.window_pane_2, wx.ID_ANY, style = wx.SIMPLE_BORDER)
+        
+        self.region_map_label = wx.StaticText(self.region_map_window, wx.ID_ANY, "Region Map")
+        self.sensors_label = wx.StaticText(self.window_pane_1, wx.ID_ANY, "Sensors")
+        self.region_details_label = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Region Details")
+        self.list_box_regions_label = wx.StaticText(self.list_box_regions, wx.ID_ANY, "List of Regions")
+        self.guidelines_label = wx.StaticText(self.guidelines_window, wx.ID_ANY, "Guidelines")
+        
+        self.old_region_name = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Previous Region: None")
+        self.present_region_name = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Current Region: None")
+        self.invalid_region_name = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Invalid Region: None yet")
+        self.about_the_region = wx.StaticText(self.window_pane_2, wx.ID_ANY, "About the region: ")
+        
+        self.SetTitle("Visualise Dynamics")
+        self.SetSize((1170, 700))
+        
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer_1 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_2 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_3 = wx.BoxSizer(wx.VERTICAL)
+        sizer_env = wx.BoxSizer(wx.VERTICAL)
+        
+        
+        sizer_1.Add(self.region_map_window, 2, wx.EXPAND, 1)
+        sizer_1.Add(self.sensors_label, 2, wx.EXPAND, 1)
+        sizer_1.Add((20, 20), 0, 0, 0)
+        sizer_1.Add(sizer_env, 1, wx.EXPAND, 0)
+        
+        self.window_pane_1.SetSizer(sizer_1)
+        
+        #region details stuff here instead of in a window
+        sizer_3.Add(self.region_details_label, 0, 0, 0)
+        sizer_3.Add((20, 20), 0, 0, 0)
+        sizer_3.Add(self.old_region_name, 0, 0, 0)
+        sizer_3.Add(self.present_region_name, 0, 0, 0)
+        sizer_3.Add(self.invalid_region_name, 0, 0, 0)
+        sizer_3.Add((20, 20), 0, 0, 0)
+        sizer_3.Add(self.about_the_region, 0, 0, 0)
+        
+        #sizer_2.Add(self.region_details_window, 1, wx.EXPAND, 1)
+        sizer_2.Add(sizer_3, 1, wx.EXPAND, 1)
+        sizer_2.Add(self.list_box_regions, 1, wx.EXPAND, 1)
+        sizer_2.Add(self.guidelines_window, 1, wx.EXPAND, 1)
+        
+        self.window_pane_2.SetSizer(sizer_2)
+        
+        self.window.SplitHorizontally(self.window_pane_1, self.window_pane_2)
+        sizer.Add(self.window, 1, wx.EXPAND, 0)
+        self.SetSizer(sizer)
+        self.Layout()
+        
+        self.sizer_env = sizer_env
+
+if __name__ == "__main__":
+
+    app = wx.PySimpleApp(0)
+    wx.InitAllImageHandlers()
+    dynamics_GUI = MainGui(None, -1, "")
+    app.SetTopWindow(dynamics_GUI)
+    dynamics_GUI.Show()
+    app.MainLoop()
+
