@@ -61,7 +61,6 @@ class MainGui(wx.Frame):
         '''draws the map to the screen'''
         mapRenderer.drawMap(self.region_map_window, self.proj.rfi, scaleToFit=True)
         
-        #self.onResize()
         event.Skip()
     
     def onResize(self, event=None):
@@ -93,13 +92,14 @@ class MainGui(wx.Frame):
         
         for region in self.proj.rfi.regions:
             if (self.list_box_regions.GetString(self.list_box_regions.GetSelection())== region.name):
-                try:
-                    self.about_the_region.SetLabel("About the region: " + region.info)
                 
-                except:
-                    self.about_the_region.SetLabel("About the region: Did you click the right button? Please select something else")
+                #print dir(region)
+                self.about_the_region.SetLabel("About the region: " + region.info)
+                
+                '''except:
+                    self.about_the_region.SetLabel("About the region: Did you click the right button? Please select something else")'''
                     
-        event.skip()
+        #event.skip()
 
     def onMapClick(self, event):
         x = event.GetX()/self.mapScale
