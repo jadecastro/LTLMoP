@@ -37,8 +37,8 @@ class MainGui(wx.Frame):
         self.compiler = SpecCompiler(sys.argv[1])
         self.proj = copy.deepcopy(self.compiler.proj)
         self.proj.rfi = self.proj.loadRegionFile(decomposed= False)
+        
         self.Bind(wx.EVT_SIZE, self.onResize, self)
-        #self.region_map_window.Bind(wx.EVT_PAINT, self.onPaint)
         self.region_map_window.Bind(wx.EVT_PAINT, self.draw_Map)
         
         #various initialisations
@@ -54,6 +54,7 @@ class MainGui(wx.Frame):
         self.displayRegionList()
         self.Bind(wx.EVT_LISTBOX_DCLICK, self.displayRegionDetails)
         self.region_map_window.Bind(wx.EVT_LEFT_DOWN, self.onMapClick)
+        self.region_map_window.Bind(wx.EVT_PAINT, self.onPaint)
         
         self.populateToggleButtons(self.sizer_env, self.env_buttons, self.proj.all_sensors)
         
@@ -98,10 +99,13 @@ class MainGui(wx.Frame):
                 self.about_the_region.SetLabel("About the region: " + region.info)
                 self.LTLstring.SetLabel("LTL Sring :"+ region.LTL)
                 
-                '''except:
-                    self.about_the_region.SetLabel("About the region: Did you click the right button? Please select something else")'''
-                    
-        #event.skip()
+                if (region.LTL != 'NONE'):
+                        for button in self.env_buttons:
+                            if (region.LTL.find(button.GetLabel()) != -1):
+                                button.Enable(False)
+                else:
+                    for button in self.env_buttons:
+                        button.Enable(True)
 
     def onMapClick(self, event):
         x = event.GetX()/self.mapScale
@@ -118,6 +122,7 @@ class MainGui(wx.Frame):
                     self.old_region_name.SetLabel("Previous Region: " + self.prev_region.name)
                     self.present_region_name.SetLabel("Current Region: " + self.current_region.name)
                     self.about_the_region.SetLabel("About the region: " + region.info)
+                    self.LTLstring.SetLabel("LTL Sring :"+ region.LTL)
                     
                     if (region.LTL != 'NONE'):
                         for button in self.env_buttons:
@@ -144,6 +149,32 @@ class MainGui(wx.Frame):
 
             self.window_pane_1.Layout() # Update the frame
             self.Refresh()
+    
+    def onPaint(self, event=None):
+        if self.mapBitmap is None:
+            return
+
+        if event is None:
+            dc = wx.ClientDC(self.region_map_window)
+        else:
+            pdc = wx.AutoBufferedPaintDC(self.region_map_window)
+            try:
+                dc = wx.GCDC(pdc)
+            except:
+                dc = pdc
+            else:
+                self.region_map_window.PrepareDC(pdc)
+
+        dc.BeginDrawing()
+
+        # Draw background
+        dc.DrawBitmap(self.mapBitmap, 0, 0)
+
+        
+        dc.EndDrawing()
+
+        if event is not None:
+            event.Skip()
     
     ################## parsing functions################
     def findRnamePrevious(self):
@@ -227,7 +258,7 @@ class MainGui(wx.Frame):
         
         self.old_region_name = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Previous Region: None")
         self.present_region_name = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Current Region: None")
-        self.invalid_region_name = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Invalid Region: None yet")
+        #self.invalid_region_name = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Invalid Region: None yet")
         self.about_the_region = wx.StaticText(self.window_pane_2, wx.ID_ANY, "About the region: ")
         self.LTLstring = wx.StaticText(self.window_pane_2, wx.ID_ANY, "LTL string:")
         
@@ -253,7 +284,7 @@ class MainGui(wx.Frame):
         sizer_3.Add((20, 20), 0, 0, 0)
         sizer_3.Add(self.old_region_name, 0, 0, 0)
         sizer_3.Add(self.present_region_name, 0, 0, 0)
-        sizer_3.Add(self.invalid_region_name, 0, 0, 0)
+        #sizer_3.Add(self.invalid_region_name, 0, 0, 0)
         sizer_3.Add((20, 20), 0, 0, 0)
         sizer_3.Add(self.about_the_region, 0, 0, 0)
         sizer_3.Add((20, 20), 0, 0, 0)
