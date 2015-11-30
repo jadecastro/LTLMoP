@@ -25,14 +25,13 @@ import mapRenderer
 from specCompiler import SpecCompiler
 
 
+
 class MainGui(wx.Frame):
     def __init__(self, *args, **kwds):
         kwds["style"] = wx.DEFAULT_FRAME_STYLE
         wx.Frame.__init__(self, *args, **kwds)
         
         self.layout()
-        
-        self.env_buttons = []
         
         #load region file and display it
         self.compiler = SpecCompiler(sys.argv[1])
@@ -50,12 +49,14 @@ class MainGui(wx.Frame):
         self.sensorStates = {}
         self.region_map_window.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
         self.mapBitmap = None
+        #listOfPropositions = self.findRnamePrevious + self.findRnameCurrent() + self.findSensors()
         
         self.displayRegionList()
         self.Bind(wx.EVT_LISTBOX_DCLICK, self.displayRegionDetails)
         self.region_map_window.Bind(wx.EVT_LEFT_DOWN, self.onMapClick)
         
-        self.populateToggleButtons(self.sizer_env, self.env_buttons, self.proj.enabled_sensors)
+        self.populateToggleButtons(self.sizer_env, self.env_buttons, self.proj.all_sensors)
+        
     
     def draw_Map(self, event):
         '''draws the map to the screen'''
@@ -95,6 +96,7 @@ class MainGui(wx.Frame):
                 
                 #print dir(region)
                 self.about_the_region.SetLabel("About the region: " + region.info)
+                self.LTLstring.SetLabel("LTL Sring :"+ region.LTL)
                 
                 '''except:
                     self.about_the_region.SetLabel("About the region: Did you click the right button? Please select something else")'''
@@ -115,7 +117,16 @@ class MainGui(wx.Frame):
                 
                     self.old_region_name.SetLabel("Previous Region: " + self.prev_region.name)
                     self.present_region_name.SetLabel("Current Region: " + self.current_region.name)
-
+                    self.about_the_region.SetLabel("About the region: " + region.info)
+                    
+                    if (region.LTL != 'NONE'):
+                        for button in self.env_buttons:
+                            if (region.LTL.find(button.GetLabel()) != -1):
+                                button.Enable(False)
+                    else:
+                        for button in self.env_buttons:
+                            button.Enable(True)
+                        
                 #self.applySafetyConstraints()
 
         self.onResize() # Force map redraw
@@ -134,7 +145,70 @@ class MainGui(wx.Frame):
             self.window_pane_1.Layout() # Update the frame
             self.Refresh()
     
+    ################## parsing functions################
+    def findRnamePrevious(self):
+        RnamePrevious = []
+        for region in self.proj.rfi.regions:
+            p = ['rob1_'+ regions]
+            RnamePrevious = RnamePrevious + p
+        return RnamePrevious
+
+    def findRnameCurrent(self):
+        RnameCurrent = []
+        for region in self.proj.regions:
+            c = ['rob_1_' + region + '_rc']
+            RnameCurrent = RnameCurrent + c
+        return RnameCurrent
+
+    def findSensors(self):
+        sensors =[]
+        for name in self.proj.all_sensors:
+            s = [name]
+            sensors = sensors + s
+        return sensors
+
+    def parseBooleanFormulaRecurse(self, currentLine,APnames,boolString):
+        operation = currentLine.pop(0)
     
+        #print operation
+        if operation=="":
+            print >> sys.stderr, "Error reading the input string. Premature end of line."
+        if operation=="|": 
+            tmp1 = parseBooleanFormulaRecurse(currentLine,APnames,boolString)
+            tmp2 = parseBooleanFormulaRecurse(currentLine,APnames,boolString)
+            tmp = tmp1 or tmp2
+            #print tmp1, tmp2, tmp
+            return tmp
+        if operation=="&":
+            tmp1 = parseBooleanFormulaRecurse(currentLine,APnames,boolString)
+            tmp2 = parseBooleanFormulaRecurse(currentLine,APnames,boolString)
+            tmp = tmp1 and tmp2
+            #print tmp1, tmp2, tmp
+            return tmp
+        if operation=="!":
+            tmp = not parseBooleanFormulaRecurse(currentLine,APnames,boolString)
+            #print tmp
+            return tmp
+        if operation=="1": 
+            return True
+        if operation=="0": 
+            return False
+
+        # Has to be a variable!
+        for i,name in enumerate(APnames):
+            if name==operation:
+                #print name, boolString[i]
+                return boolString[i]=='1'
+        #print >> sys.stderr, "Error reading the input string. The variable "+operation+" has not been found."
+
+
+    def parseBooleanFormula(self, currentLine,APnames,boolString):
+        clSplit = currentLine.split(' ')
+        #print clSplit
+        result = parseBooleanFormulaRecurse(clSplit,APnames,boolString)
+        return result
+    
+    #################layout ###########################
     def layout(self):   
         #defines the layout of the GUI
         
@@ -145,18 +219,17 @@ class MainGui(wx.Frame):
         self.region_map_window = wx.Panel(self.window_pane_1, wx.ID_ANY, style=wx.SUNKEN_BORDER | wx.TAB_TRAVERSAL)
         #self.sensors_window = wx.Panel(self.window_pane_1, wx.ID_ANY, style = wx.SIMPLE_BORDER)
         self.list_box_regions = wx.ListBox(self.window_pane_2, wx.ID_ANY, style = wx.LB_SINGLE)
-        self.guidelines_window = wx.Panel(self.window_pane_2, wx.ID_ANY, style = wx.SIMPLE_BORDER)
         
         self.region_map_label = wx.StaticText(self.region_map_window, wx.ID_ANY, "Region Map")
         self.sensors_label = wx.StaticText(self.window_pane_1, wx.ID_ANY, "Sensors")
         self.region_details_label = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Region Details")
         self.list_box_regions_label = wx.StaticText(self.list_box_regions, wx.ID_ANY, "List of Regions")
-        self.guidelines_label = wx.StaticText(self.guidelines_window, wx.ID_ANY, "Guidelines")
         
         self.old_region_name = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Previous Region: None")
         self.present_region_name = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Current Region: None")
         self.invalid_region_name = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Invalid Region: None yet")
         self.about_the_region = wx.StaticText(self.window_pane_2, wx.ID_ANY, "About the region: ")
+        self.LTLstring = wx.StaticText(self.window_pane_2, wx.ID_ANY, "LTL string:")
         
         self.SetTitle("Visualise Dynamics")
         self.SetSize((1170, 700))
@@ -170,7 +243,7 @@ class MainGui(wx.Frame):
         
         sizer_1.Add(self.region_map_window, 2, wx.EXPAND, 1)
         sizer_1.Add(self.sensors_label, 2, wx.EXPAND, 1)
-        sizer_1.Add((20, 20), 0, 0, 0)
+        #sizer_1.Add((20, 20), 0, 0, 0)
         sizer_1.Add(sizer_env, 1, wx.EXPAND, 0)
         
         self.window_pane_1.SetSizer(sizer_1)
@@ -183,11 +256,12 @@ class MainGui(wx.Frame):
         sizer_3.Add(self.invalid_region_name, 0, 0, 0)
         sizer_3.Add((20, 20), 0, 0, 0)
         sizer_3.Add(self.about_the_region, 0, 0, 0)
+        sizer_3.Add((20, 20), 0, 0, 0)
+        sizer_3.Add(self.LTLstring, 0, 0, 0)
         
         #sizer_2.Add(self.region_details_window, 1, wx.EXPAND, 1)
         sizer_2.Add(sizer_3, 1, wx.EXPAND, 1)
         sizer_2.Add(self.list_box_regions, 1, wx.EXPAND, 1)
-        sizer_2.Add(self.guidelines_window, 1, wx.EXPAND, 1)
         
         self.window_pane_2.SetSizer(sizer_2)
         

@@ -477,7 +477,7 @@ class Region(object):
     """
 
     def __init__(self, type=reg_POLY, position=Point(0, 0), size=Size(0, 0),
-                 height=0, color=None, points=None, name=''):
+                 height=0, color=None, points=None, name='', info = 'No restrictions :)', LTL = 'NONE'):
 
         if color is None:
             # Give a random color
@@ -492,9 +492,10 @@ class Region(object):
         self.color             = color
         self.pointArray        = [] if points is None else points
         self.alignmentPoints   = [False] * len([x for x in self.getPoints()])
-        self.isObstacle = False
+        self.isObstacle	= False
         self.holeList = []
-
+	self.info = info
+	self.LTL = LTL
 
     def __repr__(self):
         return "<Region '{}' (@{})>".format(self.name, hex(id(self)))
@@ -607,10 +608,12 @@ class Region(object):
         """
 
         data = {'name': self.name,
+		'info' : self.info,
+		'LTL': self.LTL,
                 'position': (self.position.x, self.position.y),
                 'size': (self.size.width, self.size.height),
                 'height': self.height,
-                'color': (self.color.Red(), self.color.Green(), self.color.Blue())}
+                'color': (self.color.Red(), self.color.Green(), self.color.Blue()),}
 
         if self.type == reg_RECT:
             data['type'] = "rect"
@@ -637,12 +640,15 @@ class Region(object):
             getData() above.  This is used for undo and to restore a 
             previously saved region.
         """
-        self.name = data['name']
-        if 'position' in data:
-            self.position = Point(*data['position'])
-        if 'size' in data:
-            self.size = Size(*data['size'])
-        self.color = Color(*data['color'])
+	self.name = data['name']
+	
+	if 'position' in data:
+	    self.position = Point(*data['position'])
+	
+	if 'size' in data:
+	    self.size = Size(*data['size'])
+	    
+	self.color = Color(*data['color'])
 
         if 'height' in data:
             self.height = data['height']
@@ -654,6 +660,14 @@ class Region(object):
                 self.type = reg_POLY
         else:
             self.type = reg_POLY
+	
+	#info
+	if 'info' in data:
+	    self.info = data['info']
+	
+	#LTL
+	if 'LTL' in data:
+	    self.LTL = data['LTL']
 
         # Only load pointArray if type is poly
         if self.type == reg_POLY:
