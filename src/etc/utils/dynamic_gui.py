@@ -7,6 +7,7 @@ import sys, os, re, copy
 import numpy
 import threading
 import textwrap
+import time
 
 # Climb the tree to find out where we are
 p = os.path.abspath(__file__)
@@ -22,6 +23,7 @@ sys.path.append(os.path.join(p,"src","lib"))
 import strategy
 import project
 import mapRenderer
+import regions
 from specCompiler import SpecCompiler
 
 
@@ -117,10 +119,18 @@ class MainGui(wx.Frame):
                 
                     self.prev_region = self.current_region
                     self.current_region = region
-                    #need a way to determine invalid regions
-                
-                    self.old_region_name.SetLabel("Previous Region: " + self.prev_region.name)
-                    self.present_region_name.SetLabel("Current Region: " + self.current_region.name)
+                    
+                    if (self.prev_region != None):
+                        c1 = self.prev_region.color
+                        
+                    c2 = self.current_region.color
+
+                    #changing color of the regions
+                    self.prev_region.color = regions.Color(255,0,255)
+                    self.current_region.color = regions.Color(255,0,255)
+                    
+                    self.old_region_name.SetLabel("Current Region: " + self.prev_region.name)
+                    self.present_region_name.SetLabel("Next Region: " + self.current_region.name)
                     self.about_the_region.SetLabel("About the region: " + region.info)
                     self.LTLstring.SetLabel("LTL Sring :"+ region.LTL)
                     
@@ -131,8 +141,11 @@ class MainGui(wx.Frame):
                     else:
                         for button in self.env_buttons:
                             button.Enable(True)
-                        
-                #self.applySafetyConstraints()
+                    
+                    '''time.sleep(3)
+                    self.prev_region.color = c1
+                    self.current_region.color = c2
+                    '''
 
         self.onResize() # Force map redraw
         event.Skip()
@@ -256,8 +269,8 @@ class MainGui(wx.Frame):
         self.region_details_label = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Region Details")
         self.list_box_regions_label = wx.StaticText(self.list_box_regions, wx.ID_ANY, "List of Regions")
         
-        self.old_region_name = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Previous Region: None")
-        self.present_region_name = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Current Region: None")
+        self.old_region_name = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Current Region: None")
+        self.present_region_name = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Next Region: None")
         #self.invalid_region_name = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Invalid Region: None yet")
         self.about_the_region = wx.StaticText(self.window_pane_2, wx.ID_ANY, "About the region: ")
         self.LTLstring = wx.StaticText(self.window_pane_2, wx.ID_ANY, "LTL string:")
