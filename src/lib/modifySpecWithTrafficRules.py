@@ -225,6 +225,13 @@ def findRegionWidthConstraintConditions(regions,faces):
                                 regA = face[1]
                                 regB = face[0]
 
+
+                            newOutputPropositions = []
+                            newSysInitialConds = []
+                            newStatement = []
+                            newConditionsOnSettingMempropsRobot1 = []
+                            newConditionsOnSettingMempropsRobot2 = []
+
                             #memProps[0].append("m_rob1_"+regB)
                             #memProps[1].append("m_rob2_"+regB)
 
