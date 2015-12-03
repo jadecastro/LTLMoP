@@ -225,25 +225,39 @@ def findRegionWidthConstraintConditions(regions,faces):
                                 regA = face[1]
                                 regB = face[0]
 
-                            memProps[0].append("m_rob1_"+regB)
-                            memProps[1].append("m_rob2_"+regB)
-                            # Add a platooning constraint
-                            newOutputPropositions = "m_rob1_"+regB+"\nm_rob2_"+regB
-                            newSysInitialConds = "& ! m_rob1_"+regB+" ! m_rob2_"+regB
-                            newStatement = "& | ! & & m_rob1_"+regB+"' rob1_"+regA+"_rc' ! rob2_"+regB+"_rc' ! rob2_"+regA+"' | ! & & m_rob2_"+regB+"' rob2_"+regA+"_rc' ! rob1_"+regB+"_rc' ! rob1_"+regA+"'"
-                            newConditionsOnSettingMempropsRobot1 = "& & | ! rob1_"+regB+"_rc' m_rob1_"+regB+"' | ! & rob1_"+regA+"_rc' m_rob1_"+regB+" m_rob1_"+regB+"' | | rob1_"+regB+"_rc' rob1_"+regA+"_rc' ! m_rob1_"+regB+"'"
-                            newConditionsOnSettingMempropsRobot2 = "& & | ! rob2_"+regB+"_rc' m_rob2_"+regB+"' | ! & rob2_"+regA+"_rc' m_rob2_"+regB+" m_rob2_"+regB+"' | | rob2_"+regB+"_rc' rob2_"+regA+"_rc' ! m_rob2_"+regB+"'"
-                            print newOutputPropositions
-                            print newStatement
-                            print newConditionsOnSettingMempropsRobot1
-                            print newConditionsOnSettingMempropsRobot2
-                            print newSysInitialConds
+                            #memProps[0].append("m_rob1_"+regB)
+                            #memProps[1].append("m_rob2_"+regB)
 
-                            addedOutputPropositions.append(newOutputPropositions)
+                            # Add a platooning constraint
+                            # newOutputPropositions = "m_rob1_"+regB+"\nm_rob2_"+regB
+                            # addedOutputPropositions.append(newOutputPropositions)
+                            # print newOutputPropositions
+                            # newSysInitialConds = "& ! m_rob1_"+regB+" ! m_rob2_"+regB
+                            # addedSystemInitialConditions.append(newSysInitialConds)
+                            # print newSysInitialConds
+                            # newStatement = "& | ! & & m_rob1_"+regB+"' rob1_"+regA+"_rc' ! rob2_"+regB+"_rc' ! rob2_"+regA+"' | ! & & m_rob2_"+regB+"' rob2_"+regA+"_rc' ! rob1_"+regB+"_rc' ! rob1_"+regA+"'"
+                            # addedSystemSafetyStatement.append(newStatement)
+                            # print newStatement
+                            # newConditionsOnSettingMempropsRobot1 = "& & | ! rob1_"+regB+"_rc' m_rob1_"+regB+"' | ! & rob1_"+regA+"_rc' m_rob1_"+regB+" m_rob1_"+regB+"' | | rob1_"+regB+"_rc' rob1_"+regA+"_rc' ! m_rob1_"+regB+"'"
+                            # addedSystemSafetyStatement.append(newConditionsOnSettingMempropsRobot1)
+                            # print newConditionsOnSettingMempropsRobot1
+                            # newConditionsOnSettingMempropsRobot2 = "& & | ! rob2_"+regB+"_rc' m_rob2_"+regB+"' | ! & rob2_"+regA+"_rc' m_rob2_"+regB+" m_rob2_"+regB+"' | | rob2_"+regB+"_rc' rob2_"+regA+"_rc' ! m_rob2_"+regB+"'"
+                            # addedSystemSafetyStatement.append(newConditionsOnSettingMempropsRobot2)
+                            # print newConditionsOnSettingMempropsRobot2
+
+                            # Platooning constraint without memprops
+                            newStatement = "| ! & & & rob1_"+regA+"_rc rob1_"+regB+" rob1_"+regA+"_rc' rob2_"+regB+"_rc ! rob2_"+regA+"'"
                             addedSystemSafetyStatement.append(newStatement)
-                            addedSystemSafetyStatement.append(newConditionsOnSettingMempropsRobot1)
-                            addedSystemSafetyStatement.append(newConditionsOnSettingMempropsRobot2)
-                            addedSystemInitialConditions.append(newSysInitialConds)
+                            print newStatement                            
+                            newStatement = "| ! & & & rob1_"+regB+"_rc rob1_"+regA+" rob1_"+regB+"_rc' rob2_"+regA+"_rc ! rob2_"+regB+"'"
+                            addedSystemSafetyStatement.append(newStatement)
+                            print newStatement                            
+                            newStatement = "| ! & & & rob2_"+regA+"_rc rob2_"+regB+" rob2_"+regA+"_rc' rob1_"+regB+"_rc ! rob1_"+regA+"'"
+                            addedSystemSafetyStatement.append(newStatement)
+                            print newStatement                            
+                            newStatement = "| ! & & & rob2_"+regB+"_rc rob2_"+regA+" rob2_"+regB+"_rc' rob1_"+regA+"_rc ! rob1_"+regB+"'"
+                            addedSystemSafetyStatement.append(newStatement)
+                            print newStatement                            
 
     if newOutputPropositions != []:
         # add mutex conditions on setting memprops
