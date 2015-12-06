@@ -36,7 +36,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         scalingPixelsToMeters (float): Scaling factor between RegionEditor map and Javier's map
         """
         self.numRobots              = []    # number of robots: number of agents in the specification, controlled by the local planner
-        self.numDynamicObstacles    = 6     # number of dynamic obstacles: obstacles whose velocities are internally- or externally-controlled and do NOT do collision avoidance
+        self.numDynamicObstacles    = 10     # number of dynamic obstacles: obstacles whose velocities are internally- or externally-controlled and do NOT do collision avoidance
         self.extDynamicObstacles    = False # externally defined pose?
         self.numExogenousRobots     = 0     # number of exogenous agents: robots that are controlled by another (unknown) specification, with collision avoidance
         self.robotType              = 2     # Set the robot type: quads (type 1) iCreate (type 2) and NAO (type 3)
@@ -286,6 +286,8 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
                     #return False not leaving yet until all robots are checked
 
                 # if self.system_print == True:
+                # print "**Region info:"
+                # print dir(self.rfi.regions[next_reg])
                 print "Next Region is " +str(robot_name)+str(self.rfi.regions[next_reg].name)
                 print "Current Region is " +str(robot_name)+str(self.rfi.regions[current_reg].name)
                 logging.debug("Next Region is " + str(self.rfi.regions[next_reg].name))
@@ -358,7 +360,8 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
                         self.goalPositionList[robot_name].pop()
                         self.goalVelocityList[robot_name].pop()  
                     # else:
-                    self.goalPositionList[robot_name].append(self.pose[robot_name][:2]+[0.1,-0.1])
+                    # self.goalPositionList[robot_name].append(self.pose[robot_name][:2]+[0.1,-0.1])  # use the current pose (after some delay once we've entered a new region)
+                    self.goalPositionList[robot_name].append(array(self.coordmap_map2lab(self.rfi.regions[current_reg].getCenter()))+[0.1,-0.1])  # use the center of the current region (to try and make the robot look alive)
                     self.goalVelocityList[robot_name].append([0, 0])  # temporarily setting this to zero
                     # goal = []
                     goal = self.goal[robot_name]  # TODO: fix the case of a self-loop in the initial region
@@ -371,7 +374,8 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
                 # initialize the goal to the current pose, if the initial goal list is empty
                 if len(self.goalPositionList[robot_name]) == 0 and self.initial:
                     print "Initial condition: STAYING IN REGION "+str(robot_name)
-                    self.goalPositionList[robot_name].append(self.pose[robot_name][:2]+[0.1,-0.1])
+                    # self.goalPositionList[robot_name].append(self.pose[robot_name][:2]+[0.1,-0.1])  # use the current pose (after some delay once we've entered a new region)
+                    self.goalPositionList[robot_name].append(array(self.coordmap_map2lab(self.rfi.regions[current_reg].getCenter()))+[0.1,-0.1])  # use the center of the current region (to try and make the robot look alive)
                     # self.goalPositionList[robot_name].append(self.pose[robot_name][:2]+[40,-40])
                     self.goalVelocityList[robot_name].append([0, 0])
 
@@ -438,8 +442,11 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
             if not self.initial and self.counter[robot_name]  > self.numberOfStepsToApplyNewGoal: #and current_regIndices[robot_name] == next_regIndices[robot_name]:
                 print "UPDATING GOAL. contents of the position goal list: "+str(robot_name)+str(self.goalPositionList[robot_name])
                 if self.updateWithPose[robot_name]:
-                    print " using current pose"+str(self.pose[robot_name][:2]+[0.01,-0.01])
-                    self.goalPosition[robot_name] = self.pose[robot_name][:2]+[0.01,-0.01] 
+                    # print " using current pose"+str(self.pose[robot_name][:2]+[0.01,-0.01])
+                    # self.goalPosition[robot_name] = self.pose[robot_name][:2]+[0.01,-0.01] 
+                    print " using region centroid"+str(self.coordmap_map2lab(self.rfi.regions[current_reg].getCenter())+[0.1,-0.1])
+                    self.goalPosition[robot_name] = array(self.coordmap_map2lab(self.rfi.regions[current_reg].getCenter()))+[0.1,-0.1]  # use the center of the current region (to try and make the robot look alive)
+                    
                     self.goalVelocity[robot_name] = self.goalVelocityList[robot_name].pop(0)
                     self.goalPositionList[robot_name].pop(0)
                 else:

@@ -253,16 +253,16 @@ def findRegionWidthConstraintConditions(regions,faces):
                             # print newConditionsOnSettingMempropsRobot2
 
                             # Platooning constraint without memprops
-                            newStatement = "| ! & & & rob1_"+regA+"_rc rob1_"+regB+" rob1_"+regA+"_rc' rob2_"+regB+"_rc ! rob2_"+regA+"'"
+                            newStatement = "| ! & & & rob1_"+regA+"_rc rob1_"+regA+"_rc' rob2_"+regB+"_rc | rob1_"+regB+" rob1_"+regA+" ! rob2_"+regA+"'"
                             addedSystemSafetyStatement.append(newStatement)
                             print newStatement                            
-                            newStatement = "| ! & & & rob1_"+regB+"_rc rob1_"+regA+" rob1_"+regB+"_rc' rob2_"+regA+"_rc ! rob2_"+regB+"'"
+                            newStatement = "| ! & & & rob1_"+regB+"_rc rob1_"+regB+"_rc' rob2_"+regA+"_rc | rob1_"+regA+" rob1_"+regB+" ! rob2_"+regB+"'"
                             addedSystemSafetyStatement.append(newStatement)
                             print newStatement                            
-                            newStatement = "| ! & & & rob2_"+regA+"_rc rob2_"+regB+" rob2_"+regA+"_rc' rob1_"+regB+"_rc ! rob1_"+regA+"'"
+                            newStatement = "| ! & & & rob2_"+regA+"_rc rob2_"+regA+"_rc' rob1_"+regB+"_rc | rob2_"+regB+" rob2_"+regA+" ! rob1_"+regA+"'"
                             addedSystemSafetyStatement.append(newStatement)
                             print newStatement                            
-                            newStatement = "| ! & & & rob2_"+regB+"_rc rob2_"+regA+" rob2_"+regB+"_rc' rob1_"+regA+"_rc ! rob1_"+regB+"'"
+                            newStatement = "| ! & & & rob2_"+regB+"_rc rob2_"+regB+"_rc' rob1_"+regA+"_rc | rob2_"+regA+" rob2_"+regB+" ! rob1_"+regB+"'"
                             addedSystemSafetyStatement.append(newStatement)
                             print newStatement                            
 
