@@ -39,6 +39,7 @@ class MainGui(wx.Frame):
         self.compiler = SpecCompiler(sys.argv[1])
         self.proj = copy.deepcopy(self.compiler.proj)
         self.proj.rfi = self.proj.loadRegionFile(decomposed= False)
+        self.proj.rfi1 = self.proj.loadRegionFile(decomposed= False)
         
         self.Bind(wx.EVT_SIZE, self.onResize, self)
         self.region_map_window.Bind(wx.EVT_PAINT, self.draw_Map)
@@ -51,7 +52,11 @@ class MainGui(wx.Frame):
         self.sensorStates = {}
         self.region_map_window.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
         self.mapBitmap = None
-        #listOfPropositions = self.findRnamePrevious + self.findRnameCurrent() + self.findSensors()
+        self.colour_arr =[]
+        self.data1 = []
+        self.data2 = []
+        self.listOfPropositions = self.findRnamePrevious() + self.findRnameCurrent() + self.findSensors()
+        self.prop_arr = []
         
         self.displayRegionList()
         self.Bind(wx.EVT_LISTBOX_DCLICK, self.displayRegionDetails)
@@ -60,11 +65,35 @@ class MainGui(wx.Frame):
         
         self.populateToggleButtons(self.sizer_env, self.env_buttons, self.proj.all_sensors)
         
+        self.clear_button.Bind(wx.EVT_BUTTON, self.click_reset)
+       
+        #self.afterClear()
+        
     
     def draw_Map(self, event):
         '''draws the map to the screen'''
         mapRenderer.drawMap(self.region_map_window, self.proj.rfi, scaleToFit=True)
         
+        event.Skip()
+    
+    def drawNewMap(self, event):
+        """self.prev_region.color = regions.Color(self.colour_arr[-2])
+        self.current_region.color = regions.Color(self.colour_arr[-1])"""
+        
+        print "in new map"
+        
+        for region in self.proj.rfi.regions:
+            if not (region.isObstacle or region.name.lower() == "boundary"):
+                print "in if not"
+                data = region.getData()
+                if (data['color'] == (255, 0, 255)):
+                    print "in if"
+                    for i in self.colour_arr[-2:]:
+                        print "in for"
+                        region.color = regions.Color(i)
+        
+        print "out"
+
         event.Skip()
     
     def onResize(self, event=None):
@@ -88,6 +117,7 @@ class MainGui(wx.Frame):
     def displayRegionList(self):
         
         self.list_box_regions.Append(' ')
+        self.list_box_regions.Append(' ')
         for region in self.proj.rfi.regions:
             if not (region.isObstacle or region.name.lower() == "boundary"):
                 self.list_box_regions.Append(region.name)
@@ -105,9 +135,11 @@ class MainGui(wx.Frame):
                         for button in self.env_buttons:
                             if (region.LTL.find(button.GetLabel()) != -1):
                                 button.Enable(False)
+                                button.SetBackgroundColour((255, 0, 0))
                 else:
                     for button in self.env_buttons:
                         button.Enable(True)
+                        button.SetBackgroundColour((127, 255, 0))
 
     def onMapClick(self, event):
         x = event.GetX()/self.mapScale
@@ -120,32 +152,54 @@ class MainGui(wx.Frame):
                     self.prev_region = self.current_region
                     self.current_region = region
                     
-                    if (self.prev_region != None):
-                        c1 = self.prev_region.color
-                        
-                    c2 = self.current_region.color
-
+                    d1 = self.prev_region.getData()
+                    d2 = self.current_region.getData()
+                    
+                    self.data1 = [d1]
+                    self.data2 = [d2]
+                    
+                    c1 = d1['color']
+                    c2 = d2['color']
+                    
+                    self.colour_arr = [c1] +[c2]
+                    
+                    for prop in self.listOfPropositions:
+                        if (('rob1_'+ self.prev_region.name == prop)):
+                            self.prop_arr = self.prop_arr + [True]
+                            
+                        elif (('rob_1_' + self.current_region.name + '_rc' == prop)):
+                            self.prop_arr = self.prop_arr + [True]
+                        else:
+                            self.prop_arr = self.prop_arr + [False]
+                    
+                    print self.listOfPropositions
+                    print self.prop_arr
+                    
                     #changing color of the regions
-                    self.prev_region.color = regions.Color(255,0,255)
-                    self.current_region.color = regions.Color(255,0,255)
+                    '''self.prev_region.color = regions.Color(255,0,255)
+                    self.current_region.color = regions.Color(255,0,255)'''
                     
                     self.old_region_name.SetLabel("Current Region: " + self.prev_region.name)
                     self.present_region_name.SetLabel("Next Region: " + self.current_region.name)
                     self.about_the_region.SetLabel("About the region: " + region.info)
                     self.LTLstring.SetLabel("LTL Sring :"+ region.LTL)
                     
+                    strin = self.makeBoolString(self.prop_arr)
                     if (region.LTL != 'NONE'):
                         for button in self.env_buttons:
-                            if (region.LTL.find(button.GetLabel()) != -1):
+                            if (region.LTL.find(button.GetLabel()) != -1 and self.parseBooleanFormula( region.LTL, self.listOfPropositions, strin)):
+                                print self.parseBooleanFormula( region.LTL, self.listOfPropositions, strin)
                                 button.Enable(False)
+                                button.SetBackgroundColour((255, 0, 0))
+                                self.prop_arr =[]
+                                #button.SetForegroundColour((0,0,0))
                     else:
                         for button in self.env_buttons:
+                            print self.parseBooleanFormula( region.LTL, self.listOfPropositions, strin)
                             button.Enable(True)
-                    
-                    '''time.sleep(3)
-                    self.prev_region.color = c1
-                    self.current_region.color = c2
-                    '''
+                            button.SetBackgroundColour((127, 255, 0))
+                            self.prop_arr = []
+
 
         self.onResize() # Force map redraw
         event.Skip()
@@ -159,7 +213,7 @@ class MainGui(wx.Frame):
             target_sizer.Add(button_container[-1], 1, wx.EXPAND, 0)
 
             button_container[-1].SetFont(wx.Font(14, wx.DEFAULT, wx.NORMAL, wx.BOLD, 0, ""))
-
+            button_container[-1].SetBackgroundColour((127, 255, 0))
             self.window_pane_1.Layout() # Update the frame
             self.Refresh()
     
@@ -189,19 +243,57 @@ class MainGui(wx.Frame):
         if event is not None:
             event.Skip()
     
+    def click_reset(self, event):
+        
+        print "button clicked"
+        #self.onResize()
+        
+        
+        self.afterClear()
+        #print self.clear_button.GetValue()
+        
+        #self.clear_button.Enable(True)
+        
+        
+        '''for region in self.proj.rfi.regions:
+            if not (region.isObstacle or region.name.lower() == "boundary"):
+                print "in if not"
+                data = region.getData()
+                if (data['color'] == (255, 0, 255)):
+                    print "in if"
+                    for i in self.colour_arr[-2:]:
+                        print "in for"
+                        region.color = regions.Color(i)
+                        print "out"'''
+    
+    def afterClear(self):
+        
+        if (self.clear_button.GetValue()== True):
+            print "in if"
+            for region in self.proj.rfi.regions:
+                print "in for"
+                if not (region.isObstacle or region.name.lower() == "boundary"):
+                    data = region.getData()
+                    
+                    self.region_map_window.Bind(wx.EVT_PAINT, self.drawNewMap)
+                    print "after"
+        
+    
     ################## parsing functions################
     def findRnamePrevious(self):
         RnamePrevious = []
         for region in self.proj.rfi.regions:
-            p = ['rob1_'+ regions]
-            RnamePrevious = RnamePrevious + p
+            if not (region.isObstacle or region.name.lower() == "boundary"):
+                p = ['rob1_'+ region.name]
+                RnamePrevious = RnamePrevious + p
         return RnamePrevious
 
     def findRnameCurrent(self):
         RnameCurrent = []
-        for region in self.proj.regions:
-            c = ['rob_1_' + region + '_rc']
-            RnameCurrent = RnameCurrent + c
+        for region in self.proj.rfi.regions:
+            if not (region.isObstacle or region.name.lower() == "boundary"):
+                c = ['rob_1_' + region.name + '_rc']
+                RnameCurrent = RnameCurrent + c
         return RnameCurrent
 
     def findSensors(self):
@@ -211,6 +303,16 @@ class MainGui(wx.Frame):
             sensors = sensors + s
         return sensors
 
+    def makeBoolString(self, prop_array):
+        bstr = ''
+        for i in prop_array:
+            if (i == True):
+                bstr = bstr + '01'
+            else:
+                bstr = bstr + '00'
+        
+        return bstr        
+    
     def parseBooleanFormulaRecurse(self, currentLine,APnames,boolString):
         operation = currentLine.pop(0)
     
@@ -218,19 +320,19 @@ class MainGui(wx.Frame):
         if operation=="":
             print >> sys.stderr, "Error reading the input string. Premature end of line."
         if operation=="|": 
-            tmp1 = parseBooleanFormulaRecurse(currentLine,APnames,boolString)
-            tmp2 = parseBooleanFormulaRecurse(currentLine,APnames,boolString)
+            tmp1 = self.parseBooleanFormulaRecurse(currentLine,APnames,boolString)
+            tmp2 = self.parseBooleanFormulaRecurse(currentLine,APnames,boolString)
             tmp = tmp1 or tmp2
             #print tmp1, tmp2, tmp
             return tmp
         if operation=="&":
-            tmp1 = parseBooleanFormulaRecurse(currentLine,APnames,boolString)
-            tmp2 = parseBooleanFormulaRecurse(currentLine,APnames,boolString)
+            tmp1 = self.parseBooleanFormulaRecurse(currentLine,APnames,boolString)
+            tmp2 = self.parseBooleanFormulaRecurse(currentLine,APnames,boolString)
             tmp = tmp1 and tmp2
             #print tmp1, tmp2, tmp
             return tmp
         if operation=="!":
-            tmp = not parseBooleanFormulaRecurse(currentLine,APnames,boolString)
+            tmp = not self.parseBooleanFormulaRecurse(currentLine,APnames,boolString)
             #print tmp
             return tmp
         if operation=="1": 
@@ -243,13 +345,13 @@ class MainGui(wx.Frame):
             if name==operation:
                 #print name, boolString[i]
                 return boolString[i]=='1'
-        #print >> sys.stderr, "Error reading the input string. The variable "+operation+" has not been found."
+        
 
 
     def parseBooleanFormula(self, currentLine,APnames,boolString):
         clSplit = currentLine.split(' ')
         #print clSplit
-        result = parseBooleanFormulaRecurse(clSplit,APnames,boolString)
+        result = self.parseBooleanFormulaRecurse(clSplit,APnames,boolString)
         return result
     
     #################layout ###########################
@@ -265,15 +367,29 @@ class MainGui(wx.Frame):
         self.list_box_regions = wx.ListBox(self.window_pane_2, wx.ID_ANY, style = wx.LB_SINGLE)
         
         self.region_map_label = wx.StaticText(self.region_map_window, wx.ID_ANY, "Region Map")
+        self.region_map_label.SetFont(wx.Font(14, wx.DEFAULT, wx.NORMAL, wx.BOLD, 0, ""))
         self.sensors_label = wx.StaticText(self.window_pane_1, wx.ID_ANY, "Sensors")
+        self.sensors_label.SetFont(wx.Font(14, wx.DEFAULT, wx.NORMAL, wx.BOLD, 0, ""))
         self.region_details_label = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Region Details")
+        self.region_details_label.SetFont(wx.Font(14, wx.DEFAULT, wx.NORMAL, wx.BOLD, 0, ""))
         self.list_box_regions_label = wx.StaticText(self.list_box_regions, wx.ID_ANY, "List of Regions")
+        self.list_box_regions_label.SetFont(wx.Font(14, wx.DEFAULT, wx.NORMAL, wx.BOLD, 0, ""))
         
         self.old_region_name = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Current Region: None")
+        self.old_region_name.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
+        
         self.present_region_name = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Next Region: None")
-        #self.invalid_region_name = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Invalid Region: None yet")
+        self.present_region_name.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
+        
         self.about_the_region = wx.StaticText(self.window_pane_2, wx.ID_ANY, "About the region: ")
+        self.about_the_region.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
+        
         self.LTLstring = wx.StaticText(self.window_pane_2, wx.ID_ANY, "LTL string:")
+        self.LTLstring.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
+        
+        self.clear_button = wx.lib.buttons.GenToggleButton(self.window_pane_2, wx.ID_ANY, "Clear Map")
+        self.clear_button.SetFont(wx.Font(14, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
+        
         
         self.SetTitle("Visualise Dynamics")
         self.SetSize((1170, 700))
@@ -294,7 +410,7 @@ class MainGui(wx.Frame):
         
         #region details stuff here instead of in a window
         sizer_3.Add(self.region_details_label, 0, 0, 0)
-        sizer_3.Add((20, 20), 0, 0, 0)
+        sizer_3.Add((30, 30), 0, 0, 0)
         sizer_3.Add(self.old_region_name, 0, 0, 0)
         sizer_3.Add(self.present_region_name, 0, 0, 0)
         #sizer_3.Add(self.invalid_region_name, 0, 0, 0)
@@ -302,6 +418,8 @@ class MainGui(wx.Frame):
         sizer_3.Add(self.about_the_region, 0, 0, 0)
         sizer_3.Add((20, 20), 0, 0, 0)
         sizer_3.Add(self.LTLstring, 0, 0, 0)
+        sizer_3.Add((60, 60), 0, 0, 0)
+        sizer_3.Add(self.clear_button,0, 0, 0)
         
         #sizer_2.Add(self.region_details_window, 1, wx.EXPAND, 1)
         sizer_2.Add(sizer_3, 1, wx.EXPAND, 1)
@@ -325,3 +443,7 @@ if __name__ == "__main__":
     dynamics_GUI.Show()
     app.MainLoop()
 
+#fix higlighting
+#add clear button
+#help parser to get direction
+#FONT
