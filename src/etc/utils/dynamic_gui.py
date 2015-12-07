@@ -157,7 +157,7 @@ class MainGui(wx.Frame):
                     
                     if (self.flag == True):
                         self.prev_region = [region]
-                        region.color = regions.Color(255,0,255)
+                        region.color = regions.Color(250, 250, 210)
                         self.LTLstr = str(region.LTL)
                     else:
                         print "in else"
@@ -186,12 +186,12 @@ class MainGui(wx.Frame):
                                     self.prop_arr = self.prop_arr + [False]
                         
                        
-                        region.color = regions.Color(255,0,255)
+                        region.color = regions.Color(250, 250, 210)
                         
                         m = ''
                         for a in self.prev_region:
                             print 'current' + a.name
-                            a.color = regions.Color(255,0,255)
+                            a.color = regions.Color(250, 250, 210)
                             m = m + a.name
                         
                         self.old_region_name.SetLabel("Current Region: " + m)
