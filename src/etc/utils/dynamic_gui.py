@@ -419,7 +419,7 @@ class MainGui(wx.Frame):
         self.list_box_regions_label = wx.StaticText(self.list_box_regions, wx.ID_ANY, "List of Regions")
         self.list_box_regions_label.SetFont(wx.Font(14, wx.DEFAULT, wx.NORMAL, wx.BOLD, 0, ""))
         
-        self.message1 = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Click any 2 regions. Click CLEAR to start again")
+        self.message1 = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Click any 2 regions to view restrictions. Click CLEAR to start again")
         self.message1.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
         
         self.old_region_name = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Current Region: None")
