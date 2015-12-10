@@ -51,7 +51,7 @@ class basicSimulator:
             self.time = self.timer_func()
         while 1:
             if self.setVel_called:
-                # print 'basicSim inputs v:' + str(self.curVel[0]) + ' w:' + str(self.curVel[1])
+                #print 'basicSim inputs vx:' + str(self.curVel[0]) + ' vy:' + str(self.curVel[1]) + ' w:' + str(self.curVel[2])
                 time_span = (self.timer_func()-self.time)
                 time_span = time_span*10**ceil(log10(0.03/time_span))
                 vel = self.curVel[0]*array([cos(self.pose[2]), sin(self.pose[2])])  # x-component of the velocity
@@ -62,7 +62,7 @@ class basicSimulator:
                 self.pose[0:2] = self.pose[0:2]+deltaCartesian
                 self.pose[2] = self.pose[2]+deltaOrientation
                 self.setVel_called=False
-                # print 'basicSim outputs x,y:' + str(self.pose[0:2]) + ' theta:' + str(self.pose[2])
+                #print 'basicSim outputs x,y:' + str(self.pose[0:2]) + ' theta:' + str(self.pose[2])
             else:
                 self.pose[0:2] = self.pose[0:2]+array([0.0,0.0])*(self.timer_func()-self.time)
             self.time = self.timer_func()

@@ -16,8 +16,7 @@ fastslow: True
 decompose: True
 
 CurrentConfigName:
-#box_pushing_youbot
-box_pushing_new
+box_pushing_youbot
 
 Customs: # List of custom propositions
 pushingBox
@@ -35,13 +34,14 @@ moveToRight, 1
 
 RegionMapping: # Mapping between region names and their decomposed counterparts
 A = p1
-B = p2
 C = p3
-D = p4
+B = p2
 E = p5
+D = p4
 E_C = p7
 E_D = p6
 
 Spec: # Specification in structured English
+# Please see box_pushing_new.structuredslugs for spec
 visit A
 

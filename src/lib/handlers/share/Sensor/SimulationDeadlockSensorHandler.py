@@ -66,13 +66,16 @@ class SimulationDeadlockSensorHandler(handlerTemplates.SensorHandler):
         self.rfi = executor.proj.rfi
 
         # set up a client session if we have other agents to avoid
-        if self.numExogenousRobots > 1:
-            address = ('localhost', 9999)  # let the kernel give us a port
-            print "Starting the client..."
+        if getFromOtherLTLMoPinstance:
+            if self.numExogenousRobots > 1:
+                address = ('localhost', 9999)  # let the kernel give us a port
+                print "Starting the client..."
 
-            # Create a socket (SOCK_STREAM means a TCP socket)
-            self.c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.c.connect(address)
+                # Create a socket (SOCK_STREAM means a TCP socket)
+                self.c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.c.connect(address)
+        else:
+            self.session = executor.proj.session
 
 
     def deadlockRobot(self, robot_id, init_value, initial=False):
@@ -117,23 +120,26 @@ class SimulationDeadlockSensorHandler(handlerTemplates.SensorHandler):
             # print "norm(vHColFree) : "+str(norm(vHColFree))
             # print "self.prefV/5 : "+str(self.prefV/5)
 
-            # check if velocity small AND any exogenous agents are within a certain radius
-            isWithinRadius = False
-            for i in range(self.numExogenousRobots):
-                isWithinRadius |= norm(self.poseExog[i][:2] - robotPose[:2]) < self.deadDist
+            if getFromOtherLTLMoPinstance:
+                # check if velocity small AND any exogenous agents are within a certain radius
+                isWithinRadius = False
+                for i in range(self.numExogenousRobots):
+                    isWithinRadius |= norm(self.poseExog[i][:2] - robotPose[:2]) < self.deadDist
 
-            if (norm(vHColFree) < self.prefV) and isWithinRadius: # could be in a deadlock?
-                logging.debug("are we in deadlock?? "+str(robot_name))
-                print "are we in deadlock?? "+str(robot_name)
-                self.timesStoppedNotConvergedAgent[robot_name] += 1
+                if (norm(vHColFree) < self.prefV) and isWithinRadius: # could be in a deadlock?
+                    logging.debug("are we in deadlock?? "+str(robot_name))
+                    print "are we in deadlock?? "+str(robot_name)
+                    self.timesStoppedNotConvergedAgent[robot_name] += 1
+                else:
+                    self.timesStoppedNotConvergedAgent[robot_name] = max(0, self.timesStoppedNotConvergedAgent[robot_name] - 3)
+                
+                # flag if number of consecutive steps exceeds threshold
+                deadlockAgent = False
+                if (self.timesStoppedNotConvergedAgent[robot_name] > self.stoppedStepsForDeadlock):
+                    deadlockAgent = True
+                    self.timesStoppedNotConvergedAgent[robot_name] = 0
             else:
-                self.timesStoppedNotConvergedAgent[robot_name] = max(0, self.timesStoppedNotConvergedAgent[robot_name] - 3)
-            
-            # flag if number of consecutive steps exceeds threshold
-            deadlockAgent = False
-            if (self.timesStoppedNotConvergedAgent[robot_name] > self.stoppedStepsForDeadlock):
-                deadlockAgent = True
-                self.timesStoppedNotConvergedAgent[robot_name] = 0
+                deadlockAgent = self.session.getvalue('deadlockAgent'+str(self.robot_id+1))
 
             self.deadlockAgent[robot_name] = deadlockAgent
             self.pastRobotPose[robot_name] = deepcopy(robotPose)

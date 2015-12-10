@@ -25,7 +25,7 @@ Regions: # Stored as JSON string
         ], 
         "type": "rect", 
         "size": [
-            110.0, 
+            130.0, 
             120.0
         ]
     }, 
@@ -43,7 +43,7 @@ Regions: # Stored as JSON string
         ], 
         "type": "rect", 
         "size": [
-            30.0, 
+            50.0, 
             30.0
         ]
     }, 
@@ -61,7 +61,7 @@ Regions: # Stored as JSON string
         ], 
         "type": "rect", 
         "size": [
-            30.0, 
+            50.0, 
             40.0
         ]
     }, 
@@ -121,7 +121,6 @@ Regions: # Stored as JSON string
     }
 ,    {"name":"E_D","color":[255,0,0],"holeList":[],"height":0,"points":[[0,22.1608],[43.8600,21.7852],[42.2600,20],[0.9031,20]],"position":[0.0,0.0],"type":"poly","size":[0.0,0.0]}
 ,    {"name":"E_C","color":[255,0,0],"holeList":[],"height":0,"points":[[0,100],[0,98.8240],[45.1680,98.4440],[42.8640,100]],"position":[0.0,0.0],"type":"poly","size":[0.0,0.0]}
-,    {"name":"E_C","color":[255,0,0],"holeList":[],"height":0,"points":[[5.4727,86.789],[39.9062,100.3069],[43.5052,91.7231],[41.5456,97.5295],[7.4307,80.9875],[4.5395,100.3069],[4.7254,93.6651]],"position":[0.0,0.0],"type":"poly","size":[0.0,0.0]}
 ]
 
 Transitions: # Region 1 Name, Region 2 Name, Bidirectional transition faces (face1_x1, face1_y1, face1_x2, face1_y2, face2_x1, ...)
