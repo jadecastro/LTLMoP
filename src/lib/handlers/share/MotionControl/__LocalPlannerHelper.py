@@ -24,9 +24,11 @@ def initializeLocalPlanner(session, regions, regionTransitionFaces, obstaclePoin
     logging.info('Starting Matlab session...')
     # session = pymatlab.session_factory()
 
+    session.run("rng('shuffle');")
+
     # Initialize the local planner
     session.run('cd '+pathToMatlabLocalPlanner)
-    if scenario == 1 or scenario == 3:
+    if scenario == 1 or scenario == 3 or scenario == 4:
         session.run('settingsHadas = 1;')
         session.run('isFirstCall = 1;')
     elif scenario == 2:
@@ -59,18 +61,18 @@ def initializeLocalPlanner(session, regions, regionTransitionFaces, obstaclePoin
         session.run('obstaclePoints{'+str(i+1)+'} = obstaclePointsNew;')
 
     # Set the region/obstacle vertices
-    if scenario == 1 or scenario == 3:
+    if scenario == 1 or scenario == 3 or scenario == 4:
         session.run('[map] = create_map_3d_from_2d_input(limitsMap, obstaclePoints, regionTransitionFaces);')
     elif scenario == 2:
         session.run('[obstacle_rel, wallConstraintsXYZ, region_doors] = create_map_3d(scenario_type);')
 
     for i in range(numRobots+numExogenousRobots):
         session.run('agentType('+str(i+1)+') = '+str(robotType)+';')
-        if scenario == 2:
+        if scenario == 2 or scenario == 4:
             # put initial values into the variables we will be querying
             if i == 0:
-                session.run('vOut'+str(i+1)+' = 1;')
-                session.run('wOut'+str(i+1)+' = 2;')
+                session.run('vOut'+str(i+1)+' = 6;')
+                session.run('wOut'+str(i+1)+' = 8;')
             elif i == 1:
                 session.run('vOut'+str(i+1)+' = 1;')
                 session.run('wOut'+str(i+1)+' = 6;')
@@ -101,7 +103,9 @@ def initializeLocalPlanner(session, regions, regionTransitionFaces, obstaclePoin
     for i in range(numRobots+numExogenousRobots):
         session.run('status.allowed_regions('+str(i+1)+',:) = [0, 0];')
 
-    # print "here"
+    for i in range(numRobots):
+        session.run('deadlockAgent'+str(i+1)+' = 0;')
+
     # print "wallConstraintsXYZ: "+str(session.getvalue('wallConstraintsXYZ'))
 
     # session.run('simLocalPlanning_saveData(param, rParam, rStates, rCmd, gState, status, allData, map);')
@@ -153,7 +157,7 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, poseExog, 
             # nextRegNbr[0] = regionNumbers[nextRegName]
             session.putvalue('id_region_1',np.float_(currNbr))
             session.putvalue('id_region_2',np.float_(nextNbr))
-            if scenario == 1 or scenario == 3:
+            if scenario == 1 or scenario == 3 or scenario == 4:
                 session.run('status.allowed_regions('+str(i+1)+',:) = [0, 0];') 
                 # session.run('status.allowed_regions('+str(i+1)+',:) = [id_region_1, id_region_2];')
             elif scenario == 2:

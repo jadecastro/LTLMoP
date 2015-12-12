@@ -178,6 +178,7 @@ def findRegionCapacityConstraintConditions(regions):
                 # the region can contain at most one robot
                 # TODO: add the case of dynamic obstacles
                 newStatement = "& | ! rob1_"+region['name']+"_rc' ! rob2_"+region['name']+"' | ! rob2_"+region['name']+"_rc' ! rob1_"+region['name']+"'"
+                print "Adding region capacity conditions."
                 print newStatement
                 addedSystemSafetyStatement.append(newStatement)
 
@@ -253,6 +254,7 @@ def findRegionWidthConstraintConditions(regions,faces):
                             # print newConditionsOnSettingMempropsRobot2
 
                             # Platooning constraint without memprops
+                            print "Adding platooning conditions."
                             newStatement = "| ! & & & rob1_"+regA+"_rc rob1_"+regA+"_rc' rob2_"+regB+"_rc | rob1_"+regB+" rob1_"+regA+" ! rob2_"+regA+"'"
                             addedSystemSafetyStatement.append(newStatement)
                             print newStatement                            

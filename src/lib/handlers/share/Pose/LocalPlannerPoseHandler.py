@@ -7,6 +7,7 @@ basicSimPose.py - 2D Pose provider for basicSimulator
 
 import sys
 from numpy import *
+import logging
 
 import lib.handlers.handlerTemplates as handlerTemplates
 

@@ -42,9 +42,11 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         self.robotType              = 2     # Set the robot type: quads (type 1) iCreate (type 2) and NAO (type 3)
         self.acceptanceFactor       = 4     # factor on the robot radius for achieving a goal point
 
-        self.scenario               = 1     # 1 = garbage collection, 2 = 3D quads, 3 = benchmarking
+        self.scenario               = 4     # 1 = garbage collection (iRobot Creates), 2 = 3D quads, 3 = benchmarking, 4 = garbage collection (quads)
 
         if self.scenario == 1 or self.scenario == 3:
+            self.numberOfStepsToApplyNewGoal = 6
+        elif self.scenario == 4:
             self.numberOfStepsToApplyNewGoal = 6
         elif self.scenario == 2:
             self.numberOfStepsToApplyNewGoal = 10
@@ -119,7 +121,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         # Generate bounding box for passing to the local planner
         # testSetOfRegions = self.rfi.regions    # TODO: hard-coding. decomposed region file doesn't store the boundary.
         testSetOfRegions = []
-        if self.scenario == 1:
+        if self.scenario == 1 or self.scenario == 4:
             testSetOfRegions.append([Point(0,0),Point(0,700),Point(700,0),Point(700,700)])
         if self.scenario == 2:
             testSetOfRegions.append([Point(0,0),Point(0,595),Point(490,0),Point(490,595)])
@@ -136,7 +138,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
 
         # Generate a list of obstacle vertices for the local planner
         obstacles = []
-        if self.scenario == 1:
+        if self.scenario == 1 or self.scenario == 4:
             obstacles.append([Point(540,490),Point(540,700),Point(700,490),Point(700,700)])
             obstacles.append([Point(574,210),Point(574,280),Point(700,210),Point(700,280)])
             obstacles.append([Point(385,210),Point(385,280),Point(465,210),Point(465,280)])
@@ -270,10 +272,12 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         for robot_name, current_reg in current_regIndices.iteritems():
             next_reg = next_regIndices[robot_name]
 
+            self.pose.update([(robot_name,self.pose_handler[robot_name].getPose())])
+
             doUpdate[robot_name] = False   
             if not self.previous_curr_reg[robot_name] == current_reg or not self.previous_next_reg[robot_name] == next_reg:
                 # Find our current configuration
-                self.pose.update([(robot_name,self.pose_handler[robot_name].getPose())])
+                #self.pose.update([(robot_name,self.pose_handler[robot_name].getPose())])
                 # self.pose.update([(robot_name,self.pose_handler[robot_name].getPose())])
                 # print "pose: "+str(self.pose[robot_name])
 
@@ -497,6 +501,8 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
                 self.goalVelocityExog[i] = [0.,0.]
 
         # Run algorithm to find a velocity vector (global frame) to take the robot to the next region
+        #self.session.run('save ltlmop_data_pre_one_step_execute;')
+
         v, w, vd, wd, deadAgent = LocalPlanner.executeLocalPlanner(self.session, self.pose, self.goalPosition, self.goalVelocity, self.poseExog, self.goalPositionExog, self.goalVelocityExog, \
             doUpdate, self.rfi.regions, current_regIndices, next_regIndices, self.coordmap_lab2map, self.scalingPixelsToMeters, self.numDynamicObstacles, self.extDynamicObstacles, self.scenario, self.initial)
 
