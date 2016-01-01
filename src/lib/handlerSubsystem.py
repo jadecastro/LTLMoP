@@ -669,8 +669,10 @@ class HandlerSubsystem:
             for handler_type_class in ht.getAllHandlerTypeClass():
                 if handler_type_class in robot.handlers:
                     h = self.prepareHandler(robot.handlers[handler_type_class],robot.name)
+                    logging.debug('Handler bef: ' + str(h))
                 # if this is a init handler, set the shared_data
                 if handler_type_class == ht.InitHandler:
+                    logging.debug('Handler: ' + str(h))
                     self.executor.proj.shared_data = h.getSharedData()
 
 #            else:
