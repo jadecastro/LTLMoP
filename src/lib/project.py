@@ -15,7 +15,25 @@ import fileMethods, regions
 from numpy import *
 import logging
 import globalConfig
-import pymatlab
+try:
+    import matlab.engine as mleng
+    mlengFlag = True
+except:
+    import pymatlab
+    mlengFlag = False
+    
+class Session:
+    """
+    A class that mimics pymatlab in function calls to the Matlab engine for Python.
+
+    http://mail.python.org/pipermail/python-list/2007-June/445795.html
+    """
+    
+    def __init__(self, mleng):
+        self.session = mleng.start_matlab()
+        
+    def run(self, cmd):
+        self.session.eval(cmd)
 
 class Project:
     """
@@ -120,8 +138,10 @@ class Project:
 
 
         # Start a matlab session for use with the local planner
-        self.session = pymatlab.session_factory()
-
+        if mlengFlag:
+            self.session = Session(mleng)
+        else:
+            self.session = pymatlab.session_factory()
 
         ### Load in the specification file
         logging.info("Loading specification file %s..." % spec_file)

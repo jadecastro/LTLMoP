@@ -16,6 +16,7 @@ if system == 'Darwin':
     pathToMatlabLocalPlanner = '/Users/jalonso/MIT/drl-projects/uav-avoidance/multiquad-sim'
 else:
     pathToMatlabLocalPlanner = '/home/jon/Dropbox/Repos/uav-avoidance/multiquad-sim'
+    pathToMatlabLocalPlanner = 'C:\Users\jad455.CORNELL\LocalPlanner\uav-avoidance\multiquad-sim'
 
 def initializeLocalPlanner(session, regions, regionTransitionFaces, obstaclePoints, scalingPixelsToMeters, limitsMap, numRobots, numDynamicObstacles, numExogenousRobots, robotType, scenario):
     """
