@@ -48,7 +48,7 @@ Regions: # Stored as JSON string
         ]
     }, 
     {
-        "name": "B", 
+        "name": "pickup", 
         "color": [
             0, 
             0, 
@@ -66,7 +66,7 @@ Regions: # Stored as JSON string
         ]
     }, 
     {
-        "name": "C", 
+        "name": "dropoffL", 
         "color": [
             255, 
             255, 
@@ -84,7 +84,7 @@ Regions: # Stored as JSON string
         ]
     },
     {
-        "name": "D", 
+        "name": "dropoffR", 
         "color": [
             255, 
             255, 
@@ -119,23 +119,14 @@ Regions: # Stored as JSON string
             120.0
         ]
     }
-,    {"name":"E_D","color":[255,0,0],"holeList":[],"height":0,"points":[[0,28.1608],[43.8600,23.7852],[43.8240,23.4324],[42.2600,20],[0.9031,20],[
+,    {"name":"E_dropoffR","color":[255,0,0],"holeList":[],"height":0,"points":[[0,28.1608],[43.8600,23.7852],[43.8240,23.4324],[42.2600,20],[0.9031,20],[
 0.2382,22.2988],[0,25.9128]],"position":[0.0,0.0],"type":"poly","size":[43.8600,28.1608],
-	"info": "If in E_D and heading to D, do not activate moveToRight.",
-	"LTL": "| ! & rob1_E_D_rc rob1_D ! moveToRight"}
-,    {"name":"E_C","color":[255,0,0],"holeList":[],"height":0,"points":[[0,140],[0,122.8240],[0,122.2240],[45.1680,135.4440],[44.6160,137.3400],[42.8640
+	"info": "When the robot is in region E_dropoffR and activating push_box the robot can only reach region dropoffR. If the robot is in region E_dropoffR, heading to region dropoffR and activating push_box do not activate moveToLeft. As a result, when activating push_box and not activating moveToLeft, the robot will not enter E_dropoffR",
+	"LTL": "| ! & rob1_E_dropoffR_rc rob1_dropoffR ! moveToLeft"}
+,    {"name":"E_dropoffL","color":[255,0,0],"holeList":[],"height":0,"points":[[0,140],[0,122.8240],[0,122.2240],[45.1680,135.4440],[44.6160,137.3400],[42.8640
 ,140]],"position":[0.0,0.0],"type":"poly","size":[45.0,140.0],
-	"info": "If in E_C and heading to C, do not activate moveToLeft.",
-	"LTL": "| ! & rob1_E_C_rc rob1_C ! moveToLeft"}
+	"info": "When the robot is in region E_dropoffL and activating push_box the robot can only reach region dropoffL. If the robot is in region E_dropoffL, heading to region dropoffL and activating push_box do not activate moveToRight. As a result, when activating push_box and not activating moveToRight, the robot will not enter E_dropoffL",
+	"LTL": "| ! & rob1_E_dropoffL_rc rob1_dropoffL ! moveToRight"}
 ]
 
 Transitions: # Region 1 Name, Region 2 Name, Bidirectional transition faces (face1_x1, face1_y1, face1_x2, face1_y2, face2_x1, ...)
-A	E	80.0	80.0	80.0	110.0
-A	B	80.0	80.0	120.0	80.0
-B	E	80.0	40.0	80.0	80.0
-C	E	0.0	140.0	50.0	140.0
-D	E	0.0	20.0	50.0	20.0
-E_C	E	0.0	122.2240	45.1680	135.4440
-E_D	E	0.0	28.1608	43.8600	23.7852
-E_C	C	0.0	140.0	42.8640	140.0
-E_D	D	0.9031	20.0	42.2600	20.0

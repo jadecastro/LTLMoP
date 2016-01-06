@@ -3,6 +3,7 @@
 import wx
 import wx.grid
 import wx.lib.buttons, wx.lib.delayedresult
+from wx.lib.wordwrap import wordwrap
 import sys, os, re, copy
 import numpy
 import textwrap
@@ -49,6 +50,7 @@ class MainGui(wx.Frame):
         self.prop_arr = []
         self.LTLstr = 'NONE'
         self.flag = True
+        self.deemphasizeList = []
         
         self.Bind(wx.EVT_LISTBOX_DCLICK, self.displayRegionDetails)
         self.Bind(wx.EVT_SIZE, self.onResize, self)
@@ -62,17 +64,21 @@ class MainGui(wx.Frame):
     def drawMap(self, event):
         '''draws the map to the screen'''
         
-        mapRenderer.drawMap(self.region_map_window, self.proj.rfi, scaleToFit=True)
+        mapRenderer.drawMap(self.region_map_window, self.proj.rfi, scaleToFit=True, deemphasizeList=self.deemphasizeList)
+        
         event.Skip()
     
     
     def onResize(self, event=None):
         '''redraws the map once changes are made'''
         
+        regionsToDeemphasize=[]
         size = self.region_map_window.GetSize()
         self.mapBitmap = wx.EmptyBitmap(size.x, size.y)
 
-        self.mapScale = mapRenderer.drawMap(self.mapBitmap, self.proj.rfi, scaleToFit=True, drawLabels=True, memory=True)
+        print regionsToDeemphasize
+        self.mapScale = mapRenderer.drawMap(self.mapBitmap, self.proj.rfi, scaleToFit=True, highlightList=regionsToDeemphasize, deemphasizeList=regionsToDeemphasize, drawLabels=True, memory=True)
+        #self.mapScale = mapRenderer.drawMap(self.mapBitmap, self.proj.rfi, scaleToFit=True, deemphasizeList=regionsToDeemphasize, drawLabels=True, memory=True)
 
         self.Refresh()
         self.Update()
@@ -80,7 +86,34 @@ class MainGui(wx.Frame):
         if event is not None:
             event.Skip()
     
-    
+    def onSelect(self, regionsToDeemphasize=[], event=None):
+        '''redraws the map once changes are made'''
+        
+        size = self.region_map_window.GetSize()
+        self.mapBitmap = wx.EmptyBitmap(size.x, size.y)
+
+        self.mapScale = mapRenderer.drawMap(self.mapBitmap, self.proj.rfi, scaleToFit=True, highlightList=regionsToDeemphasize, deemphasizeList=regionsToDeemphasize, drawLabels=True, memory=True)
+        #self.mapScale = mapRenderer.drawMap(self.mapBitmap, self.proj.rfi, scaleToFit=True, deemphasizeList=regionsToDeemphasize, drawLabels=True, memory=True)
+
+        self.Refresh()
+        self.Update()
+
+        if event is not None:
+            event.Skip()    
+
+    def onSelectSingleRegion(self, rfiObj, event=None):
+        '''redraws the map once changes are made'''
+        
+        size = self.region_map_window.GetSize()
+        self.mapBitmap = wx.EmptyBitmap(size.x, size.y)
+
+        self.mapScale = mapRenderer.drawMap(self.mapBitmap, rfiObj, scaleToFit=True, drawLabels=True, memory=True)
+
+        self.Refresh()
+        self.Update()
+
+        if event is not None:
+            event.Skip()    
     
     def displayRegionDetails(self, event):
         
@@ -88,8 +121,11 @@ class MainGui(wx.Frame):
             if (self.list_box_regions.GetString(self.list_box_regions.GetSelection())== region.name):
                 
                 #print dir(region)
-                self.about_the_region.SetLabel("About the region: " + region.info)
-                self.LTLstring.SetLabel("LTL Sring :"+ region.LTL)
+                size = self.region_map_window.GetSize()
+                print "size: " + str(size.x)
+                info = wordwrap(region.info,500,wx.ClientDC(self.region_map_window))
+                self.about_the_region.SetLabel("Runtime certificate: \n" + info)
+                self.LTLstring.SetLabel("LTL environment transition formula: \n"+ region.LTL)
                 
 
     def onMapClick(self, event):
@@ -107,7 +143,7 @@ class MainGui(wx.Frame):
                     if (self.flag == True):
                         #setting current region
                         self.prev_region = [region]
-                        region.color = regions.Color(250, 250, 210)
+                        #region.color = regions.Color(250, 250, 210)
                         self.LTLstr = str(region.LTL)
                         
                         self.old_region_name.SetLabel("Current Region: " + region.name)
@@ -139,13 +175,13 @@ class MainGui(wx.Frame):
                                     self.prop_arr = self.prop_arr + [False]
                         
                         #highlighting next region
-                        region.color = regions.Color(250, 250, 210)
+                        # region.color = regions.Color(250, 0, 0)
                         
                         #updating everything else
                         m = ''
                         for a in self.prev_region:
                             print 'current' + a.name
-                            a.color = regions.Color(250, 250, 210)
+                            # a.color = regions.Color(250, 0, 0)
                             m = m + a.name
                         
                         self.old_region_name.SetLabel("Current Region: " + m)
@@ -160,8 +196,12 @@ class MainGui(wx.Frame):
                         print self.prev_region
                         print self.current_region
                         
-                        self.about_the_region.SetLabel("About the region: " + self.prev_region[0].info)
-                        self.LTLstring.SetLabel("LTL String :"+ self.LTLstr)
+                        # why isn't this in a function?
+                        if not self.prev_region == []:
+                            size = self.window_pane_2.GetSize()
+                            info = wordwrap(self.prev_region[0].info,size.x-150,wx.ClientDC(self.region_map_window))
+                            self.about_the_region.SetLabel("Runtime Certificate: \n" + info)
+                            self.LTLstring.SetLabel("LTL environment transition formula: \n"+ self.LTLstr)
                         
                         strin = self.makeBoolString(self.prop_arr)
                         
@@ -180,11 +220,43 @@ class MainGui(wx.Frame):
                                 button.Enable(True)
                                 button.SetBackgroundColour((127, 255, 0))
                                 self.prop_arr = []
+
+        if self.prev_region and self.current_region:
+            for region in self.proj.rfi.regions:
+                inPrevList = False
+                inCurrList = False
+                for a in self.prev_region:
+                    if (region.name == a.name):
+                        inPrevList = True
+                for a in self.current_region:
+                    if (region.name == a.name):
+                        inCurrList = True
+                if not (inPrevList or inCurrList or region.isObstacle or region.name.lower() == "boundary"):
+                    print region.name
+                    self.deemphasizeList.append(region.name)
         
+        # self.onResize() # Force map redraw
+
+        for a in self.current_region:
+            #currentRFI = regions.RegionFileInterface(regions=[a])
+            #print a.name
+            a.color = regions.Color(250, 100, 0)
+        for a in self.prev_region:
+            #prevRFI = regions.RegionFileInterface(regions=[a])
+            #print a.name
+            a.color = regions.Color(250, 100, 0)
         if (self.flag == True):
+            # highlight only the last region in the list of current regions
+            # region.color = regions.Color(250, 250, 100)
             self.flag = False
-        
-        self.onResize() # Force map redraw
+
+        # Attempt to re-draw just the regions in question, to deal with overlap issue
+        if self.prev_region and self.current_region:
+            print self.deemphasizeList
+            self.onSelect(self.deemphasizeList) # Apply shading to the inactive regions
+        else:
+            self.onResize() # Force map redraw
+
         event.Skip()
     
     
@@ -233,12 +305,13 @@ class MainGui(wx.Frame):
         
         MainGui(None, -1, "")
         
+        self.deemphasizeList = []
         self.prev_region = []
         self.current_region =[]
         self.old_region_name.SetLabel("Current Region: None")
         self.present_region_name.SetLabel("Next Region: None")
-        self.about_the_region.SetLabel("About the region: ")
-        self.LTLstring.SetLabel("LTL String :")
+        self.about_the_region.SetLabel("Runtime certificate: ")
+        self.LTLstring.SetLabel("LTL environment transition formula:")
         
         for button in self.env_buttons:
             button.Enable(True)
@@ -253,6 +326,8 @@ class MainGui(wx.Frame):
         
         self.Bind(wx.EVT_SIZE, self.onResize, self)
         self.region_map_window.Bind(wx.EVT_PAINT, self.drawMap)
+
+        self.onResize() # Force map redraw
     
     ################## parsing functions################
     def findRnamePrevious(self):
@@ -338,6 +413,11 @@ class MainGui(wx.Frame):
         self.window_pane_2 = wx.Panel(self.window, wx.ID_ANY)
         
         self.region_map_window = wx.Panel(self.window_pane_1, wx.ID_ANY, style=wx.SUNKEN_BORDER | wx.TAB_TRAVERSAL)
+
+        self.SetTitle("Dynamics-Based Visualization Tool")
+        self.SetSize((750, 800))
+        size = self.window_pane_2.GetSize()
+        # print 'size: ' + str(size)
         
         self.region_map_label = wx.StaticText(self.window_pane_1, wx.ID_ANY, "Region Map")
         self.region_map_label.SetFont(wx.Font(14, wx.DEFAULT, wx.NORMAL, wx.BOLD, 0, ""))
@@ -345,28 +425,27 @@ class MainGui(wx.Frame):
         self.sensors_label.SetFont(wx.Font(14, wx.DEFAULT, wx.NORMAL, wx.BOLD, 0, ""))
         self.region_details_label = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Region Details")
         self.region_details_label.SetFont(wx.Font(14, wx.DEFAULT, wx.NORMAL, wx.BOLD, 0, ""))
+
+        info = wordwrap("Click any 2 regions to check for generated certificates.  The first click designates the CURRENT region, the second designates the ACTION TAKEN from that region.  Click CLEAR to start again." , \
+            750-150,wx.ClientDC(self.region_map_window))
         
-        self.message1 = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Click any 2 regions to view restrictions. Click CLEAR to start again")
+        self.message1 = wx.StaticText(self.window_pane_2, wx.ID_ANY, info)
         self.message1.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
-        
+
         self.old_region_name = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Current Region: None")
         self.old_region_name.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
         
-        self.present_region_name = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Next Region: None")
+        self.present_region_name = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Motion Activated: None")
         self.present_region_name.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
         
-        self.about_the_region = wx.StaticText(self.window_pane_2, wx.ID_ANY, "About the region: ")
+        self.about_the_region = wx.StaticText(self.window_pane_2, wx.ID_ANY, "Runtime Certificate: ")
         self.about_the_region.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
         
-        self.LTLstring = wx.StaticText(self.window_pane_2, wx.ID_ANY, "LTL string:")
+        self.LTLstring = wx.StaticText(self.window_pane_2, wx.ID_ANY, "LTL environment transition formula:")
         self.LTLstring.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
         
         self.clear_button = wx.lib.buttons.GenToggleButton(self.window_pane_2, wx.ID_ANY, "CLEAR")
         self.clear_button.SetFont(wx.Font(14, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
-        
-        
-        self.SetTitle("Visualise Dynamics")
-        self.SetSize((1200, 700))
         
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer_0 = wx.BoxSizer(wx.VERTICAL)
@@ -392,10 +471,10 @@ class MainGui(wx.Frame):
         sizer_3.Add(self.old_region_name, 0, 0, 0)
         sizer_3.Add(self.present_region_name, 0, 0, 0)
         sizer_3.Add((20, 20), 0, 0, 0)
-        sizer_3.Add(self.about_the_region, 0, 0, 0)
-        sizer_3.Add((20, 20), 0, 0, 0)
         sizer_3.Add(self.LTLstring, 0, 0, 0)
-        sizer_3.Add((60, 60), 0, 0, 0)
+        sizer_3.Add((20, 30), 0, 0, 0)
+        sizer_3.Add(self.about_the_region, 0, 0, 0)
+        sizer_3.Add((60, 80), 0, 0, 0)
         sizer_3.Add(self.clear_button,0, 0, 0)
         
         sizer_2.Add(sizer_3, 1, wx.EXPAND, 1)
