@@ -42,5 +42,6 @@ E_C = p7
 E_D = p6
 
 Spec: # Specification in structured English
+# Please see box_pushing_holonomic.structuredslugs for spec
 visit A
 

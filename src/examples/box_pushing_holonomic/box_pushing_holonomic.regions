@@ -3,7 +3,7 @@
 # Note that all values are separated by *tabs*.
 
 Background: # Relative path of background image file
-RegionEditorProjectorTemplate.png
+None
 
 CalibrationPoints: # Vertices to use for map calibration: (vertex_region_name, vertex_index)
 
@@ -119,9 +119,14 @@ Regions: # Stored as JSON string
             120.0
         ]
     }
-,    {"name":"E_D","color":[255,0,0],"holeList":[],"height":0,"points":[[0,28.1608],[43.8600,23.7852],[43.8240,23.4324],[42.2600,20],[0.9031,20],[0.2382,22.2988],[0,25.9128]],"position":[0.0,0.0],"type":"poly","size":[0.0,0.0]}
+,    {"name":"E_D","color":[255,0,0],"holeList":[],"height":0,"points":[[0,28.1608],[43.8600,23.7852],[43.8240,23.4324],[42.2600,20],[0.9031,20],[
+0.2382,22.2988],[0,25.9128]],"position":[0.0,0.0],"type":"poly","size":[43.8600,28.1608],
+	"info": "If in E_D and heading to D, do not activate moveToRight.",
+	"LTL": "| ! & rob1_E_D_rc rob1_D ! moveToRight"}
 ,    {"name":"E_C","color":[255,0,0],"holeList":[],"height":0,"points":[[0,140],[0,122.8240],[0,122.2240],[45.1680,135.4440],[44.6160,137.3400],[42.8640
-,140]],"position":[0.0,0.0],"type":"poly","size":[0.0,0.0]}
+,140]],"position":[0.0,0.0],"type":"poly","size":[45.0,140.0],
+	"info": "If in E_C and heading to C, do not activate moveToLeft.",
+	"LTL": "| ! & rob1_E_C_rc rob1_C ! moveToLeft"}
 ]
 
 Transitions: # Region 1 Name, Region 2 Name, Bidirectional transition faces (face1_x1, face1_y1, face1_x2, face1_y2, face2_x1, ...)
