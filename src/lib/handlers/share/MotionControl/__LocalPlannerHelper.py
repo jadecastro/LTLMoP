@@ -28,7 +28,7 @@ def initializeLocalPlanner(session, regions, regionTransitionFaces, obstaclePoin
     session.run("rng('shuffle');")
 
     # Initialize the local planner
-    session.run('cd '+pathToMatlabLocalPlanner)
+    session.run('cd(\'' + pathToMatlabLocalPlanner+'\')')
     if scenario == 1 or scenario == 3 or scenario == 4:
         session.run('settingsHadas = 1;')
         session.run('isFirstCall = 1;')

@@ -33,7 +33,7 @@ class MatlabSession:
         self.session = mleng.start_matlab()
         
     def run(self, cmd):
-        logging.info('Evaluating Matlab command'+cmd+'  ....')
+        logging.info('Evaluating Matlab command:  '+cmd+'  ....')
         self.session.eval(cmd)
         logging.info('.... Finished!!')
 

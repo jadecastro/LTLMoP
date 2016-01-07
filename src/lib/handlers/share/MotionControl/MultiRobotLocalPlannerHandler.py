@@ -28,6 +28,8 @@ import _pyvicon
 import lib.handlers.handlerTemplates as handlerTemplates
 from lib.regions import Point
 
+logging.debug("local planner - success!") 
+
 class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
     def __init__(self, executor, shared_data, scalingPixelsToMeters):
         """
@@ -35,6 +37,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
 
         scalingPixelsToMeters (float): Scaling factor between RegionEditor map and Javier's map
         """
+        logging.debug("Initializing the local planner...") 
         self.numRobots              = []    # number of robots: number of agents in the specification, controlled by the local planner
         self.numDynamicObstacles    = 6     # number of dynamic obstacles: obstacles whose velocities are internally- or externally-controlled and do NOT do collision avoidance
         self.extDynamicObstacles    = False # externally defined pose?
