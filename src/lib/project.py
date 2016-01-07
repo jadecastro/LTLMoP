@@ -22,7 +22,7 @@ except:
     import pymatlab
     mlengFlag = False
     
-class Session:
+class MatlabSession:
     """
     A class that mimics pymatlab in function calls to the Matlab engine for Python.
 
@@ -33,7 +33,9 @@ class Session:
         self.session = mleng.start_matlab()
         
     def run(self, cmd):
+        logging.info('Evaluating Matlab command'+cmd+'  ....')
         self.session.eval(cmd)
+        logging.info('.... Finished!!')
 
 class Project:
     """
@@ -139,7 +141,7 @@ class Project:
 
         # Start a matlab session for use with the local planner
         if mlengFlag:
-            self.session = Session(mleng)
+            self.session = MatlabSession(mleng)
         else:
             self.session = pymatlab.session_factory()
 
