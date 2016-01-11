@@ -18,15 +18,13 @@ import globalConfig
 try:
     import matlab.engine as mleng
     mlengFlag = True
-except:
+except ImportError:
     import pymatlab
     mlengFlag = False
     
 class MatlabSession:
     """
-    A class that mimics pymatlab in function calls to the Matlab engine for Python.
-
-    http://mail.python.org/pipermail/python-list/2007-June/445795.html
+    A helper class that redirects pymatlab function calls to Matlab engine for Python.
     """
     
     def __init__(self, mleng):
@@ -36,6 +34,12 @@ class MatlabSession:
         logging.info('Evaluating Matlab command:  '+cmd+'  ....')
         self.session.eval(cmd)
         logging.info('.... Finished!!')
+
+    def putvalue(self, var, val):
+        self.session.workspace[var] = val
+
+    def getvalue(self, var):
+        return self.session.eval(var)
 
 class Project:
     """

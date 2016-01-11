@@ -17,7 +17,12 @@ import Polygon, Polygon.IO
 import Polygon.Utils as PolyUtils
 import Polygon.Shapes as PolyShapes
 import project
-import pymatlab
+try:
+    import matlab.engine as mleng
+    mlengFlag = True
+except ImportError:
+    import pymatlab
+    mlengFlag = False
 
 import subprocess
 import socket
@@ -28,7 +33,6 @@ import _pyvicon
 import lib.handlers.handlerTemplates as handlerTemplates
 from lib.regions import Point
 
-logging.debug("local planner - success!") 
 
 class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
     def __init__(self, executor, shared_data, scalingPixelsToMeters):
@@ -77,6 +81,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         self.radius             = self.scalingPixelsToMeters*0.15
         self.trans_matrix       = mat([[0,1],[-1,0]])   # transformation matrix for find the normal to the vector
         self.timer              = time.time()
+        self.timerTerminate     = time.time()
 
         self.pose = OrderedDict()
         self.goalPositionList = OrderedDict()
@@ -512,7 +517,13 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         # save the data
         if (time.time() - self.timer) > 30:
             self.timer = time.time()
-            self.session.run('simLocalPlanning_saveData(param, rParam, rStates, rCmd, gState, status, allData, map);')
+            self.session.run('saveDataLTLMoPhandler')
+
+        print 'time'+str((time.time() - self.timerTerminate))
+        if (time.time() - self.timerTerminate) > 10000:
+            print 'Terminating!!!'
+            #raise RuntimeError()
+            quit()
 
         # send the v and w for the dynamic obstacles
         if self.numExogenousRobots > 1:
@@ -626,3 +637,11 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         pointArray = map(self.coordmap_map2lab, pointArray)
         regionPoints = [(float(1)/self.scalingPixelsToMeters*pt[0],float(1)/self.scalingPixelsToMeters*pt[1]) for pt in pointArray]
         return regionPoints
+
+    def formRunningListOfPoses(self, size):
+        """
+        maintain a list of poses 
+        """
+
+        norm(pose - self.pose) 
+        return self.poseList, sumPoseDiff

@@ -433,6 +433,11 @@ class LTLMoPExecutor(ExecutorStrategyExtensions,ExecutorResynthesisExtensions, o
             # if show_gui and (timer_func() - last_gui_update_time > 0.05)
             avg_freq = 0.9 * avg_freq + 0.1 * 1 / (toc - tic) # IIR filter
             self.postEvent("FREQ", int(math.ceil(avg_freq)))
+            if avg_freq > 20:
+                print 'Terminating!!!'
+                #raise RuntimeError()
+                quit()
+                
             poseAllRobots = self.hsub.getPoseMultiRobot(cached=True) #[0:2]
             #self.postEvent("POSE", tuple(map(int, self.hsub.coordmap_lab2map(pose))))
             for robot_name, pose in poseAllRobots.iteritems():

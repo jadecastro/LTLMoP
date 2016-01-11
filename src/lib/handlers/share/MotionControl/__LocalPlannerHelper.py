@@ -1,9 +1,15 @@
-import pymatlab
+try:
+    import matlab.engine as mleng
+    mlengFlag = True
+except ImportError:
+    import pymatlab
+    mlengFlag = False
 import numpy as np
 import logging
 import platform
 from collections import OrderedDict
 from math import sin, cos
+from scipy.linalg import norm
 
 threshold = 10
 robRadius = OrderedDict([('rob2',0.15), ('rob1',0.15)])
@@ -14,9 +20,12 @@ robots = [robRadius, robMaxVel]
 system = platform.system()
 if system == 'Darwin':
     pathToMatlabLocalPlanner = '/Users/jalonso/MIT/drl-projects/uav-avoidance/multiquad-sim'
-else:
+elif system == 'Linux':
     pathToMatlabLocalPlanner = '/home/jon/Dropbox/Repos/uav-avoidance/multiquad-sim'
+elif system == 'Windows':
     pathToMatlabLocalPlanner = 'C:\Users\jad455.CORNELL\LocalPlanner\uav-avoidance\multiquad-sim'
+else:
+    raise NotImplementedError("System '%s' not recognized" % system)
 
 def initializeLocalPlanner(session, regions, regionTransitionFaces, obstaclePoints, scalingPixelsToMeters, limitsMap, numRobots, numDynamicObstacles, numExogenousRobots, robotType, scenario):
     """
@@ -25,20 +34,19 @@ def initializeLocalPlanner(session, regions, regionTransitionFaces, obstaclePoin
     logging.info('Starting Matlab session...')
     # session = pymatlab.session_factory()
 
-    session.run("rng('shuffle');")
-
-    # Initialize the local planner
+    # Navigate to the appropriate directory and then initialize the local planner
     session.run('cd(\'' + pathToMatlabLocalPlanner+'\')')
-    if scenario == 1 or scenario == 3 or scenario == 4:
-        session.run('settingsHadas = 1;')
-        session.run('isFirstCall = 1;')
-    elif scenario == 2:
-        session.run('settingsHadas = 2;')
 
-    session.run('nB = '+str(numRobots+numExogenousRobots+numDynamicObstacles)+';')
+    if scenario == 1 or scenario == 3 or scenario == 4:
+        session.putvalue('settingsHadas',np.float_([1]))
+        session.putvalue('isFirstCall',np.float_([1]))
+    elif scenario == 2:
+        session.putvalue('settingsHadas',np.float_([2]))
+
+    nB = numRobots + numExogenousRobots + numDynamicObstacles
+    session.putvalue('nB',np.float_([numRobots+numExogenousRobots+numDynamicObstacles]))
     print "mode: "+str(session.getvalue('settingsHadas'))
     print "total number of robots: "+str(session.getvalue('nB'))
-    session.run('[rParam, param, agentTypeDef, debugSettings] = simLocalPlanning_initialize(settingsHadas, nB);')
 
     # Set robot parameters for use in the current Matlab session
     rRadius = []
@@ -49,63 +57,37 @@ def initializeLocalPlanner(session, regions, regionTransitionFaces, obstaclePoin
     # session.putvalue('rRob',robotRadius)
     # logging.debug("  rRob (matlab): "+str(session.getvalue('rRob')))
 
-    session.putvalue('limitsMap',limitsMap)
+    session.putvalue('limitsMap',np.float_(limitsMap))
     logging.debug("  limitsMap (matlab): "+str(session.getvalue('limitsMap')))
 
-    session.putvalue('regionTransitionFaces',regionTransitionFaces)
+    session.putvalue('regionTransitionFaces',np.float_(regionTransitionFaces))
     logging.debug("  regionTransitionFaces (matlab): "+str(session.getvalue('regionTransitionFaces')))
-    session.run('sizeOut = size(regionTransitionFaces);')
-
-    for i, points in enumerate(obstaclePoints):
-        session.putvalue('obstaclePointsNew',points)
-        logging.debug("  obstaclePointsNew (matlab): "+str(session.getvalue('obstaclePointsNew')))
-        session.run('obstaclePoints{'+str(i+1)+'} = obstaclePointsNew;')
-
-    # Set the region/obstacle vertices
-    if scenario == 1 or scenario == 3 or scenario == 4:
-        session.run('[map] = create_map_3d_from_2d_input(limitsMap, obstaclePoints, regionTransitionFaces);')
-    elif scenario == 2:
-        session.run('[obstacle_rel, wallConstraintsXYZ, region_doors] = create_map_3d(scenario_type);')
 
     for i in range(numRobots+numExogenousRobots):
-        session.run('agentType('+str(i+1)+') = '+str(robotType)+';')
         if scenario == 2 or scenario == 4:
             # put initial values into the variables we will be querying
             if i == 0:
-                session.run('vOut'+str(i+1)+' = 6;')
-                session.run('wOut'+str(i+1)+' = 8;')
+                session.putvalue('vOut'+str(i+1),np.float_([6]))
+                session.putvalue('wOut'+str(i+1),np.float_([8]))
             elif i == 1:
-                session.run('vOut'+str(i+1)+' = 1;')
-                session.run('wOut'+str(i+1)+' = 6;')
+                session.putvalue('vOut'+str(i+1),np.float_([1]))
+                session.putvalue('wOut'+str(i+1),np.float_([6]))
             elif i == 2:
-                session.run('vOut'+str(i+1)+' = 2;')
-                session.run('wOut'+str(i+1)+' = 1;')
+                session.putvalue('vOut'+str(i+1),np.float_([2]))
+                session.putvalue('wOut'+str(i+1),np.float_([1]))
             elif i == 3:
-                session.run('vOut'+str(i+1)+' = 2;')
-                session.run('wOut'+str(i+1)+' = 2;')
-            session.run('deadlockAgent'+str(i+1)+' = 0;')
-
-    if robotType == 3:
-        # force the third one to be a Create
-        session.run('agentType(3) = 2;')
-
-    session.run('[rParam, rStates, rCmd, gState, status, param, allData] = initializeAgentParameters(rParam, param, agentTypeDef, map);')
-    session.run('view(2);')
-    if True:
-        session.run('param.nB_controlledLTLMoP = nB - '+str(numDynamicObstacles)+';')
-        session.run('param.n_dynamicObstacle = 0;')
-    else:
-        session.run('param.nB_controlledLTLMoP = 0;')
-        session.run('param.n_dynamicObstacle = '+str(numDynamicObstacles)+';')
-    if numDynamicObstacles > 0:
-        session.run('param.dynamicObstacleVelocityControlled = 0;')
-
-    # initially set the allowed regions to zero (no constraints)
-    for i in range(numRobots+numExogenousRobots):
-        session.run('status.allowed_regions('+str(i+1)+',:) = [0, 0];')
+                session.putvalue('vOut'+str(i+1),np.float_([2]))
+                session.putvalue('wOut'+str(i+1),np.float_([2]))
+            session.putvalue('deadlockAgent'+str(i+1),np.float_([0]))
 
     for i in range(numRobots):
-        session.run('deadlockAgent'+str(i+1)+' = 0;')
+        session.putvalue('deadlockAgent'+str(i+1), np.float_([0]))
+
+    # run the initialization scripts
+    if mlengFlag:
+        session.initializeLTLMoPhandler()
+    else:
+        runInitializationScripts(session, numRobots, numExogenousRobots, numDynamicObstacles, obstaclePoints, scenario, robotType)
 
     # print "wallConstraintsXYZ: "+str(session.getvalue('wallConstraintsXYZ'))
 
@@ -158,11 +140,12 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, poseExog, 
             # nextRegNbr[0] = regionNumbers[nextRegName]
             session.putvalue('id_region_1',np.float_(currNbr))
             session.putvalue('id_region_2',np.float_(nextNbr))
-            if scenario == 1 or scenario == 3 or scenario == 4:
-                session.run('status.allowed_regions('+str(i+1)+',:) = [0, 0];') 
-                # session.run('status.allowed_regions('+str(i+1)+',:) = [id_region_1, id_region_2];')
-            elif scenario == 2:
-                session.run('status.allowed_regions('+str(i+1)+',:) = [id_region_1, id_region_2];')
+            if not mlengFlag:
+                if scenario == 1 or scenario == 3 or scenario == 4:
+                    session.run('status.allowed_regions('+str(i+1)+',:) = [0, 0];') 
+                    # session.run('status.allowed_regions('+str(i+1)+',:) = [id_region_1, id_region_2];')
+                elif scenario == 2:
+                    session.run('status.allowed_regions('+str(i+1)+',:) = [id_region_1, id_region_2];')
 
             logging.debug("  id_region_1 (matlab): "+str(session.getvalue('id_region_1')))
             logging.debug("  id_region_2 (matlab): "+str(session.getvalue('id_region_2')))
@@ -199,9 +182,10 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, poseExog, 
     # Execute one step of the local planner and collect velocity components
     # session.run('simLocalPlanning_saveData(param, rParam, rStates, rCmd, gState, status, allData, map);')
     try:
-        session.run('doStep_wrapper();')
+        session.run('doStep_wrapper')
     except:
         print "WARNING: Matlab function doStep_wrapper experienced an error!!"
+        logging.debug('WARNING: Matlab function doStep_wrapper experienced an error!!')
 
     v = {}
     w = {}
@@ -236,3 +220,49 @@ def closeInterface(session):
     """
     logging.info('MATLAB session closed')
     del session
+
+def runInitializationScripts(session, numRobots, numExogenousRobots, numDynamicObstacles, obstaclePoints, scenario, robotType):
+    """
+    run matlab initializations using commands specific to pymatlab
+    """
+
+    nB = numRobots + numExogenousRobots + numDynamicObstacles
+
+    session.run("rng('shuffle');")
+    session.run('[rParam, param, agentTypeDef, debugSettings] = simLocalPlanning_initialize(settingsHadas, nB);')
+
+    session.run('sizeOut = size(regionTransitionFaces);')
+
+    if True:  # when DO behavior is governed by the local planner, as opposed to pose being defined externally
+        session.run('param.nB_controlledLTLMoP = nB - '+str(numDynamicObstacles))
+        session.run('param.n_dynamicObstacle = 0')
+    else:
+        session.run('param.nB_controlledLTLMoP = 0')  #TODO: doesn't this need to be set > 0?
+        session.run('param.n_dynamicObstacle = '+str(numDynamicObstacles))
+    if numDynamicObstacles > 0:
+        session.run('param.dynamicObstacleVelocityControlled = 0')
+
+    for i, points in enumerate(obstaclePoints):
+        session.putvalue('obstaclePointsNew',np.float_([points]))
+        logging.debug("  obstaclePointsNew (matlab): "+str(session.getvalue('obstaclePointsNew')))
+        session.run('obstaclePoints{'+str(i+1)+'} = obstaclePointsNew;')
+
+    # Set the region/obstacle vertices
+    if scenario == 1 or scenario == 3 or scenario == 4:
+        session.run('[map] = create_map_3d_from_2d_input(limitsMap, obstaclePoints, regionTransitionFaces);')
+    elif scenario == 2:
+        session.run('[obstacle_rel, wallConstraintsXYZ, region_doors] = create_map_3d(scenario_type);')
+
+    for i in range(numRobots+numExogenousRobots):
+        session.run('agentType('+str(i+1)+') = '+str(robotType)+';')
+
+    if robotType == 3:
+        # force the third one to be a Create
+        session.run('agentType(3) = 2;')
+
+    session.run('[rParam, rStates, rCmd, gState, status, param, allData] = initializeAgentParameters(rParam, param, agentTypeDef, map);')
+    session.run('view(2);')
+
+    # initially set the allowed regions to zero (no constraints)
+    for i in range(numRobots+numExogenousRobots):
+        session.run('status.allowed_regions('+str(i+1)+',:) = [0, 0];')
