@@ -33,6 +33,7 @@ class LocalPlannerPoseHandler(handlerTemplates.PoseHandler):
         """ Returns the most recent (x,y) reading from matlab """
 
         # Get updated information
+        logging.debug("  Pose: "+str(self.session.getvalue('vOut'+str(self.robot_id+1))))
         x = 1*self.scalingPixelsToMeters*self.session.getvalue('vOut'+str(self.robot_id+1))
         y = 1*self.scalingPixelsToMeters*self.session.getvalue('wOut'+str(self.robot_id+1))
         theta = 0

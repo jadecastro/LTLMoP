@@ -29,17 +29,22 @@ class MatlabSession:
     
     def __init__(self, mleng):
         self.session = mleng.start_matlab()
+        print "object inside: "+str(self.session)
+        self.session.sin(2.,nargout=0)
         
     def run(self, cmd):
         logging.info('Evaluating Matlab command:  '+cmd+'  ....')
-        self.session.eval(cmd)
+        self.session.eval(cmd,nargout=0)
         logging.info('.... Finished!!')
 
     def putvalue(self, var, val):
-        self.session.workspace[var] = val
+        self.session.workspace[var] = val.tolist()
 
     def getvalue(self, var):
-        return self.session.eval(var)
+        try:
+            return self.session.eval(var)[0]
+        except:
+            return self.session.eval(var)
 
 class Project:
     """
@@ -146,6 +151,8 @@ class Project:
         # Start a matlab session for use with the local planner
         if mlengFlag:
             self.session = MatlabSession(mleng)
+            print "object outside: "+str(self.session)
+            self.session.run('sin(2.)')
         else:
             self.session = pymatlab.session_factory()
 

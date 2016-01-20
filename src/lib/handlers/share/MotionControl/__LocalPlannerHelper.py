@@ -35,7 +35,8 @@ def initializeLocalPlanner(session, regions, regionTransitionFaces, obstaclePoin
     # session = pymatlab.session_factory()
 
     # Navigate to the appropriate directory and then initialize the local planner
-    session.run('cd(\'' + pathToMatlabLocalPlanner+'\')')
+    session.run('cd(\'' + pathToMatlabLocalPlanner + '\')')
+    session.run('addpath(\'' + pathToMatlabLocalPlanner + '\')')
 
     if scenario == 1 or scenario == 3 or scenario == 4:
         session.putvalue('settingsHadas',np.float_([1]))
@@ -44,9 +45,11 @@ def initializeLocalPlanner(session, regions, regionTransitionFaces, obstaclePoin
         session.putvalue('settingsHadas',np.float_([2]))
 
     nB = numRobots + numExogenousRobots + numDynamicObstacles
-    session.putvalue('nB',np.float_([numRobots+numExogenousRobots+numDynamicObstacles]))
-    print "mode: "+str(session.getvalue('settingsHadas'))
-    print "total number of robots: "+str(session.getvalue('nB'))
+    session.putvalue('numRobots',np.float_([numRobots]))
+    session.putvalue('numExogenousRobots',np.float_([numExogenousRobots]))
+    session.putvalue('numDynamicObstacles',np.float_([numDynamicObstacles]))
+    session.putvalue('scenario',np.float_([scenario]))
+    session.putvalue('robotType',np.float_([robotType]))
 
     # Set robot parameters for use in the current Matlab session
     rRadius = []
@@ -57,6 +60,12 @@ def initializeLocalPlanner(session, regions, regionTransitionFaces, obstaclePoin
     # session.putvalue('rRob',robotRadius)
     # logging.debug("  rRob (matlab): "+str(session.getvalue('rRob')))
 
+    session.putvalue('obstaclePoints',np.float_(obstaclePoints))
+    for i, points in enumerate(obstaclePoints):
+        logging.debug("  points: "+str(points))
+    logging.debug("  obstaclePoints: "+str(obstaclePoints))
+    logging.debug("  obstaclePoints (matlab): "+str(session.getvalue('obstaclePoints')))
+    
     session.putvalue('limitsMap',np.float_(limitsMap))
     logging.debug("  limitsMap (matlab): "+str(session.getvalue('limitsMap')))
 
@@ -85,9 +94,14 @@ def initializeLocalPlanner(session, regions, regionTransitionFaces, obstaclePoin
 
     # run the initialization scripts
     if mlengFlag:
-        session.initializeLTLMoPhandler()
+        print session
+        session.run('initializeLTLMoPhandler')
+        #self.session.run('initializeLTLMoPhandler')
     else:
         runInitializationScripts(session, numRobots, numExogenousRobots, numDynamicObstacles, obstaclePoints, scenario, robotType)
+        
+    print "mode: "+str(session.getvalue('settingsHadas'))
+    print "total number of robots: "+str(session.getvalue('nB'))
 
     # print "wallConstraintsXYZ: "+str(session.getvalue('wallConstraintsXYZ'))
 
@@ -181,6 +195,7 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, poseExog, 
 
     # Execute one step of the local planner and collect velocity components
     # session.run('simLocalPlanning_saveData(param, rParam, rStates, rCmd, gState, status, allData, map);')
+    #session.run('save(\'test\')')
     try:
         session.run('doStep_wrapper')
     except:

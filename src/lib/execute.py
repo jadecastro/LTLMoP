@@ -208,9 +208,9 @@ class LTLMoPExecutor(ExecutorStrategyExtensions,ExecutorResynthesisExtensions, o
 
     def pause(self):
         """ pause execution of the automaton """
-        self.runStrategy.clear()
-        time.sleep(0.1) # Wait for FSA to stop
-        self.postEvent("PAUSE")
+        #self.runStrategy.clear()
+        #time.sleep(0.1) # Wait for FSA to stop
+        #self.postEvent("PAUSE")
 
     def resume(self):
         """ start/resume execution of the automaton """
