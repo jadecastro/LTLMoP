@@ -417,6 +417,15 @@ m_rob2_one
 #rob2_R_rc -> ! rob1_R
 #rob2_D_rc -> ! rob1_D
 #******
+& | ! rob1_D_rc' ! rob2_D' | ! rob2_D_rc' ! rob1_D'
+| ! & & & rob1_L_rc rob1_L_rc' rob2_B_rc | rob1_B rob1_L ! rob2_L'
+| ! & & & rob1_B_rc rob1_B_rc' rob2_L_rc | rob1_L rob1_B ! rob2_B'
+| ! & & & rob2_L_rc rob2_L_rc' rob1_B_rc | rob2_B rob2_L ! rob1_L'
+| ! & & & rob2_B_rc rob2_B_rc' rob1_L_rc | rob2_L rob2_B ! rob1_B'
+| ! & & & rob1_L_rc rob1_L_rc' rob2_T_rc | rob1_T rob1_L ! rob2_L'
+| ! & & & rob1_T_rc rob1_T_rc' rob2_L_rc | rob1_L rob1_T ! rob2_T'
+| ! & & & rob2_L_rc rob2_L_rc' rob1_T_rc | rob2_T rob2_L ! rob1_L'
+| ! & & & rob2_T_rc rob2_T_rc' rob1_L_rc | rob2_L rob2_T ! rob1_T'
 
 [SYS_INIT]
 & & & & & & & & & & & & & & & ! rob1_T ! rob1_B rob1_L ! rob1_R ! rob1_D ! rob2_T ! rob2_B ! rob2_L rob2_R ! rob2_D ! m_rob1_deadlock2 ! m_rob1_deadlock3 ! m_rob2_deadlock2 ! m_rob2_deadlock3 ! m_rob1_one ! m_rob2_one
