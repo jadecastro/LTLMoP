@@ -27,7 +27,7 @@ def initializeController(session, regions, scalingPixelsToMeters, limitsMap):
     session.run('initExecute();')
     print str(session.getvalue('errorMsg'))
 
-    v,w,acLastData = executeControllersSingleStep(aut,sys,ac_trans,ac_inward,pose,id_region_1,id_region_2,acLastData)
+    vx,vy,w,errorMsg,acLastData = executeControllersSingleStep(aut,ac_trans,ac_inward,pose,id_region_1,id_region_2,acLastData)
     print str(session.getvalue('errorMsg'))
 
     # session.putvalue('rRob',robotRadius)
@@ -52,7 +52,7 @@ def executeController(session, poseDic, regions, curr, next, coordmap_lab2map, s
         roboName = poseLoc[0]
 
         # Set the current pose: PYTHON: pose, MATLAB: zAux  (size d x n)  
-        # poseNew = np.float_(np.hstack([float(1)/scalingPixelsToMeters*np.array(coordmap_lab2map(poseLoc[1][0:2])), poseLoc[1][2]]))
+        #pose = np.float_(np.hstack([float(1)/scalingPixelsToMeters*np.array(coordmap_lab2map(poseLoc[1][0:2])), poseLoc[1][2]]))
         pose = np.float_(np.hstack([float(1)/scalingPixelsToMeters*poseLoc[1][0:2], poseLoc[1][2]]))
         # poseNew = np.float_(poseLoc[1])
         session.putvalue('pose',pose)
@@ -89,63 +89,81 @@ def executeController(session, poseDic, regions, curr, next, coordmap_lab2map, s
 
     # Execute one step of the local planner and collect velocity components
     try:
-        v,w,acLastData = executeControllersSingleStep(aut,sys,ac_trans,ac_inward,pose,id_region_1,id_region_2,acLastData)
+        vx,vy,w,errorMsg,acLastData = executeControllersSingleStep(aut,ac_trans,ac_inward,pose,id_region_1,id_region_2,acLastData)
     except:
         print "WARNING: Matlab execute function experienced an error!!"
 
+    logging.debug("  Matlab error: "+str(session.getvalue('errorMsg')))
     # print str(session.getvalue('errorMsg'))
-    v = {}
+    vx = {}
+    vy = {}
     w = {}
     for i, poseLoc in enumerate(poseDic.iteritems()):
         # logging.debug('v = ' + str(session.getvalue('vOut'+str(i+1))))
         # logging.debug('w = ' + str(session.getvalue('wOut'+str(i+1))))
 
-        v[i] = 1*scalingPixelsToMeters*session.getvalue('v')
+        vx[i] = 1*scalingPixelsToMeters*session.getvalue('vx')
+        vy[i] = 1*scalingPixelsToMeters*session.getvalue('vy')
         w[i] = 1*session.getvalue('w') #0.25*session.getvalue('wOut'+str(i+1))
         # deadAgent.append(session.getvalue('deadlockAgent'+str(i+1)))
         # print "Deadlock status (agent "+str(i)+") :"+str(deadAgent[i])
 
 
     # return velocities
-    return v, w
+    return vx, vy, w
+
+def closeInterface(session):
+    """
+    close connection with MATLAB
+    """
+    logging.info('MATLAB session closed')
+    del session
 
 def initializeController():
 
 
-def executeControllersSingleStep(aut,sys,ac_trans,ac_inward,pose,id_region_1,id_region_2,acLastData):
-
-    persistent t_offset t_base tend ell t_trials
-
-    global u_sav x_sav x0_sav
+def executeSingleStep(aut,ac_trans,ac_inward,pose,x,t,currReg,nextReg,acLastData,data):
+    t_offset = data['t_offset']
+    t_base = data['t_base']
+    tend = data['tend']
+    ell = data['ell']
+    t_trials = data['t_trials']
+    x_sav = data['x_sav']
+    x0_sav = data['x0_sav']
 
     delayTime = -0.1
 
-    timeBaseFlag = false  # if 'true', use time as a basis for choosing the TVLQR states; otherwise use a weighted Euclidean distance.
-    useLastAC = true
+    timeBaseFlag = False  # if 'true', use time as a basis for choosing the TVLQR states; otherwise use a weighted Euclidean distance.
+    useLastAC = True
+
+    phaseWrap = np.array([0, 0, 2*pi])
+
+    weights = np.array([1, 1, 0.2])
+
+    m = sysObj.numConfig
+    n = sysObj.numState
 
     #################
     # Account for our manual shifting of the map to the left because of the "dead zone" in the Vicon field 
-    x(1) = x(1) + 0.0043
-    x(2) = x(2) + 0.1629
+    x = x + np.array([0.0043, 0.1629, 0])
     #################
 
     #################
     # Account for our manual shifting of the map
-    x(1) = x(1) - 0.9774
-    x(2) = x(2) + 0.0258
+    x = x + np.array([-0.9774, 0.0258, 0])
     #################
 
-    x(3) = x(3) + 0.2  # theta bias needed to account for misalignment of the youBot's coordinate frame wrt. its true orientation
+    x[2] = x[2] + 0.2  # theta bias needed to account for misalignment of the youBot's coordinate frame wrt. its true orientation
 
-    prevCtrl = false
+    prevCtrl = False
 
-    if isempty(t_base):
-        t_base = clock
+    if not t_base:
+        t_base = clock #FIX
 
+    # fail-safe velocity settings
     vx = 0
     vy = 0
     w = 0.001
-    errorMsg = 'nothing to see here...'
 
     teval = 0.02;
 
@@ -161,22 +179,16 @@ def executeControllersSingleStep(aut,sys,ac_trans,ac_inward,pose,id_region_1,id_
         error('you have specified an invalid transition!')
     currState = trans(currTrans,1);  nextState = trans(currTrans,2)
     
-    # deal with the possibility of sys being a cell array of systems.
-    if length(sysArray) > 1:
-        sys = sysArray(aut.f{currTrans})
-    else:
-        sys = sysArray
-    
     # identify the funnel we're in and get the ellipse index
     iTrans = false
     iIn = false
-    if isinternal(ac_trans{currTrans}, x,'u',sys):
+    if isinternal(ac_trans{currTrans}, x,'u'):
     # if isinternal(ac_trans{currTrans}, x,'u')
         iTrans = currTrans
         ac = ac_trans{currTrans}
     if iTrans == false && ~isempty(ac_inward):
         for funIdx = 1:length(ac_inward{currState})
-            if isinternal(ac_inward{currState}(funIdx), x,'u',sys)
+            if isinternal(ac_inward{currState}(funIdx), x,'u')
                 #         if isinternal(ac_inward{currState}, x,'u')
                 iIn = currState
                 ac = ac_inward{currState}(funIdx)
@@ -207,11 +219,11 @@ def executeControllersSingleStep(aut,sys,ac_trans,ac_inward,pose,id_region_1,id_
             print('WARNING: no funnels found! Forcing an (unverified) controller.')
     
     # determine the new time offset if something has changed
-    if timeBaseFlag:
+    if timeBaseFlag:  
+        # TODO: This option is work-in-progress
         acData = {iTrans, iIn, currState, nextState, currStateOld, nextStateOld};
         for i in range(len(acData)-2):
             cmp(i) = acData{i}==acLastData{i}
-        end
         cmp
         if (~all(cmp) || ~(all(ismember([acLastData{1:4}],[acData{1:4}])) && all([acLastData{3:4}] == [acData{3:4}]))) && ~prevCtrl
             t_trials = getTimeVec(ac.x0)
@@ -231,7 +243,8 @@ def executeControllersSingleStep(aut,sys,ac_trans,ac_inward,pose,id_region_1,id_
         t_offset
         teval = min(tend,t + t_offset)
 
-    else:
+    else:  
+        # this approach computes the command based on proximity to the nominal trajectory
         acData = {iTrans, iIn, currState, nextState, currStateOld, nextStateOld}
         for i = 1:length(acData)-2:
             cmp(i) = acData{i}==acLastData{i}
@@ -242,44 +255,50 @@ def executeControllersSingleStep(aut,sys,ac_trans,ac_inward,pose,id_region_1,id_
 
         acLastData = acData
         
-        minDelta = inf;
-        weights = [1;1;0.2]
-        for i = 2:3:length(ell)
-            xtmp = double(ac.x0, t_trials(i));
-            testMinDist = min([
-                norm(weights.*(xtmp(1:3) - (x(1:3)+[0 0 2*pi]))) 
-                norm(weights.*(xtmp(1:3) - x(1:3))) 
-                norm(weights.*(xtmp(1:3) - (x(1:3)-[0 0 2*pi])))])
+        minDelta = np.inf
+        for i in range(len(ell))
+            xtmp = double(ac.x0, t_trials(i)) #FIX
+            testDist = np.array([
+                np.linalg.norm(weights*(sysObj.state2SEconfig(xtmp) - (sysObj.state2SEconfig(x)+phaseWrap))),
+                np.linalg.norm(weights*(sysObj.state2SEconfig(xtmp) - sysObj.state2SEconfig(x)),
+                np.linalg.norm(weights*(sysObj.state2SEconfig(xtmp) - (sysObj.state2SEconfig(x)-phaseWrap)))])
+
+            testMinDist = min(testDist)
+
             if testMinDist < minDelta
-                teval = t_trials(i)
+                teval = t_trials[i]
                 minDelta = testMinDist
-        if isempty(t)  # if time is not given, we compute it here
-            t = etime(clock,t_base)
+        if not t  # if time is not given, we compute it here
+            t = etime(clock,t_base)#FIX
     
     # compute a command
     teval
-    K = double(ac.K,teval)
-    x0 = double(ac.x0,teval)
-    u0 = double(ac.u0,teval)
+    K = double(ac.K,teval) #FIX
+    x0 = double(ac.x0,teval) #FIX
+    u0 = double(ac.u0,teval)#FIX
     
     K = K(end-length(u0)+1:end,:)
     
-    u_test = [(K*(x+[0 0 2*pi] - x0)) (K*(x - x0)) (K*(x-[0 0 2*pi] - x0))]
-    u_idx = abs(u_test(end,:)) == min(abs(u_test(end,:)))
-    u_ctrl = u_test(:,u_idx)
-    u = u0 + 1*u_ctrl(:,1)
+    u_test = np.array([
+            (K*(x+sysObj.state2SEconfig(phaseWrap) - x0)),
+            (K*(x - x0)),
+            (K*(x-sysObj.state2SEconfig(phaseWrap) - x0))])
+    u_idx = (abs(u_test[:,-1]) == min(abs(u_test[:,-1]))).nonzero()
+    u_ctrl = u_test[u_idx[0]]
+
+    # Compute the control command
+    u = u0 + u_ctrl
     # u(2) = max(min(u(2),16),-16);
     
-    if aut.f{currTrans} == 1:  # we're using diff-drive dynamics
-        vx = u(1);  w = max(min(u(2),0.2),-0.2);
-    else if aut.f{currTrans} == 2:  # we're using holonomic-drive dynamics
-        u_local = [cos(-x(3)) -sin(-x(3));sin(-x(3)) cos(-x(3))]*u(1:2)
-        vx = 1*u_local(1);  vy = 1*u_local(2);  w = u(3);
-    else:
-        error('unhandled system identifier!')
+    # Allocate the linear/angular velocities
+    vx, vy, w = sysObj.command2robotInput(x,u)
     
     #u_sav = [u_sav; t u]
     x_sav = [x_sav; t x]
     x0_sav = [x0_sav; t x0]
 
-    return v,w,acLastData
+    data = {'t_offset': t_offset,'t_base': t_base,'tend': tend,'ell': ell,'t_trials': t_trials,'x_sav': x_sav,'x0_sav': x0_sav}
+
+    return vx, vy, w, acLastData, data
+
+def isinternal():
