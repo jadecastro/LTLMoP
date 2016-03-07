@@ -10,7 +10,7 @@ system = platform.system()
 
 def initializeController(fname, numDiscStates, numDiscTransitions):
     """
-    intialize Local Planner by setting up a pymatlab session and setting variables
+    intialize the controller and set up variables
     """
 
     mat_contents = sio.loadmat(fname)
@@ -60,7 +60,7 @@ def initializeController(fname, numDiscStates, numDiscTransitions):
     
     return aut ac_inward ac_inward acLastData cyclicTrinaryVector
 
-def executeController(session, poseDic, regions, curr, next, coordmap_lab2map, scalingPixelsToMeters, doUpdate):
+def executeController(poseDic, regions, curr, next, coordmap_lab2map, scalingPixelsToMeters, doUpdate):
     """
     pose  = {'rob1':[-1 ,.5],'rob2':[1,1],'rob3':[3.5 , -1]}
     next_regIndices = {'rob1': 2,'rob2':3,'rob3':3}
@@ -104,15 +104,10 @@ def executeController(session, poseDic, regions, curr, next, coordmap_lab2map, s
     Vy = {}
     W = {}
     for i, poseLoc in enumerate(poseDic.iteritems()):
-        # logging.debug('v = ' + str(session.getvalue('vOut'+str(i+1))))
-        # logging.debug('w = ' + str(session.getvalue('wOut'+str(i+1))))
 
         Vx[i] = 1*scalingPixelsToMeters*vx
         Vy[i] = 1*scalingPixelsToMeters*vy
-        W[i] = 1*w #0.25*session.getvalue('wOut'+str(i+1))
-        # deadAgent.append(session.getvalue('deadlockAgent'+str(i+1)))
-        # print "Deadlock status (agent "+str(i)+") :"+str(deadAgent[i])
-
+        W[i] = 1*w #0.25*w
 
     # return velocities
     return Vx, Vy, W

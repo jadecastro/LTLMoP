@@ -90,16 +90,7 @@ class ReasynsHandler(handlerTemplates.MotionControlHandler):
         # print 'Bounding box: '+str(limitsMap)
         self.limitsMap = limitsMap
 
-        Reasyns.initializeController(self.session, self.rfi.regions, self.scalingPixelsToMeters, limitsMap)
-
-    def _stop(self):
-        """
-        Properly terminates all threads/computations in the handler. Leave no trace behind.
-        """
-
-        session.run('saveData();')
-        logging.debug("Closing the connection...") 
-
+        Reasyns.initializeController(self.rfi.regions, self.scalingPixelsToMeters, limitsMap)
 
     def gotoRegion(self, current_regIndices, next_regIndices, last=False):
         """
@@ -177,13 +168,7 @@ class ReasynsHandler(handlerTemplates.MotionControlHandler):
                 """
 
         # Run algorithm to find a velocity vector (global frame) to take the robot to the next region
-        vx, vy, w = Reasyns.executeController(self.session, self.pose, self.rfi.regions, current_regIndices, next_regIndices, self.coordmap_lab2map, self.scalingPixelsToMeters, doUpdate)
-
-        # save the data
-        if (time.time() - self.timer) > 10:
-            self.timer = time.time()
-            self.session.run('saveData();')
-
+        vx, vy, w = Reasyns.executeController(self.pose, self.rfi.regions, current_regIndices, next_regIndices, self.coordmap_lab2map, self.scalingPixelsToMeters, doUpdate)
 
         for idx, robot_name in enumerate(self.robotList):
             current_reg = current_regIndices[robot_name]
