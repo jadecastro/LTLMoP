@@ -17,7 +17,7 @@ class SystemDynamics():
 
     def state2SEconfig(self, x):
     	"""
-    	Transforms a state vector to an SE(2) configuration (x,y translations plus rotation)
+    	Transforms a state vector to an SE(n) configuration (x,y translations plus rotation)
     	"""
 
         y = np.identity(self.numConfig+1)*x[:self.numConfig+1]
@@ -26,7 +26,7 @@ class SystemDynamics():
 
     def SEconfig2state(self, y):
     	"""
-    	Transforms SE(2) configuration vector to a state vector
+    	Transforms SE(n) configuration vector to a state vector
     	"""
 
         x = np.array([0]*self.numState)
@@ -43,7 +43,7 @@ class Holonomic(SystemDynamics):
 
     def state2SEconfig(self, x):
     	"""
-    	Transforms a state vector to an SE(2) configuration (x,y translations plus rotation)
+    	Transforms a state vector to an SE(n) configuration (x,y translations plus rotation)
     	"""
     	
     	y = SystemDynamics.state2SEconfig(self,x)
@@ -53,7 +53,7 @@ class Holonomic(SystemDynamics):
 
     def SEconfig2state(self, y):
     	"""
-    	Transforms SE(2) configuration vector to a state vector
+    	Transforms SE(n) configuration vector to a state vector
     	"""
 
         x = SystemDynamics.SEconfig2state(self, y)
@@ -85,7 +85,7 @@ class Unicycle(SystemDynamics):
 
     def state2SEconfig(self, x):
     	"""
-    	Transforms a state vector to an SE(2) configuration (x,y translations plus rotation)
+    	Transforms a state vector to an SE(n) configuration (x,y translations plus rotation)
     	"""
 
         y = SystemDynamics.state2SEconfig(self,x)
@@ -94,7 +94,7 @@ class Unicycle(SystemDynamics):
 
     def SEconfig2state(self, y):
     	"""
-    	Transforms SE(2) configuration vector to a state vector
+    	Transforms SE(n) configuration vector to a state vector
     	"""
 
         x = SystemDynamics.SEconfig2state(self, y)

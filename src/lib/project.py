@@ -15,7 +15,6 @@ import fileMethods, regions
 from numpy import *
 import logging
 import globalConfig
-import pymatlab
 
 class Project:
     """
@@ -38,8 +37,6 @@ class Project:
         self.internal_props = []
         self.current_config = ""
         self.shared_data = {}  # This is for storing things like server connection objects, etc.
-
-        self.session = None
 
         self.h_instance = {'init':{},'pose':None,'locomotionCommand':None,'motionControl':None,'drive':None,'sensor':{},'actuator':{}}
 
@@ -117,11 +114,6 @@ class Project:
         # Figure out where we should be looking for files, based on the spec file name & location
         self.project_root = os.path.abspath(os.path.dirname(spec_file))
         self.project_basename, ext = os.path.splitext(os.path.basename(spec_file))
-
-
-        # Start a matlab session for use with the local planner
-        self.session = pymatlab.session_factory()
-
 
         ### Load in the specification file
         logging.info("Loading specification file %s..." % spec_file)

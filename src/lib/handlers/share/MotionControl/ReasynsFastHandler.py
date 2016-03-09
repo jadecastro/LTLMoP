@@ -10,7 +10,7 @@ from numpy import *
 from __is_inside import *
 import time, math, sys
 import logging
-import __ReasynsHelper as Reasyns
+import __ReasynsHelperFast as Reasyns
 from collections import OrderedDict
 from scipy.linalg import norm
 import Polygon, Polygon.IO
@@ -18,6 +18,7 @@ import Polygon.Utils as PolyUtils
 import Polygon.Shapes as PolyShapes
 import project
 
+print "ping"
 import lib.handlers.handlerTemplates as handlerTemplates
 from lib.regions import Point
 
@@ -28,6 +29,9 @@ class ReasynsHandler(handlerTemplates.MotionControlHandler):
 
         scalingPixelsToMeters (float): Scaling factor between RegionEditor map and the Matlab map
         """
+
+        filename                = 'resultsPython'
+
         self.numRobots          = []    # number of robots: number of agents in the specification, controlled by the local planner
         
         self.scalingPixelsToMeters = scalingPixelsToMeters
@@ -77,20 +81,16 @@ class ReasynsHandler(handlerTemplates.MotionControlHandler):
         for region in self.rfi.regions:
             self.map[region.name] = self.createRegionPolygon(region)
 
-        # Generate bounding box for passing to the local planner
-        # testSetOfRegions = self.rfi.regions    # TODO: hard-coding. decomposed region file doesn't store the boundary.
-        testSetOfRegions = []
-        testSetOfRegions.append([Point(0,0),Point(0,700),Point(700,0),Point(700,700)])
-        for region in testSetOfRegions:
-            regionPoints = self.getRegionVertices(region)
-            print regionPoints 
-            # if region.name == 'boundary':
-            xv = [x for x,y in regionPoints]; yv = [y for x,y in regionPoints]
-            limitsMap = [min(xv), max(xv), min(yv), max(yv)]
-        # print 'Bounding box: '+str(limitsMap)
-        self.limitsMap = limitsMap
+        # Initialize the data structures
+        acLastData, data, aut, ac_trans, ac_inward cyclicTrinaryVector = Reasyns.initializeController(filename)
 
-        Reasyns.initializeController(self.rfi.regions, self.scalingPixelsToMeters, limitsMap)
+        self.acLastData = acLastData
+        self.data = data
+        self.aut = aut
+        self.ac_trans = ac_trans
+        self.ac_inward = ac_inward
+        self.cyclicTrinaryVector = cyclicTrinaryVector
+
 
     def gotoRegion(self, current_regIndices, next_regIndices, last=False):
         """
@@ -168,7 +168,10 @@ class ReasynsHandler(handlerTemplates.MotionControlHandler):
                 """
 
         # Run algorithm to find a velocity vector (global frame) to take the robot to the next region
-        vx, vy, w = Reasyns.executeController(self.pose, self.rfi.regions, current_regIndices, next_regIndices, self.coordmap_lab2map, self.scalingPixelsToMeters, doUpdate)
+        vx, vy, w, acLastData, data = Reasyns.executeController(self.pose, self.rfi.regions, current_regIndices, next_regIndices, self.coordmap_lab2map, self.scalingPixelsToMeters, doUpdate, self.acLastData, self.data, self.aut, self.ac_trans, self.ac_inward, self.cyclicTrinaryVector)
+
+        self.acLastData = acLastData
+        self.data = data
 
         for idx, robot_name in enumerate(self.robotList):
             current_reg = current_regIndices[robot_name]

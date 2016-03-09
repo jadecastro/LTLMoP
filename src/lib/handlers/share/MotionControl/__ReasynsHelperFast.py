@@ -5,65 +5,70 @@ from collections import OrderedDict
 from math import sin, cos
 
 import scipy.io as sio
+from scipy.interpolate import interp1d
 
 system = platform.system()
 
-def initializeController(fname, numDiscStates, numDiscTransitions):
+def initializeController(fname):
     """
     intialize the controller and set up variables
     """
 
+    # Load the Matlab data
     mat_contents = sio.loadmat(fname)
 
     t_base = 0
     acLastData = [1, 0, 5, 1, [], []]
 
-    numInward = len(mat_contents['ac_inward'][0])
-    numtrans = len(mat_contents['ac_trans'][0])
+    numInward = len(mat_contents['ac_inward_py'][0])
+    numtrans = len(mat_contents['ac_trans_py'][0])
     #if (not len(mat_contents['ac_inward'][0]) == numDiscStates):
         #TODO: throw an error!
 
-    #unpack the mat file contents
+    # Unpack the mat file contents
     aut = mat_contents['aut'][0]
 
     ac_inward = [[]]*numInward
     for i in range(numInward):
-        t = mat_contents['ac_inward'][0][i]['t'][0][0]
-        x0 = mat_contents['ac_inward'][0][i]['x0'][0][0]
-        u0 = mat_contents['ac_inward'][0][i]['u0'][0][0]
-        K = mat_contents['ac_inward'][0][i]['P'][0][0]
-        #Einv = mat_contents['ac_inward'][0][i]['Einv'][0][0]['P']
-        rho = mat_contents['ac_inward'][0][i]['rho'][0][0]
-        P = mat_contents['ac_inward'][0][i]['P'][0][0]
+        t = mat_contents['ac_inward_py'][0][i]['t'][0][0]
+        x0 = mat_contents['ac_inward_py'][0][i]['x0'][0][0]
+        u0 = mat_contents['ac_inward_py'][0][i]['u0'][0][0]
+        K = mat_contents['ac_inward_py'][0][i]['K'][0][0]
+        #Einv = mat_contents['ac_inward_py'][0][i]['Einv'][0][0]['P']
+        rho = mat_contents['ac_inward_py'][0][i]['rho'][0][0]
+        P = mat_contents['ac_inward_py'][0][i]['P'][0][0]
 
         ac_inward[i] = {'t':t, 'x0':x0, 'u0':u0, 'K':K, 'rho':,rho, 'P':,P}
 
     ac_trans = [[]]*numTrans
     for i in range(numTrans):
-        t = mat_contents['ac_trans'][0][i]['t'][0][0]
-        x0 = mat_contents['ac_trans'][0][i]['x0'][0][0]
-        u0 = mat_contents['ac_trans'][0][i]['u0'][0][0]
-        K = mat_contents['ac_trans'][0][i]['P'][0][0]
-        #Einv = mat_contents['ac_trans'][0][i]['Einv'][0][0]['P']
-        rho = mat_contents['ac_trans'][0][i]['rho'][0][0]
-        P = mat_contents['ac_trans'][0][i]['P'][0][0]
+        t = mat_contents['ac_trans_py'][0][i]['t'][0][0]
+        x0 = mat_contents['ac_trans_py'][0][i]['x0'][0][0]
+        u0 = mat_contents['ac_trans_py'][0][i]['u0'][0][0]
+        K = mat_contents['ac_trans_py'][0][i]['K'][0][0]
+        #Einv = mat_contents['ac_trans_py'][0][i]['Einv'][0][0]['P']
+        rho = mat_contents['ac_trans_py'][0][i]['rho'][0][0]
+        P = mat_contents['ac_trans_py'][0][i]['P'][0][0]
 
         ac_trans[i] = {'t':t, 'x0':x0, 'u0':u0, 'K':K, 'rho':,rho, 'P':,P}
 
-    # pre-compute a trinary vector for making complete funnel-containment checks
+    # Pre-compute a trinary vector for making the point-within-funnel checks are complete
     numCyclicStates = len(sysObj.isCyclic.nonzero())
     vec, cyclicTrinaryVector = buildTrinary([],[[]],numCyclicStates)
 
-    # make [0, ..., 0] the first element to try
+    # Make [0, ..., 0] the first element to try
     indexToPop = cyclicTrinaryVector.index([0]*numCyclicStates)
     cyclicTrinaryVector = [[0]*numCyclicStates, cyclicTrinaryVector.pop(indexToPop)]
-    
-    return aut ac_inward ac_inward acLastData cyclicTrinaryVector
 
-def executeController(poseDic, regions, curr, next, coordmap_lab2map, scalingPixelsToMeters, doUpdate):
+    # Initialize some other needed data structures TODO: could we simplify?
+    data = {'t_offset': [],'t_base': 0,'tend': 0,'t_trials': [],'t_sav': [],'x_sav': [],'x0_sav': []}
+    acLastData = [1, 0, 5, 1, [], []]
+    
+    return acLastData data aut ac_trans ac_inward cyclicTrinaryVector
+
+def executeController(poseDic, regions, curr, next, coordmap_lab2map, scalingPixelsToMeters, doUpdate, acLastData, data, aut, ac_trans, ac_inward, cyclicTrinaryVector):
     """
-    pose  = {'rob1':[-1 ,.5],'rob2':[1,1],'rob3':[3.5 , -1]}
-    next_regIndices = {'rob1': 2,'rob2':3,'rob3':3}
+
     """
 
     numRobots = len(poseDic)
@@ -96,7 +101,7 @@ def executeController(poseDic, regions, curr, next, coordmap_lab2map, scalingPix
 
     # Execute one step of the local planner and collect velocity components
     try:
-        vx,vy,w,acLastData,data = executeSingleStep(aut,ac_trans,ac_inward,pose,currRegNbr,nextRegNbr,acLastData)
+        vx,vy,w,acLastData,data = executeSingleStep(aut,ac_trans,ac_inward,pose,currRegNbr,nextRegNbr,acLastData,data,cyclicTrinaryVector)
     except:
         print "WARNING: Matlab execute function experienced an error!!"
 
@@ -110,14 +115,13 @@ def executeController(poseDic, regions, curr, next, coordmap_lab2map, scalingPix
         W[i] = 1*w #0.25*w
 
     # return velocities
-    return Vx, Vy, W
+    return Vx, Vy, W, acLastData, data
 
 
-def executeSingleStep(aut,ac_trans,ac_inward,pose,x,t,currReg,nextReg,acLastData,data):
+def executeSingleStep(aut,ac_trans,ac_inward,pose,x,t,currReg,nextReg,acLastData,data,cyclicTrinaryVector):
     t_offset = data['t_offset']
     t_base = data['t_base']
     tend = data['tend']
-    ell = data['ell']
     t_trials = data['t_trials']
     t_sav = data['t_sav']
     x_sav = data['x_sav']
@@ -260,7 +264,7 @@ def executeSingleStep(aut,ac_trans,ac_inward,pose,x,t,currReg,nextReg,acLastData
         
         minDelta = np.inf
         for i in range(len(t_trials)):
-            xtmp = double(ac['x0'], t_trials[i])
+            xtmp = double(ac,'x0',t_trials[i])
             testDist = np.array([
                 np.linalg.norm(weights*(sysObj.state2SEconfig(xtmp) - (sysObj.state2SEconfig(x) + phaseWrap))),
                 np.linalg.norm(weights*(sysObj.state2SEconfig(xtmp) - sysObj.state2SEconfig(x)),
@@ -276,9 +280,9 @@ def executeSingleStep(aut,ac_trans,ac_inward,pose,x,t,currReg,nextReg,acLastData
     
     # compute a command
     teval
-    K = double(ac['K'],teval) 
-    x0 = double(ac['x0'],teval) 
-    u0 = double(ac['u0'],teval)
+    K = double(ac,'K',teval) 
+    x0 = double(ac,'x0',teval) 
+    u0 = double(ac,'u0',teval)
     
     K = K(end-length(u0)+1:end,:)
     
@@ -301,7 +305,7 @@ def executeSingleStep(aut,ac_trans,ac_inward,pose,x,t,currReg,nextReg,acLastData
     x_sav = np.append(x_sav, x)
     x0_sav = np.append(x0_sav, x0)
 
-    data = {'t_offset': t_offset,'t_base': t_base,'tend': tend,'ell': ell,'t_trials': t_trials,'t_sav': t_sav,'x_sav': x_sav,'x0_sav': x0_sav}
+    data = {'t_offset': t_offset,'t_base': t_base,'tend': tend,'t_trials': t_trials,'t_sav': t_sav,'x_sav': x_sav,'x0_sav': x0_sav}
 
     return vx, vy, w, acLastData, data
 
@@ -337,9 +341,12 @@ def buildTrinary(vec, dvec, size):
 
 def checkSingleState(ac, x):
 
+    if not len(ac['t']) == x.shape[1]:
+        raise Exception('The time-dimension of the provided ac does not match that of x!')
+
     for i in range(x.shape[1]):
-        q = x[:,i] - ac['x0']
-        Qinv = ac['P']
+        q = x[:,i] - double(ac,'x0',ac['t'][i])
+        Qinv = double(ac,'P',ac['t'][i])
         
         # Assume Qinv is not ill-conditioned
         r = q * (Qinv * q)
@@ -349,5 +356,22 @@ def checkSingleState(ac, x):
             return 1
     return 0
 
-def double():
+def double(ac,key,teval):
 
+    t = ac['t']
+    x = ac[key]
+
+    if len(x.shape) == 2:
+        x1 = []        
+        for i in range(len(x)):
+            f = interp1d(t,x[i])
+            x1.append(f(teval))
+
+    elif len(x.shape) == 3:
+        x1 = []
+        for i in range(len(x)):
+            x1.append([])
+            for j in range(len(x[i]))
+                f = interp1d(t,x[i][j])
+                x1[i].append(f(teval))
+    return x1
