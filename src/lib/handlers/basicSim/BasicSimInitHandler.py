@@ -35,6 +35,9 @@ class BasicSimInitHandler(handlerTemplates.InitHandler):
             center.y = center.y + y
         
         #initialize the simulator
+        center.x = center.x/40
+        center.y = center.y/40
+        print center.x, center.y
         self.simulator =  basicSimulator.basicSimulator([center[0],center[1],theta])
 
         # rospy.init_node('LTLMoPHandlers')

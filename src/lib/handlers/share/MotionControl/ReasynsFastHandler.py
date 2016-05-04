@@ -17,20 +17,25 @@ import Polygon, Polygon.IO
 import Polygon.Utils as PolyUtils
 import Polygon.Shapes as PolyShapes
 import project
+import os
+import time
 
-print "ping"
 import lib.handlers.handlerTemplates as handlerTemplates
 from lib.regions import Point
 
-class ReasynsHandler(handlerTemplates.MotionControlHandler):
-    def __init__(self, executor, shared_data, scalingPixelsToMeters):
+class ReasynsFastHandler(handlerTemplates.MotionControlHandler):
+    def __init__(self, executor, shared_data, scalingPixelsToMeters, fname):
         """
         Vector motion planning controller
 
         scalingPixelsToMeters (float): Scaling factor between RegionEditor map and the Matlab map
+        fname (string): Name of the .mat file containing the stored atomic controllers
         """
 
-        filename                = 'resultsPython'
+        # filename                = '/home/jon/Dropbox/Repos/LTLMoP/src/lib/handlers/share/MotionControl/resultsPython'
+        filename                = os.getcwd()+'/examples/box_pushing/reasyns_controllers/'+fname
+        if not os.path.exists(filename):
+            logging.exception('Cannot open the specified reasyns controller file.')
 
         self.numRobots          = []    # number of robots: number of agents in the specification, controlled by the local planner
         
@@ -82,14 +87,17 @@ class ReasynsHandler(handlerTemplates.MotionControlHandler):
             self.map[region.name] = self.createRegionPolygon(region)
 
         # Initialize the data structures
-        acLastData, data, aut, ac_trans, ac_inward cyclicTrinaryVector = Reasyns.initializeController(filename)
+        sysObj, acLastData, data, aut, ac_trans, ac_inward, cyclicTrinaryVector = Reasyns.initializeController(filename)
 
+        self.sysObj = sysObj
         self.acLastData = acLastData
         self.data = data
         self.aut = aut
         self.ac_trans = ac_trans
         self.ac_inward = ac_inward
         self.cyclicTrinaryVector = cyclicTrinaryVector
+        self.currRegNbr = 4
+        self.nextRegNbr = 0
 
 
     def gotoRegion(self, current_regIndices, next_regIndices, last=False):
@@ -105,6 +113,10 @@ class ReasynsHandler(handlerTemplates.MotionControlHandler):
         departed            = {}
         arrived             = {}
         doUpdate            = {}
+
+
+        logging.debug(self.executor.strategy.states.index(self.executor.strategy.current_state))
+        logging.debug(self.executor.strategy.states.index(self.executor.next_state))
 
         logging.debug("current_regIndices:" + str(current_regIndices))
         logging.debug("next_regIndices: " + str(next_regIndices))
@@ -137,8 +149,8 @@ class ReasynsHandler(handlerTemplates.MotionControlHandler):
                     #return False not leaving yet until all robots are checked
 
                 # if self.system_print == True:
-                print "Next Region is " +str(robot_name)+str(self.rfi.regions[next_reg].name)
-                print "Current Region is " +str(robot_name)+str(self.rfi.regions[current_reg].name)
+                print "Next Region for " +str(robot_name)+" is: "+str(self.rfi.regions[next_reg].name)
+                print "Current Region for " +str(robot_name)+" is: "+str(self.rfi.regions[current_reg].name)
                 logging.debug("Next Region is " + str(self.rfi.regions[next_reg].name))
                 logging.debug("Current Region is " + str(self.rfi.regions[current_reg].name))
 
@@ -168,10 +180,14 @@ class ReasynsHandler(handlerTemplates.MotionControlHandler):
                 """
 
         # Run algorithm to find a velocity vector (global frame) to take the robot to the next region
-        vx, vy, w, acLastData, data = Reasyns.executeController(self.pose, self.rfi.regions, current_regIndices, next_regIndices, self.coordmap_lab2map, self.scalingPixelsToMeters, doUpdate, self.acLastData, self.data, self.aut, self.ac_trans, self.ac_inward, self.cyclicTrinaryVector)
+        vx, vy, w, acLastData, data, currRegNbr, nextRegNbr = Reasyns.executeController(self.sysObj, self.pose, self.rfi.regions, \
+            current_regIndices, next_regIndices, self.coordmap_lab2map, self.scalingPixelsToMeters, doUpdate, self.acLastData, self.data, \
+            self.aut, self.ac_trans, self.ac_inward, self.cyclicTrinaryVector,self.currRegNbr,self.nextRegNbr)
 
         self.acLastData = acLastData
         self.data = data
+        self.currRegNbr = currRegNbr
+        self.nextRegNbr = nextRegNbr
 
         for idx, robot_name in enumerate(self.robotList):
             current_reg = current_regIndices[robot_name]

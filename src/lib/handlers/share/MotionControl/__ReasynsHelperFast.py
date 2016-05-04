@@ -3,9 +3,11 @@ import logging
 import platform
 from collections import OrderedDict
 from math import sin, cos
+import time
 
 import scipy.io as sio
 from scipy.interpolate import interp1d
+from systemDynamics import Unicycle
 
 system = platform.system()
 
@@ -15,45 +17,66 @@ def initializeController(fname):
     """
 
     # Load the Matlab data
+
     mat_contents = sio.loadmat(fname)
 
     t_base = 0
     acLastData = [1, 0, 5, 1, [], []]
 
-    numInward = len(mat_contents['ac_inward_py'][0])
-    numtrans = len(mat_contents['ac_trans_py'][0])
+    numInward = 0 if not len(mat_contents['ac_inward_py']) else len(mat_contents['ac_inward_py'][0])
+    numTrans = 0 if not len(mat_contents['ac_trans_py']) else len(mat_contents['ac_trans_py'][0])
     #if (not len(mat_contents['ac_inward'][0]) == numDiscStates):
         #TODO: throw an error!
 
-    # Unpack the mat file contents
-    aut = mat_contents['aut'][0]
+    # Unpack the mat file 
+    state = [mat_contents['aut'][0][0]['state'][0][i][0][0] for i in range(len(mat_contents['aut'][0][0]['state'][0]))]
+    label = [mat_contents['aut'][0][0]['label'][0][i][0][0] for i in range(len(mat_contents['aut'][0][0]['label'][0]))]
+    trans = [list(mat_contents['aut'][0][0]['trans'][0][i][0]) for i in range(len(mat_contents['aut'][0][0]['trans'][0]))]
+
+    aut = {'state': state,'label': label,'trans': trans}
 
     ac_inward = [[]]*numInward
     for i in range(numInward):
-        t = mat_contents['ac_inward_py'][0][i]['t'][0][0]
-        x0 = mat_contents['ac_inward_py'][0][i]['x0'][0][0]
-        u0 = mat_contents['ac_inward_py'][0][i]['u0'][0][0]
-        K = mat_contents['ac_inward_py'][0][i]['K'][0][0]
-        #Einv = mat_contents['ac_inward_py'][0][i]['Einv'][0][0]['P']
-        rho = mat_contents['ac_inward_py'][0][i]['rho'][0][0]
-        P = mat_contents['ac_inward_py'][0][i]['P'][0][0]
+        print i
+        try:
+            t = mat_contents['ac_inward_py'][0][i]['t'][0][0][0]
+            x0 = mat_contents['ac_inward_py'][0][i]['x0'][0][0]
+            u0 = mat_contents['ac_inward_py'][0][i]['u0'][0][0]
+            K = mat_contents['ac_inward_py'][0][i]['K'][0][0]
+            #Einv = mat_contents['ac_inward_py'][0][i]['Einv'][0][0]['P']
+            rho = mat_contents['ac_inward_py'][0][i]['rho'][0][0][0]
+            P = mat_contents['ac_inward_py'][0][i]['P'][0][0]
+            pre = mat_contents['ac_inward_py'][0][i]['pre'][0][0]
+            post = mat_contents['ac_inward_py'][0][i]['post'][0][0]
 
-        ac_inward[i] = {'t':t, 'x0':x0, 'u0':u0, 'K':K, 'rho':,rho, 'P':,P}
+            ac_inward[i] = {'t':t, 'x0':x0, 'u0':u0, 'K':K, 'rho':rho, 'P':P, 'pre':pre, 'post':post}
+
+        except:
+            ac_inward[i] = {'t':[], 'x0':[], 'u0':[], 'K':[], 'rho':[], 'P':[], 'pre':[], 'post':[]}    
 
     ac_trans = [[]]*numTrans
     for i in range(numTrans):
-        t = mat_contents['ac_trans_py'][0][i]['t'][0][0]
-        x0 = mat_contents['ac_trans_py'][0][i]['x0'][0][0]
-        u0 = mat_contents['ac_trans_py'][0][i]['u0'][0][0]
-        K = mat_contents['ac_trans_py'][0][i]['K'][0][0]
-        #Einv = mat_contents['ac_trans_py'][0][i]['Einv'][0][0]['P']
-        rho = mat_contents['ac_trans_py'][0][i]['rho'][0][0]
-        P = mat_contents['ac_trans_py'][0][i]['P'][0][0]
+        try:
+            t = mat_contents['ac_trans_py'][0][i]['t'][0][0][0]
+            x0 = mat_contents['ac_trans_py'][0][i]['x0'][0][0]
+            u0 = mat_contents['ac_trans_py'][0][i]['u0'][0][0]
+            K = mat_contents['ac_trans_py'][0][i]['K'][0][0]
+            #Einv = mat_contents['ac_trans_py'][0][i]['Einv'][0][0]['P']
+            rho = mat_contents['ac_trans_py'][0][i]['rho'][0][0][0]
+            P = mat_contents['ac_trans_py'][0][i]['P'][0][0]
+            pre = mat_contents['ac_trans_py'][0][i]['pre'][0][0]
+            post = mat_contents['ac_trans_py'][0][i]['post'][0][0]
 
-        ac_trans[i] = {'t':t, 'x0':x0, 'u0':u0, 'K':K, 'rho':,rho, 'P':,P}
+            ac_trans[i] = {'t':t, 'x0':x0, 'u0':u0, 'K':K, 'rho':rho, 'P':P, 'pre':pre, 'post':post}
 
+        except:
+            ac_trans[i] = {'t':[], 'x0':[], 'u0':[], 'K':[], 'rho':[], 'P':[], 'pre':[], 'post':[]}
+
+    # Instantiate the system dynamics model
+    sysObj = Unicycle()
+    
     # Pre-compute a trinary vector for making the point-within-funnel checks are complete
-    numCyclicStates = len(sysObj.isCyclic.nonzero())
+    numCyclicStates = len([i for i, e in enumerate(sysObj.isCyclic) if e != 0])
     vec, cyclicTrinaryVector = buildTrinary([],[[]],numCyclicStates)
 
     # Make [0, ..., 0] the first element to try
@@ -61,12 +84,13 @@ def initializeController(fname):
     cyclicTrinaryVector = [[0]*numCyclicStates, cyclicTrinaryVector.pop(indexToPop)]
 
     # Initialize some other needed data structures TODO: could we simplify?
-    data = {'t_offset': [],'t_base': 0,'tend': 0,'t_trials': [],'t_sav': [],'x_sav': [],'x0_sav': []}
+    data = {'t_offset': [],'t_base': 0,'tend': 0,'t_trials': [],'t_sav': [],'x_sav': [],'x0_sav': [],'t': []}
     acLastData = [1, 0, 5, 1, [], []]
-    
-    return acLastData data aut ac_trans ac_inward cyclicTrinaryVector
 
-def executeController(poseDic, regions, curr, next, coordmap_lab2map, scalingPixelsToMeters, doUpdate, acLastData, data, aut, ac_trans, ac_inward, cyclicTrinaryVector):
+    return sysObj, acLastData, data, aut, ac_trans, ac_inward, cyclicTrinaryVector
+
+def executeController(sysObj, poseDic, regions, curr, next, coordmap_lab2map, scalingPixelsToMeters, doUpdate, acLastData, data, aut, \
+    ac_trans, ac_inward, cyclicTrinaryVector, currRegNbr, nextRegNbr):
     """
 
     """
@@ -96,14 +120,14 @@ def executeController(poseDic, regions, curr, next, coordmap_lab2map, scalingPix
             # print currRegNbr, nextRegNbr
 
             print "  currRegNbr: "+str(currRegNbr)
-            print "  nextRegNbr: "+str(nextRegNbr)
-
+            print "  nextRegNbr: "+str(nextRegNbr) 
 
     # Execute one step of the local planner and collect velocity components
-    try:
-        vx,vy,w,acLastData,data = executeSingleStep(aut,ac_trans,ac_inward,pose,currRegNbr,nextRegNbr,acLastData,data,cyclicTrinaryVector)
-    except:
-        print "WARNING: Matlab execute function experienced an error!!"
+    vx,vy,w,acLastData,data = executeSingleStep(sysObj,aut,ac_trans,ac_inward,pose,currRegNbr,nextRegNbr,acLastData,data,cyclicTrinaryVector)
+    # try:
+    #     vx,vy,w,acLastData,data = executeSingleStep(sysObj,aut,ac_trans,ac_inward,pose,currRegNbr,nextRegNbr,acLastData,data,cyclicTrinaryVector)
+    # except:
+    #     print "WARNING: execute function experienced an error!!"
 
     Vx = {}
     Vy = {}
@@ -115,10 +139,13 @@ def executeController(poseDic, regions, curr, next, coordmap_lab2map, scalingPix
         W[i] = 1*w #0.25*w
 
     # return velocities
-    return Vx, Vy, W, acLastData, data
+    return Vx, Vy, W, acLastData, data, currRegNbr, nextRegNbr
 
 
-def executeSingleStep(aut,ac_trans,ac_inward,pose,x,t,currReg,nextReg,acLastData,data,cyclicTrinaryVector):
+def executeSingleStep(sysObj, aut, ac_trans, ac_inward, x, currReg, nextReg, acLastData, data, cyclicTrinaryVector):
+
+    debug = False
+
     t_offset = data['t_offset']
     t_base = data['t_base']
     tend = data['tend']
@@ -126,13 +153,13 @@ def executeSingleStep(aut,ac_trans,ac_inward,pose,x,t,currReg,nextReg,acLastData
     t_sav = data['t_sav']
     x_sav = data['x_sav']
     x0_sav = data['x0_sav']
+    t = data['t']
 
     delayTime = -0.1
 
     timeBaseFlag = False  # if 'true', use time as a basis for choosing the TVLQR states; otherwise use a weighted Euclidean distance.
-    useLastAC = True
 
-    phaseWrap = np.array([0, 0, 2*pi])
+    phaseWrap = np.array([0, 0, 2*np.pi])
 
     weights = np.array([1, 1, 0.2])
 
@@ -141,20 +168,20 @@ def executeSingleStep(aut,ac_trans,ac_inward,pose,x,t,currReg,nextReg,acLastData
 
     #################
     # Account for our manual shifting of the map to the left because of the "dead zone" in the Vicon field 
-    x = x + np.array([0.0043, 0.1629, 0])
+    #x = x + np.array([0.0043, 0.1629, 0])
     #################
 
     #################
     # Account for our manual shifting of the map
-    x = x + np.array([-0.9774, 0.0258, 0])
+    #x = x + np.array([-0.9774, 0.0258, 0])
     #################
 
-    x[2] = x[2] + 0.2  # theta bias needed to account for misalignment of the youBot's coordinate frame wrt. its true orientation
+    #x[2] = x[2] + 0.2  # theta bias needed to account for misalignment of the youBot's coordinate frame wrt. its true orientation
 
     prevCtrl = False
 
     if not t_base:
-        t_base = clock #FIX
+        t_base = time.time() 
 
     # fail-safe velocity settings
     vx = 0
@@ -167,62 +194,109 @@ def executeSingleStep(aut,ac_trans,ac_inward,pose,x,t,currReg,nextReg,acLastData
     #if size(x,2) > size(x,1):
     #    x = x'
     
-    trans = aut['trans']
-    q = aut['q']
+    # NB: the addtional processing is to correlate to Matlab's indices
+    trans = [[i[0]-1, i[1]-1] for i in aut['trans']] # trans contains a list of pairs of states for all transitions in the reduced automaton.
+    state = [i-1 for i in aut['state']]  # q are the region labels for each state in the reduced automaton, where the length of q is equal to the total number of states.
+    region = [i-1 for i in aut['label']]  # q are the region labels for each state in the reduced automaton, where the length of q is equal to the total number of states.
 
-    currStateVec = (q == currReg).nonzero()
-    nextStateVec = (q == nextReg).nonzero()
-    currTrans = ((currStateVec in trans[0]) and (nextStateVec in trans[1])).nonzero()
-    if not currTrans:
-        print 'you have specified an invalid transition!'
-    currState = trans[0,currTrans]
-    nextState = trans[1,currTrans]
+    # Estimate the current discrete state in the FSM.  NB: The following bypasses LTLMoP's states. 
+    # TODO: re-implement making full use of LTLMoP's states...
+    possibleCurrStateIndices = [i for i in range(len(region)) if region[i] == currReg]
+    possibleNextStateIndices = [i for i in range(len(region)) if region[i] == nextReg]
     
-    # identify the funnel we're in and get the ellipse index
-    iTrans = False
-    iIn = False
-    if isinternalUnion(ac_trans[currTrans], x, cyclicTrinaryVector):
-    # if isinternal(ac_trans{currTrans}, x,'u')
-        iTrans = currTrans
-        ac = ac_trans[currTrans]
-    if (iTrans == False) and not ac_inward:
-        for funIdx = 1 in range(len(ac_inward[currState])):
-            if isinternalUnion(ac_inward[currState][funIdx], x, cyclicTrinaryVector):
-                #         if isinternal(ac_inward{currState}, x,'u')
-                iIn = currState
-                ac = ac_inward[currState][funIdx]
+    possibleCurrTrans = [i for i in range(len(trans)) for j in range(len(possibleCurrStateIndices)) if state[possibleCurrStateIndices[j]] == trans[i][0]]
+    possibleNextTrans = [i for i in range(len(trans)) for j in range(len(possibleNextStateIndices)) if state[possibleNextStateIndices[j]] == trans[i][1]]
+
+    #print possibleCurrStateIndices, possibleCurrTrans
+    #print possibleNextStateIndices, possibleNextTrans
+    currTransIndices = [] if not possibleCurrTrans or not possibleNextTrans else list(set(possibleCurrTrans) & set(possibleNextTrans))  # if multiple transitions are found, use the first one in the list
+    logging.debug("Found these possible indices for the current transition: "+str(currTransIndices))
+
+    # next, attempt to match these indices to stored funnels
+    acTransIndex = []
+    acInwardIndex = []
+    for ii,currTransIndex in enumerate(currTransIndices):
+        currState = trans[currTransIndex][0]
+        nextState = trans[currTransIndex][1]
+        logging.debug("currState (as computed from matching current/next regions): "+str(currState))
+        logging.debug("nextState (as computed from matching current/next regions): "+str(nextState))
+
+        for i,ac_test in enumerate(ac_trans):
+            # check if there is a stored funnel for this transition
+            if ac_test['pre'] == [[currState+1]] and ac_test['post'] == [[nextState+1]]:
+                logging.debug('found ac trans for state transition: '+str(ac_test['pre'])+' '+str(ac_test['post']))
+
+                # Check if we are inside this funnel
+                if isinternalUnion(ac_test, x, cyclicTrinaryVector, sysObj):
+                    logging.debug("found a transition funnel "+str(i))
+                    ac = ac_trans[i]
+                    acTransIndex = i
+                    break
+
+    if not acTransIndex and ac_inward:
+        logging.debug("not inside any transition funnel. attempting to find an inward funnel")
+        for ii,currTransIndex in enumerate(currTransIndices):
+            currState = trans[currTransIndex][0]
+            logging.debug("currState (as computed from matching current/next regions): "+str(currState))
+        
+            for i,ac_test in enumerate(ac_inward):
+
+                # check if there is a stored funnel for this state
+                if ac_test['pre'] == [[currState+1]]:
+                    logging.debug('found ac inward for state: '+str(ac_test['pre']))
+            
+                    # Check if we are inside this funnel
+                    if isinternalUnion(ac_test, x, cyclicTrinaryVector, sysObj):
+                        logging.debug("found an inward funnel "+str(i))
+                        ac = ac_inward[i]
+                        acInwardIndex = i
+                        break
+
+    logging.debug("acTransIndex"+str(acTransIndex))
+    logging.debug("acInwardIndex"+str(acInwardIndex))
+    logging.debug('pose: '+str(x))
     
     # if no funnels in the new region/transition OR have temporarily left a funnel, then keep activating the previous one.
     currStateOld = []
     nextStateOld = []
-    if not iTrans and not iIn:
-        if useLastAC:
-            # propagate the appropriate old states on to the next iteration
-            if not isempty(acLastData[4]) and not isempty(acLastData[5]):
-                currStateOld = acLastData[4]
-                nextStateOld = acLastData[5]
-            else:
-                currStateOld = acLastData[2]
-                nextStateOld = acLastData[3]
+    if not acTransIndex and not acInwardIndex:
+        acTransIndex = acLastData[0]
+        acInwardIndex = acLastData[1]
+        logging.debug('acTransIndex (from last iteration): '+str(acTransIndex))
+        logging.debug('acInwardIndex (from last iteration): '+str(acInwardIndex))
+        if ~debug:
+            # # propagate the appropriate old states on to the next iteration
+            # if acLastData[4] and acLastData[5]:
+            #     currStateOld = acLastData[4]
+            #     nextStateOld = acLastData[5]
+            # else:
+            #     currStateOld = acLastData[2]
+            #     nextStateOld = acLastData[3]
 
-            currTransOld = ( trans[0] == currStateOld ) and ( trans[1] == nextStateOld )
-            if not acLastData[0]:
-                ac = ac_trans[currTransOld]
+            # possibleCurrTrans = [i for i in range(len(trans)) if currStateOld == trans[i][0]]
+            # possibleNextTrans = [i for i in range(len(trans)) if nextStateOld == trans[i][1]]
+            # currTransOld = [] if not possibleCurrTrans or not possibleNextTrans else list(set(possibleCurrTrans) & set(possibleNextTrans))[0]
+            
+            # If we were activating a transition funnel previously, then use it; otherwise activate an inward funnel
+            if acTransIndex:
+                ac = ac_trans[acTransIndex]
             else:
-                ac = ac_inward[currStateOld]
-            iTrans = acLastData[0]
-            iIn = acLastData[1]
+                ac = ac_inward[acInwardIndex]
             prevCtrl = True
+            logging.debug('WARNING: no funnels found! Using the previous controller.')
             print('WARNING: no funnels found! Using the previous controller.')
         else:
-            iTrans = currTrans
-            ac = ac_trans[currTrans]
+            ac = ac_trans[acLastData[0]]
+            logging.debug('WARNING: no funnels found! Forcing an (unverified) controller.')
             print('WARNING: no funnels found! Forcing an (unverified) controller.')
     
+    logging.debug('current funnel states: '+str(ac['pre'])+' '+str(ac['post']))
     # determine the new time offset if something has changed
     # TODO: do something smarter here: 
     #       we can remove all the times in the current trajectory prior to the current time, and also possibly add time-weighting to the Euclidean fit
+    #       OR - can we do path integration (ref?)
     if timeBaseFlag:  
+        pass
         # TODO: This option is work-in-progress
         
         # acData = {iTrans, iIn, currState, nextState, currStateOld, nextStateOld};
@@ -251,24 +325,29 @@ def executeSingleStep(aut,ac_trans,ac_inward,pose,x,t,currReg,nextReg,acLastData
     else:  
         # This approach computes the command based on a weighted Euclidean distance to the nominal trajectory
 
-        acData = [iTrans, iIn, currState, nextState, currStateOld, nextStateOld]
+        acData = [acTransIndex, acInwardIndex, currState, nextState, currStateOld, nextStateOld]
         
+        compareData = []
         for i in range(len(acData)-2):
-            cmp[i] = acData[i]==acLastData[i]
-        if not all(cmp) or not (all(ismember([acLastData[0:4]],[acData[0:4]])) and all([acLastData[2:4]] == [acData[2:4]])):
-            # a change has been detected!!
-            t_base = clock
-            t_trials = ac['t']
+            compareData.append(acData[i]==acLastData[i])
 
-        acLastData = acData
+        acLastData04 = [acLastData[i] for i in range(len(acLastData[0:4])) if acLastData[i]]
+        acData04 = [acData[i] for i in range(len(acData[0:4])) if acData[i]]
+        acLastData24 = [acLastData[i] for i in range(len(acLastData[2:4])) if acLastData[i]]
+        acData24 = [acData[i] for i in range(len(acData[2:4])) if acData[i]]
+
+        if not all(compareData) or not (set(acLastData04) <= set(acData04) and set(acLastData24) == set(acData24)):
+            # a change has been detected!!
+            t_base = time.time()
+            t_trials = ac['t']
         
         minDelta = np.inf
-        for i in range(len(t_trials)):
+        for i in range(0,len(t_trials),5):
             xtmp = double(ac,'x0',t_trials[i])
             testDist = np.array([
-                np.linalg.norm(weights*(sysObj.state2SEconfig(xtmp) - (sysObj.state2SEconfig(x) + phaseWrap))),
-                np.linalg.norm(weights*(sysObj.state2SEconfig(xtmp) - sysObj.state2SEconfig(x)),
-                np.linalg.norm(weights*(sysObj.state2SEconfig(xtmp) - (sysObj.state2SEconfig(x) - phaseWrap)))])
+                np.linalg.norm(weights*np.array(sysObj.state2SEconfig(xtmp) - (sysObj.state2SEconfig(x) + phaseWrap))),
+                np.linalg.norm(weights*np.array(sysObj.state2SEconfig(xtmp) - sysObj.state2SEconfig(x))),
+                np.linalg.norm(weights*np.array(sysObj.state2SEconfig(xtmp) - (sysObj.state2SEconfig(x) - phaseWrap)))])
 
             testMinDist = min(testDist)
 
@@ -276,7 +355,7 @@ def executeSingleStep(aut,ac_trans,ac_inward,pose,x,t,currReg,nextReg,acLastData
                 teval = t_trials[i]
                 minDelta = testMinDist
         if not t:  # if time is not given, we compute it here
-            t = etime(clock,t_base)#FIX
+            t = time.time() - t_base 
     
     # compute a command
     teval
@@ -284,44 +363,47 @@ def executeSingleStep(aut,ac_trans,ac_inward,pose,x,t,currReg,nextReg,acLastData
     x0 = double(ac,'x0',teval) 
     u0 = double(ac,'u0',teval)
     
-    K = K(end-length(u0)+1:end,:)
+    #K = K(end-length(u0)+1:end,:)
     
     u_test = np.array([
-            (K*(x - x0 + sysObj.state2SEconfig(phaseWrap))),
-            (K*(x - x0)),
-            (K*(x - x0 - sysObj.state2SEconfig(phaseWrap)))])
-    u_idx = (abs(u_test[:,-1]) == min(abs(u_test[:,-1]))).nonzero()
-    u_ctrl = u_test[u_idx[0]]
+            (np.matrix(K)*np.matrix(x - x0 + sysObj.state2SEconfig(phaseWrap)).T),
+            (np.matrix(K)*np.matrix(x - x0).T),
+            (np.matrix(K)*np.matrix(x - x0 - sysObj.state2SEconfig(phaseWrap)).T)])
+    u_idx = list(abs(u_test[:,-1]) == min(abs(u_test[:,-1]))).index([True])
+    u_ctrl = u_test[u_idx]
 
     # Compute the control command
-    u = u0 + u_ctrl
+    u = np.array(u0) + np.array([u_ctrl[i][0] for i in range(len(u_ctrl))])
     # u(2) = max(min(u(2),16),-16);
-    
+
     # Allocate the linear/angular velocities
     vx, vy, w = sysObj.command2robotInput(x,u)
     
+    print "control command: "
+    print u, vx, vy, w
+
     #u_sav = [u_sav; t u]
     t_sav = np.append(t_sav, t)
     x_sav = np.append(x_sav, x)
     x0_sav = np.append(x0_sav, x0)
 
-    data = {'t_offset': t_offset,'t_base': t_base,'tend': tend,'t_trials': t_trials,'t_sav': t_sav,'x_sav': x_sav,'x0_sav': x0_sav}
+    data = {'t_offset': t_offset,'t_base': t_base,'tend': tend,'t_trials': t_trials,'t_sav': t_sav,'x_sav': x_sav,'x0_sav': x0_sav,'t': t}
 
-    return vx, vy, w, acLastData, data
+    return vx, vy, w, acData, data
 
-def isinternalUnion(ac, xTest, cyclicTrinaryVector):
+def isinternalUnion(ac, x, cyclicTrinaryVector, sysObj):
 
-    for vec in cyclicTrinaryVector:
-        idx = 0
-        xTest = x
-        for j in sysObj.isCyclic:
-            xTest[:][j] = x[:][j] + vec[idx] * 2*np.pi
-            idx += 1
+    indexSet = [i for i in range(len(x)) if sysObj.isCyclic[i] > 0]
 
-        res = checkSingleState(ac, xTest)
-        if res:
-            return 1
-    return 0
+    xTest = x
+
+    for i, vec in enumerate(cyclicTrinaryVector):
+        for k, j in enumerate(indexSet):
+            xTest[j] = x[j] + vec[k] * 2*np.pi
+
+        if checkSingleState(ac, xTest):
+            return True
+    return False
 
 def buildTrinary(vec, dvec, size):
 
@@ -341,22 +423,24 @@ def buildTrinary(vec, dvec, size):
 
 def checkSingleState(ac, x):
 
-    if not len(ac['t']) == x.shape[1]:
-        raise Exception('The time-dimension of the provided ac does not match that of x!')
-
-    for i in range(x.shape[1]):
-        q = x[:,i] - double(ac,'x0',ac['t'][i])
+    t_test = time.time()
+    for i in range(len(ac['t'])):
+        q = x - double(ac,'x0',ac['t'][i])
         Qinv = double(ac,'P',ac['t'][i])
         
         # Assume Qinv is not ill-conditioned
-        r = q * (Qinv * q)
-        
+        # if i == 0:
+        #     print "containment check, time 0: "
+        #     print ac['t'][i], x, double(ac,'x0',ac['t'][i]), double(ac,'P',ac['t'][i])
+        #     print np.matrix(q) * np.matrix(Qinv) * np.matrix(q).T
+        r = float(np.matrix(q) * np.matrix(Qinv) * np.matrix(q).T)
         if (r < 1.) or (abs(r - 1.) < 1e-6):
             #if all(eig(Qinv) >= -1e-6):
-            return 1
-    return 0
+            print "time elapsed (checkSingleState): "+str(time.time() - t_test)
+            return True
+    return False
 
-def double(ac,key,teval):
+def double(ac, key, teval):
 
     t = ac['t']
     x = ac[key]
@@ -365,13 +449,13 @@ def double(ac,key,teval):
         x1 = []        
         for i in range(len(x)):
             f = interp1d(t,x[i])
-            x1.append(f(teval))
+            x1.append(float(f(teval)))
 
     elif len(x.shape) == 3:
         x1 = []
         for i in range(len(x)):
             x1.append([])
-            for j in range(len(x[i]))
+            for j in range(len(x[i])):
                 f = interp1d(t,x[i][j])
-                x1[i].append(f(teval))
+                x1[i].append(float(f(teval)))
     return x1
