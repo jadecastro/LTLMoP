@@ -1,0 +1,206 @@
+[INPUT]
+rob1_s1a_rc
+rob1_s1b_rc
+rob1_s2a_rc
+rob1_s2b_rc
+rob1_s3a_rc
+rob1_s3b_rc
+rob1_s4a_rc
+rob1_s4b_rc
+rob1_i12_rc
+rob1_i23_rc
+rob1_i34_rc
+rob1_i41_rc
+e1_s1a
+e1_s1b
+e1_s2a
+e1_s2b
+e1_s3a
+e1_s3b
+e1_s4a
+e1_s4b
+e1_i12
+e1_i23
+e1_i34
+e1_i41
+
+[OUTPUT]
+rob1_s1a
+rob1_s1b
+rob1_s2a
+rob1_s2b
+rob1_s3a
+rob1_s3b
+rob1_s4a
+rob1_s4b
+rob1_i12
+rob1_i23
+rob1_i34
+rob1_i41
+# memory proposition to enable an abstraction preventing the e-agent from moving any faster than the ego vehicle
+# memory proposition to enable an abstraction preventing the e-agent from moving any faster than the ego vehicle
+eagent1_wait
+
+[ENV_TRANS]
+#governs the ego vehicle's motion
+| ! & rob1_s1a_rc rob1_s1a rob1_s1a_rc'
+| ! & rob1_s1b_rc rob1_s1b rob1_s1b_rc'
+| ! & rob1_s2a_rc rob1_s2a rob1_s2a_rc'
+| ! & rob1_s2b_rc rob1_s2b rob1_s2b_rc'
+| ! & rob1_s3a_rc rob1_s3a rob1_s3a_rc'
+| ! & rob1_s3b_rc rob1_s3b rob1_s3b_rc'
+| ! & rob1_s4a_rc rob1_s4a rob1_s4a_rc'
+| ! & rob1_s4b_rc rob1_s4b rob1_s4b_rc'
+| ! & rob1_i12_rc rob1_i12 rob1_i12_rc'
+| ! & rob1_i23_rc rob1_i23 rob1_i23_rc'
+| ! & rob1_i34_rc rob1_i34 rob1_i34_rc'
+| ! & rob1_i41_rc rob1_i41 rob1_i41_rc'
+| ! & rob1_s1a_rc rob1_i12 | rob1_s1a_rc' rob1_i12_rc'
+| ! & rob1_s1b_rc rob1_i41 | rob1_s1b_rc' rob1_i41_rc'
+| ! & rob1_s2a_rc rob1_i23 | rob1_s2a_rc' rob1_i23_rc'
+| ! & rob1_s2b_rc rob1_i12 | rob1_s2b_rc' rob1_i12_rc'
+| ! & rob1_s3a_rc rob1_i34 | rob1_s3a_rc' rob1_i34_rc'
+| ! & rob1_s3b_rc rob1_i23 | rob1_s3b_rc' rob1_i23_rc'
+| ! & rob1_s4a_rc rob1_i41 | rob1_s4a_rc' rob1_i41_rc'
+| ! & rob1_s4b_rc rob1_i34 | rob1_s4b_rc' rob1_i34_rc'
+| ! & rob1_i12_rc rob1_s2a | rob1_i12_rc' rob1_s2a_rc'
+| ! & rob1_i12_rc rob1_s1b | rob1_i12_rc' rob1_s1b_rc'
+| ! & rob1_i23_rc rob1_s3a | rob1_i23_rc' rob1_s3a_rc'
+| ! & rob1_i23_rc rob1_s2b | rob1_i23_rc' rob1_s2b_rc'
+| ! & rob1_i34_rc rob1_s4a | rob1_i34_rc' rob1_s4a_rc'
+| ! & rob1_i34_rc rob1_s3b | rob1_i34_rc' rob1_s3b_rc'
+| ! & rob1_i41_rc rob1_s1a | rob1_i41_rc' rob1_s1a_rc'
+| ! & rob1_i41_rc rob1_s4b | rob1_i41_rc' rob1_s4b_rc'
+# mutex on the completions
+| ! rob1_s1a_rc' ! | | | | | | | | | | rob1_s1b_rc' rob1_s2a_rc' rob1_s2b_rc' rob1_s3a_rc' rob1_s3b_rc' rob1_s4a_rc' rob1_s4b_rc' rob1_i12_rc' rob1_i23_rc' rob1_i34_rc' rob1_i41_rc'
+| ! rob1_s1b_rc' ! | | | | | | | | | | rob1_s1a_rc' rob1_s2a_rc' rob1_s2b_rc' rob1_s3a_rc' rob1_s3b_rc' rob1_s4a_rc' rob1_s4b_rc' rob1_i12_rc' rob1_i23_rc' rob1_i34_rc' rob1_i41_rc'
+| ! rob1_s2a_rc' ! | | | | | | | | | | rob1_s1a_rc' rob1_s1b_rc' rob1_s2b_rc' rob1_s3a_rc' rob1_s3b_rc' rob1_s4a_rc' rob1_s4b_rc' rob1_i12_rc' rob1_i23_rc' rob1_i34_rc' rob1_i41_rc'
+| ! rob1_s2b_rc' ! | | | | | | | | | | rob1_s1a_rc' rob1_s1b_rc' rob1_s2a_rc' rob1_s3a_rc' rob1_s3b_rc' rob1_s4a_rc' rob1_s4b_rc' rob1_i12_rc' rob1_i23_rc' rob1_i34_rc' rob1_i41_rc'
+| ! rob1_s3a_rc' ! | | | | | | | | | | rob1_s1a_rc' rob1_s1b_rc' rob1_s2a_rc' rob1_s2b_rc' rob1_s3b_rc' rob1_s4a_rc' rob1_s4b_rc' rob1_i12_rc' rob1_i23_rc' rob1_i34_rc' rob1_i41_rc'
+| ! rob1_s3b_rc' ! | | | | | | | | | | rob1_s1a_rc' rob1_s1b_rc' rob1_s2a_rc' rob1_s2b_rc' rob1_s3a_rc' rob1_s4a_rc' rob1_s4b_rc' rob1_i12_rc' rob1_i23_rc' rob1_i34_rc' rob1_i41_rc'
+| ! rob1_s4a_rc' ! | | | | | | | | | | rob1_s1a_rc' rob1_s1b_rc' rob1_s2a_rc' rob1_s2b_rc' rob1_s3a_rc' rob1_s3b_rc' rob1_s4b_rc' rob1_i12_rc' rob1_i23_rc' rob1_i34_rc' rob1_i41_rc'
+| ! rob1_s4b_rc' ! | | | | | | | | | | rob1_s1a_rc' rob1_s1b_rc' rob1_s2a_rc' rob1_s2b_rc' rob1_s3a_rc' rob1_s3b_rc' rob1_s4a_rc' rob1_i12_rc' rob1_i23_rc' rob1_i34_rc' rob1_i41_rc'
+| ! rob1_i12_rc' ! | | | | | | | | | | rob1_s1a_rc' rob1_s1b_rc' rob1_s2a_rc' rob1_s2b_rc' rob1_s3a_rc' rob1_s3b_rc' rob1_s4a_rc' rob1_s4b_rc' rob1_i23_rc' rob1_i34_rc' rob1_i41_rc'
+| ! rob1_i23_rc' ! | | | | | | | | | | rob1_s1a_rc' rob1_s1b_rc' rob1_s2a_rc' rob1_s2b_rc' rob1_s3a_rc' rob1_s3b_rc' rob1_s4a_rc' rob1_s4b_rc' rob1_i12_rc' rob1_i34_rc' rob1_i41_rc'
+| ! rob1_i34_rc' ! | | | | | | | | | | rob1_s1a_rc' rob1_s1b_rc' rob1_s2a_rc' rob1_s2b_rc' rob1_s3a_rc' rob1_s3b_rc' rob1_s4a_rc' rob1_s4b_rc' rob1_i12_rc' rob1_i23_rc' rob1_i41_rc'
+| ! rob1_i41_rc' ! | | | | | | | | | | rob1_s1a_rc' rob1_s1b_rc' rob1_s2a_rc' rob1_s2b_rc' rob1_s3a_rc' rob1_s3b_rc' rob1_s4a_rc' rob1_s4b_rc' rob1_i12_rc' rob1_i23_rc' rob1_i34_rc'
+| | | | | | | | | | | rob1_s1a_rc' rob1_s1b_rc' rob1_s2a_rc' rob1_s2b_rc' rob1_s3a_rc' rob1_s3b_rc' rob1_s4a_rc' rob1_s4b_rc' rob1_i12_rc' rob1_i23_rc' rob1_i34_rc' rob1_i41_rc'
+# governs the e-agent's motion
+#(e1_s1a) -> ((e1_s1a') | (e1_i12'))
+#(e1_s1b) -> ((e1_s1b') | (e1_i41'))
+#(e1_s2a) -> ((e1_s2a') | (e1_i23'))
+#(e1_s2b) -> ((e1_s2b') | (e1_i12'))
+#(e1_s3a) -> ((e1_s3a') | (e1_i34'))
+#(e1_s3b) -> ((e1_s3b') | (e1_i23'))
+#(e1_s4a) -> ((e1_s4a') | (e1_i41'))
+#(e1_s4b) -> ((e1_s4b') | (e1_i34'))
+| ! & e1_s1a eagent1_wait e1_s1a'
+| ! & e1_s1b eagent1_wait e1_s1b'
+| ! & e1_s2a eagent1_wait e1_s2a'
+| ! & e1_s2b eagent1_wait e1_s2b'
+| ! & e1_s3a eagent1_wait e1_s3a'
+| ! & e1_s3b eagent1_wait e1_s3b'
+| ! & e1_s4a eagent1_wait e1_s4a'
+| ! & e1_s4b eagent1_wait e1_s4b'
+| ! & e1_s1a ! eagent1_wait | e1_s1a' e1_i12'
+| ! & e1_s1b ! eagent1_wait | e1_s1b' e1_i41'
+| ! & e1_s2a ! eagent1_wait | e1_s2a' e1_i23'
+| ! & e1_s2b ! eagent1_wait | e1_s2b' e1_i12'
+| ! & e1_s3a ! eagent1_wait | e1_s3a' e1_i34'
+| ! & e1_s3b ! eagent1_wait | e1_s3b' e1_i23'
+| ! & e1_s4a ! eagent1_wait | e1_s4a' e1_i41'
+| ! & e1_s4b ! eagent1_wait | e1_s4b' e1_i34'
+#(e1_i12) -> ((e1_i12') | (e1_s1b') | (e1_s2a'))
+#(e1_i23) -> ((e1_i23') | (e1_s2b') | (e1_s3a'))
+#(e1_i34) -> ((e1_i34') | (e1_s3b') | (e1_s4a'))
+#(e1_i41) -> ((e1_i41') | (e1_s4b') | (e1_s1a'))
+| ! & e1_i12 eagent1_wait e1_i12'
+| ! & e1_i23 eagent1_wait e1_i23'
+| ! & e1_i34 eagent1_wait e1_i34'
+| ! & e1_i41 eagent1_wait e1_i41'
+| ! & e1_i12 ! eagent1_wait | | e1_i12' e1_s1b' e1_s2a'
+| ! & e1_i23 ! eagent1_wait | | e1_i23' e1_s2b' e1_s3a'
+| ! & e1_i34 ! eagent1_wait | | e1_i34' e1_s3b' e1_s4a'
+| ! & e1_i41 ! eagent1_wait | | e1_i41' e1_s4b' e1_s1a'
+# mutex on the completions
+| ! e1_s1a' ! | | | | | | | | | | e1_s1b' e1_s2a' e1_s2b' e1_s3a' e1_s3b' e1_s4a' e1_s4b' e1_i12' e1_i23' e1_i34' e1_i41'
+| ! e1_s1b' ! | | | | | | | | | | e1_s1a' e1_s2a' e1_s2b' e1_s3a' e1_s3b' e1_s4a' e1_s4b' e1_i12' e1_i23' e1_i34' e1_i41'
+| ! e1_s2a' ! | | | | | | | | | | e1_s1a' e1_s1b' e1_s2b' e1_s3a' e1_s3b' e1_s4a' e1_s4b' e1_i12' e1_i23' e1_i34' e1_i41'
+| ! e1_s2b' ! | | | | | | | | | | e1_s1a' e1_s1b' e1_s2a' e1_s3a' e1_s3b' e1_s4a' e1_s4b' e1_i12' e1_i23' e1_i34' e1_i41'
+| ! e1_s3a' ! | | | | | | | | | | e1_s1a' e1_s1b' e1_s2a' e1_s2b' e1_s3b' e1_s4a' e1_s4b' e1_i12' e1_i23' e1_i34' e1_i41'
+| ! e1_s3b' ! | | | | | | | | | | e1_s1a' e1_s1b' e1_s2a' e1_s2b' e1_s3a' e1_s4a' e1_s4b' e1_i12' e1_i23' e1_i34' e1_i41'
+| ! e1_s4a' ! | | | | | | | | | | e1_s1a' e1_s1b' e1_s2a' e1_s2b' e1_s3a' e1_s3b' e1_s4b' e1_i12' e1_i23' e1_i34' e1_i41'
+| ! e1_s4b' ! | | | | | | | | | | e1_s1a' e1_s1b' e1_s2a' e1_s2b' e1_s3a' e1_s3b' e1_s4a' e1_i12' e1_i23' e1_i34' e1_i41'
+| ! e1_i12' ! | | | | | | | | | | e1_s1a' e1_s1b' e1_s2a' e1_s2b' e1_s3a' e1_s3b' e1_s4a' e1_s4b' e1_i23' e1_i34' e1_i41'
+| ! e1_i23' ! | | | | | | | | | | e1_s1a' e1_s1b' e1_s2a' e1_s2b' e1_s3a' e1_s3b' e1_s4a' e1_s4b' e1_i12' e1_i34' e1_i41'
+| ! e1_i34' ! | | | | | | | | | | e1_s1a' e1_s1b' e1_s2a' e1_s2b' e1_s3a' e1_s3b' e1_s4a' e1_s4b' e1_i12' e1_i23' e1_i41'
+| ! e1_i41' ! | | | | | | | | | | e1_s1a' e1_s1b' e1_s2a' e1_s2b' e1_s3a' e1_s3b' e1_s4a' e1_s4b' e1_i12' e1_i23' e1_i34'
+| | | | | | | | | | | e1_s1a' e1_s1b' e1_s2a' e1_s2b' e1_s3a' e1_s3b' e1_s4a' e1_s4b' e1_i12' e1_i23' e1_i34' e1_i41'
+# e-agents don't enter occupied intersections
+| ! rob1_i12_rc' ! e1_i12'
+| ! rob1_i23_rc' ! e1_i23'
+| ! rob1_i34_rc' ! e1_i34'
+| ! rob1_i41_rc' ! e1_i41'
+
+[ENV_INIT]
+# ego vehicle starts in i12
+& & & & & & & & & & & rob1_s1a_rc ! rob1_s1b_rc ! rob1_s2a_rc ! rob1_s2b_rc ! rob1_s3a_rc ! rob1_s3b_rc ! rob1_s4a_rc ! rob1_s4b_rc ! rob1_i12_rc ! rob1_i23_rc ! rob1_i34_rc ! rob1_i41_rc
+# e-agent1 starts in s3a
+& & & & & & & & & & & ! e1_s1a ! e1_s1b e1_s2a ! e1_s2b ! e1_s3a ! e1_s3b ! e1_s4a ! e1_s4b ! e1_i12 ! e1_i23 ! e1_i34 ! e1_i41
+
+[SYS_TRANS]
+#governs what actions the ego vehicle is allowed to use in each region
+| ! rob1_s1a_rc' | rob1_s1a' rob1_i12'
+| ! rob1_s1b_rc' | rob1_s1b' rob1_i41'
+| ! rob1_s2a_rc' | rob1_s2a' rob1_i23'
+| ! rob1_s2b_rc' | rob1_s2b' rob1_i12'
+| ! rob1_s3a_rc' | rob1_s3a' rob1_i34'
+| ! rob1_s3b_rc' | rob1_s3b' rob1_i23'
+| ! rob1_s4a_rc' | rob1_s4a' rob1_i41'
+| ! rob1_s4b_rc' | rob1_s4b' rob1_i34'
+| ! rob1_i12_rc' | | rob1_i12' rob1_s2a' rob1_s1b'
+| ! rob1_i23_rc' | | rob1_i23' rob1_s3a' rob1_s2b'
+| ! rob1_i34_rc' | | rob1_i34' rob1_s4a' rob1_s3b'
+| ! rob1_i41_rc' | | rob1_i41' rob1_s1a' rob1_s4b'
+# mutex on the actions
+| ! rob1_s1a' ! | | | | | | | | | | rob1_s1b' rob1_s2a' rob1_s2b' rob1_s3a' rob1_s3b' rob1_s4a' rob1_s4b' rob1_i12' rob1_i23' rob1_i34' rob1_i41'
+| ! rob1_s1b' ! | | | | | | | | | | rob1_s1a' rob1_s2a' rob1_s2b' rob1_s3a' rob1_s3b' rob1_s4a' rob1_s4b' rob1_i12' rob1_i23' rob1_i34' rob1_i41'
+| ! rob1_s2a' ! | | | | | | | | | | rob1_s1a' rob1_s1b' rob1_s2b' rob1_s3a' rob1_s3b' rob1_s4a' rob1_s4b' rob1_i12' rob1_i23' rob1_i34' rob1_i41'
+| ! rob1_s2b' ! | | | | | | | | | | rob1_s1a' rob1_s1b' rob1_s2a' rob1_s3a' rob1_s3b' rob1_s4a' rob1_s4b' rob1_i12' rob1_i23' rob1_i34' rob1_i41'
+| ! rob1_s3a' ! | | | | | | | | | | rob1_s1a' rob1_s1b' rob1_s2a' rob1_s2b' rob1_s3b' rob1_s4a' rob1_s4b' rob1_i12' rob1_i23' rob1_i34' rob1_i41'
+| ! rob1_s3b' ! | | | | | | | | | | rob1_s1a' rob1_s1b' rob1_s2a' rob1_s2b' rob1_s3a' rob1_s4a' rob1_s4b' rob1_i12' rob1_i23' rob1_i34' rob1_i41'
+| ! rob1_s4a' ! | | | | | | | | | | rob1_s1a' rob1_s1b' rob1_s2a' rob1_s2b' rob1_s3a' rob1_s3b' rob1_s4b' rob1_i12' rob1_i23' rob1_i34' rob1_i41'
+| ! rob1_s4b' ! | | | | | | | | | | rob1_s1a' rob1_s1b' rob1_s2a' rob1_s2b' rob1_s3a' rob1_s3b' rob1_s4a' rob1_i12' rob1_i23' rob1_i34' rob1_i41'
+| ! rob1_i12' ! | | | | | | | | | | rob1_s1a' rob1_s1b' rob1_s2a' rob1_s2b' rob1_s3a' rob1_s3b' rob1_s4a' rob1_s4b' rob1_i23' rob1_i34' rob1_i41'
+| ! rob1_i23' ! | | | | | | | | | | rob1_s1a' rob1_s1b' rob1_s2a' rob1_s2b' rob1_s3a' rob1_s3b' rob1_s4a' rob1_s4b' rob1_i12' rob1_i34' rob1_i41'
+| ! rob1_i34' ! | | | | | | | | | | rob1_s1a' rob1_s1b' rob1_s2a' rob1_s2b' rob1_s3a' rob1_s3b' rob1_s4a' rob1_s4b' rob1_i12' rob1_i23' rob1_i41'
+| ! rob1_i41' ! | | | | | | | | | | rob1_s1a' rob1_s1b' rob1_s2a' rob1_s2b' rob1_s3a' rob1_s3b' rob1_s4a' rob1_s4b' rob1_i12' rob1_i23' rob1_i34'
+| | | | | | | | | | | rob1_s1a' rob1_s1b' rob1_s2a' rob1_s2b' rob1_s3a' rob1_s3b' rob1_s4a' rob1_s4b' rob1_i12' rob1_i23' rob1_i34' rob1_i41'
+# keep the ego vehicle from entering occupied intersections
+| ! e1_i12' ! rob1_i12_rc'
+| ! e1_i23' ! rob1_i23_rc'
+| ! e1_i34' ! rob1_i34_rc'
+| ! e1_i41' ! rob1_i41_rc'
+# activation rules for the memprops - activate when the e-agent has entered a segment or intersection
+| ! & ! eagent1_wait | | | | | | | | | | | & ! e1_s1a e1_s1a' & ! e1_s1b e1_s1b' & ! e1_s2a e1_s2a' & ! e1_s2b e1_s2b' & ! e1_s3a e1_s3a' & ! e1_s3b e1_s3b' & ! e1_s4a e1_s4a' & ! e1_s4b e1_s4b' & ! e1_i12 e1_i12' & ! e1_i23 e1_i23' & ! e1_i34 e1_i34' & ! e1_i41 e1_i41' eagent1_wait'
+| ! & ! eagent1_wait ! | | | | | | | | | | | & ! e1_s1a e1_s1a' & ! e1_s1b e1_s1b' & ! e1_s2a e1_s2a' & ! e1_s2b e1_s2b' & ! e1_s3a e1_s3a' & ! e1_s3b e1_s3b' & ! e1_s4a e1_s4a' & ! e1_s4b e1_s4b' & ! e1_i12 e1_i12' & ! e1_i23 e1_i23' & ! e1_i34 e1_i34' & ! e1_i41 e1_i41' ! eagent1_wait'
+# deactivate the proposition only once the ego robot has left a segment
+| ! & eagent1_wait ! | | | | | | | & rob1_s1a_rc ! rob1_s1a_rc' & rob1_s1b_rc ! rob1_s1b_rc' & rob1_s2a_rc ! rob1_s2a_rc' & rob1_s2b_rc ! rob1_s2b_rc' & rob1_s3a_rc ! rob1_s3a_rc' & rob1_s3b_rc ! rob1_s3b_rc' & rob1_s4a_rc ! rob1_s4a_rc' & rob1_s4b_rc ! rob1_s4b_rc' eagent1_wait'
+| ! & eagent1_wait | | | | | | | & rob1_s1a_rc ! rob1_s1a_rc' & rob1_s1b_rc ! rob1_s1b_rc' & rob1_s2a_rc ! rob1_s2a_rc' & rob1_s2b_rc ! rob1_s2b_rc' & rob1_s3a_rc ! rob1_s3a_rc' & rob1_s3b_rc ! rob1_s3b_rc' & rob1_s4a_rc ! rob1_s4a_rc' & rob1_s4b_rc ! rob1_s4b_rc' ! eagent1_wait'
+! eagent1_wait
+
+[SYS_INIT]
+# ego vehicle starts with i12 active
+& & & & & & & & & & & rob1_s1a ! rob1_s1b ! rob1_s2a ! rob1_s2b ! rob1_s3a ! rob1_s3b ! rob1_s4a ! rob1_s4b ! rob1_i12 ! rob1_i23 ! rob1_i34 ! rob1_i41
+eagent1_wait
+
+[ENV_LIVENESS]
+#fairness on completion
+| | | | | | | | | | | | | | | | | | | | | | | & rob1_s1a rob1_s1a_rc' & rob1_s1b rob1_s1b_rc' & rob1_s2a rob1_s2a_rc' & rob1_s2b rob1_s2b_rc' & rob1_s3a rob1_s3a_rc' & rob1_s3b rob1_s3b_rc' & rob1_s4a rob1_s4a_rc' & rob1_s4b rob1_s4b_rc' & rob1_i12 rob1_i12_rc' & rob1_i23 rob1_i23_rc' & rob1_i34 rob1_i34_rc' & rob1_i41 rob1_i41_rc' & rob1_s1a ! rob1_s1a' & rob1_s1b ! rob1_s1b' & rob1_s2a ! rob1_s2a' & rob1_s2b ! rob1_s2b' & rob1_s3a ! rob1_s3a' & rob1_s3b ! rob1_s3b' & rob1_s4a ! rob1_s4a' & rob1_s4b ! rob1_s4b' & rob1_i12 ! rob1_i12' & rob1_i23 ! rob1_i23' & rob1_i34 ! rob1_i34' & rob1_i41 ! rob1_i41'
+
+[SYS_LIVENESS]
+#!e1_s1a -> (rob1_s1a_rc)
+#!e1_s3a -> (rob1_s3a_rc)
+rob1_s1a_rc
+rob1_s3a_rc
+
