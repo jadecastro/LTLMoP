@@ -2,6 +2,8 @@
 """
 =======================================================
 ReasynsFastHandler.py 
+
+This version of the handler takes in a set of funnels that are templates (primatives) that are rotated and translated.
 =======================================================
 
 """
@@ -53,8 +55,16 @@ class ReasynsFastHandler(handlerTemplates.MotionControlHandler):
         self.currentRegionPoly  = None
         self.nextRegionPoly     = None
         self.radius             = self.scalingPixelsToMeters*0.15
-        self.trans_matrix       = mat([[0,1],[-1,0]])   # transformation matrix for find the normal to the vector
-        self.timer              = time.time()
+        
+        self.maxIntersects      = 20
+        self.roadSegmentLength  = 300
+        self.vertsTemplate      = {}
+        self.vertsTemplate[0]   = mat([[60,60,1],[0,60,1],[0,240,1],[60,240,1]])  #vertices for matching a transformation matrix to a pre-generated template
+        self.rinvTansformationMatrix = linalg.inv(mat([[1,0,0],[0,1,0],[0,0,1]]))   # transformation matrix for the template
+        self.prevInvTransformationMatrix = linalg.inv(mat([[1,0,0],[0,1,0],[0,0,1]]))   # transformation matrix for the template
+        self.intersectionSuccessor = []
+        self.templateIndex         = 0
+          #TODO: get this directly from the .regions file used to generate the primitives
 
         self.pose = OrderedDict()
         
@@ -154,9 +164,6 @@ class ReasynsFastHandler(handlerTemplates.MotionControlHandler):
                 logging.debug("Next Region is " + str(self.rfi.regions[next_reg].name))
                 logging.debug("Current Region is " + str(self.rfi.regions[current_reg].name))
 
-                if not current_reg == next_reg:
-                    doUpdate[robot_name] = True
-                    
                 self.currentRegionPoly = self.map[self.rfi.regions[current_reg].name]
                 regionPolyOld = Polygon.Polygon(self.currentRegionPoly)
 
@@ -170,19 +177,28 @@ class ReasynsFastHandler(handlerTemplates.MotionControlHandler):
                 self.previous_next_reg[robot_name] = next_reg
                 self.previous_curr_reg[robot_name] = current_reg
 
-                """
-                if current_reg == next_reg and not last:
-                    logging.debug('stop moving, regions the same')
-                    # No need to move!
-                    self.drive_handler[robot_name].setVelocity(0, 0)  # So let's stop
-                    continue
-                    #return True not leaving until all robots are checked
-                """
+                if not current_reg == next_reg:
+                    doUpdate[robot_name] = True
+
+                    self.intersectionSuccessor = []
+
+                    # If we've just entered a 'lane' from an 'intersection', then compute a new transformation matrix
+                    if 'intersect' in self.rfi.regions[curr_reg].name and 'lane' in self.rfi.regions[next_reg].name:
+                        templateIndex, transformationMatrix, thIndex = self.getTransformationMatrixAndTemplate(self.next_regVertices[robot_name]):  
+                        self.templateIndex = templateIndex
+                        self.prevInvTransformationMatrix = linalg.inv(self.transformationMatrix)
+                        self.invTransformationMatrix = linalg.inv(transformationMatrix)
+
+                    elif 'lane' in self.rfi.regions[curr_reg].name and 'intersect' in self.rfi.regions[next_reg].name:
+                        templateIndex, transformationMatrix, thIndex = self.getTransformationMatrixAndTemplate(self.next_regVertices[robot_name]): 
+                        self.intersectionSuccessor = thIndex-1
+
 
         # Run algorithm to find a velocity vector (global frame) to take the robot to the next region
         vx, vy, w, acLastData, data, currRegNbr, nextRegNbr = Reasyns.executeController(self.sysObj, self.pose, self.rfi.regions, \
             current_regIndices, next_regIndices, self.coordmap_lab2map, self.scalingPixelsToMeters, doUpdate, self.acLastData, self.data, \
-            self.aut, self.ac_trans, self.ac_inward, self.cyclicTrinaryVector,self.currRegNbr,self.nextRegNbr)
+            self.aut, self.ac_trans, self.ac_inward, self.cyclicTrinaryVector,self.currRegNbr,self.nextRegNbr, \
+            self.templateIndex, self.prevInvTransformationMatrix, self.invTransformationMatrix, self.intersectionSuccessor)
 
         self.acLastData = acLastData
         self.data = data
@@ -241,3 +257,20 @@ class ReasynsFastHandler(handlerTemplates.MotionControlHandler):
         pointArray = map(self.coordmap_map2lab, pointArray)
         regionPoints = [(float(1)/self.scalingPixelsToMeters*pt[0],float(1)/self.scalingPixelsToMeters*pt[1]) for pt in pointArray]
         return regionPoints
+
+    def getTransformationMatrixAndTemplate(self,nextRegionVertices):
+        # search for both the funnels template and an appropriate transformation matrix to apply for the road segment we've just entered
+        for xIndex in range(0:self.maxIntersects):
+            for yIndex in range(0:self.maxIntersects):
+                for thIndex in range(0:4):
+                    theta = (thIndex+1)*pi/2
+                    transformationMatrix = mat([
+                        [cos(theta), sin(theta), xIndex*self.roadSegmentLength], 
+                        [-sin(theta), cos(theta), yIndex*self.roadSegmentLength],
+                        [0,0,1]])
+                    for templIndex in range(len(self.vertsTemplate)):
+                        error = linalg.norm(transformationMatrix[:2] * self.vertsTemplate.T - nextRegionVertices)
+                        if error < 0.001:
+                            return templIndex, transformationMatrix, thIndex
+
+

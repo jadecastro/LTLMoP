@@ -11,9 +11,11 @@ extinguish, 1
 CompileOptions:
 convexify: True
 parser: ltl
-fastslow: False
-decompose: True
+symbolic: False
 use_region_bit_encoding: True
+synthesizer: jtlv
+fastslow: True
+decompose: True
 
 CurrentConfigName:
 Basic Simulation
