@@ -4,6 +4,7 @@ import numpy as np
 import sys
 import StringIO
 import re
+from collections import OrderedDict
 
 robotRadius = 0.9
 scalingPixelsToMeters = 70.
@@ -126,7 +127,7 @@ def findDoorConstraintConditions(faces):
             print faceWidth
 
             if faceWidth <= 2*robotRadius:
-                print "yes"
+                # print "yes"
                 fullyObstructedFaces.append([face[:2]])
                 A = face[0]
                 B = face[1]
@@ -134,7 +135,7 @@ def findDoorConstraintConditions(faces):
                 print newStatement
                 addedSystemSafetyStatement.append(newStatement)
             elif faceWidth <= 4*robotRadius:
-                print "yes"
+                # print "yes"
                 partiallyObstructedFaces.append([face[:2]])
                 A = face[0]
                 B = face[1]
@@ -143,7 +144,8 @@ def findDoorConstraintConditions(faces):
                 print newStatement
                 addedSystemSafetyStatement.append(newStatement)
             else:
-                print "no"
+                pass
+                # print "no"
 
     return addedSystemSafetyStatement, fullyObstructedFaces, partiallyObstructedFaces
 
@@ -293,7 +295,7 @@ def modifySpec(specFile, regionFile):
     specData = open(specFile,"r")
 
     mode = ""
-    lines = {"[ENV_TRANS]":[],"[ENV_INIT]":[],"[INPUT]":[],"[OUTPUT]":[],"[SYS_TRANS]":[],"[SYS_INIT]":[],"[ENV_LIVENESS]":[],"[SYS_LIVENESS]":[],"[OBSERVABLE_INPUT]":[],"[UNOBSERVABLE_INPUT]":[],"[CONTROLLABLE_INPUT]":[] }
+    lines = OrderedDict([("[INPUT]",[]),("[OUTPUT]",[]),("[ENV_TRANS]",[]),("[ENV_INIT]",[]),("[SYS_TRANS]",[]),("[SYS_INIT]",[]),("[ENV_LIVENESS]",[]),("[SYS_LIVENESS]",[]),("[OBSERVABLE_INPUT]",[]),("[UNOBSERVABLE_INPUT]",[]),("[CONTROLLABLE_INPUT]",[])])
 
     # data = []
     # with codecs.open(regionFile,'rU','utf-8') as regfile:
