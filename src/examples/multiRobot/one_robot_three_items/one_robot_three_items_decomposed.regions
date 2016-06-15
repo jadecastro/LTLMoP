@@ -14,9 +14,9 @@ Regions: # Stored as JSON string
     {
         "name": "p2", 
         "color": [
-            255, 
-            128, 
-            0
+            0, 
+            0, 
+            255
         ], 
         "holeList": [], 
         "height": 0, 
@@ -125,7 +125,7 @@ Regions: # Stored as JSON string
     {
         "name": "p6", 
         "color": [
-            255, 
+            0, 
             0, 
             255
         ], 
@@ -162,9 +162,9 @@ Regions: # Stored as JSON string
     {
         "name": "p7", 
         "color": [
-            0, 
             255, 
-            0
+            0, 
+            255
         ], 
         "holeList": [], 
         "height": 0, 
@@ -200,7 +200,7 @@ Regions: # Stored as JSON string
         "name": "p4", 
         "color": [
             255, 
-            255, 
+            0, 
             0
         ], 
         "holeList": [], 
@@ -241,7 +241,7 @@ Regions: # Stored as JSON string
         "name": "p5", 
         "color": [
             255, 
-            255, 
+            128, 
             0
         ], 
         "holeList": [], 
@@ -278,8 +278,8 @@ Regions: # Stored as JSON string
         "name": "p8", 
         "color": [
             255, 
-            0, 
-            255
+            128, 
+            0
         ], 
         "holeList": [], 
         "height": 0, 

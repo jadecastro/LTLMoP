@@ -24,6 +24,10 @@ Customs: # List of custom propositions
 rob1_carrying_metal
 rob1_carrying_glass
 rob1_carrying_paper
+m_rob1_deadlock1
+m_rob1_deadlock2
+m_rob1_deadlock3
+m_rob1_deadlock4
 
 RegionFile: # Relative path of region description file
 eight_regions.regions
@@ -32,8 +36,6 @@ Sensors: # List of sensor propositions and their state (enabled = 1, disabled = 
 rob1_metal, 1
 rob1_glass, 1
 rob1_paper, 1
-rob1_drop_ac, 1
-rob1_pickup_ac, 1
 
 
 ======== SPECIFICATION ========
