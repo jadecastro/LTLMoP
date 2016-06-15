@@ -73,7 +73,7 @@ def initializeLocalPlanner(session, regions, regionTransitionFaces, obstaclePoin
     logging.debug("  regionTransitionFaces (matlab): "+str(session.getvalue('regionTransitionFaces')))
 
     for i in range(numRobots+numExogenousRobots):
-        if scenario == 2 or scenario == 4:
+        if scenario == 2:
             # put initial values into the variables we will be querying
             if i == 0:
                 session.putvalue('vOut'+str(i+1),np.float_([6]))

@@ -31,6 +31,9 @@ class BasicSimInitHandler(handlerTemplates.InitHandler):
         else:
             center.x = center.x + x
             center.y = center.y + y
+            
+        print init_region
+        print center
         
         #initialize the simulator
         self.simulator =  basicSimulator.basicSimulator([center[0],center[1],theta])
