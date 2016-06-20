@@ -195,7 +195,7 @@ def executeLocalPlanner(session, poseDic, goalPosition, goalVelocity, poseExog, 
 
     # Execute one step of the local planner and collect velocity components
     # session.run('simLocalPlanning_saveData(param, rParam, rStates, rCmd, gState, status, allData, map);')
-    #session.run('save(\'test\')')
+    # session.run('save(\'test\')')
     try:
         session.run('doStep_wrapper')
     except:
@@ -257,6 +257,7 @@ def runInitializationScripts(session, numRobots, numExogenousRobots, numDynamicO
     if numDynamicObstacles > 0:
         session.run('param.dynamicObstacleVelocityControlled = 0')
 
+    session.run('obstaclePointsNew = [];')
     for i, points in enumerate(obstaclePoints):
         session.putvalue('obstaclePointsNew',np.float_([points]))
         logging.debug("  obstaclePointsNew (matlab): "+str(session.getvalue('obstaclePointsNew')))

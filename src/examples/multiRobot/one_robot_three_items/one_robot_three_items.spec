@@ -36,7 +36,9 @@ Sensors: # List of sensor propositions and their state (enabled = 1, disabled = 
 rob1_metal, 1
 rob1_glass, 1
 rob1_paper, 1
-
+rob1_deadlock, 1
+rob1_pickup_ac, 1
+rob1_drop_ac, 1
 
 ======== SPECIFICATION ========
 

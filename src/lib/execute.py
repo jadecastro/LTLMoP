@@ -140,6 +140,7 @@ class LTLMoPExecutor(ExecutorStrategyExtensions,ExecutorResynthesisExtensions, o
         #region_domain = strategy.Domain("region",  self.proj.rfi.regions, strategy.Domain.B0_IS_MSB)
         enabled_sensors = self.proj.enabled_sensors
 
+        print "enabled_sensors: "+str(self.proj.enabled_sensors)
         regionSensorList = [x for x in self.proj.enabled_sensors if x.endswith('_rc')]
         self.proj.enabled_sensors =  [x for x in self.proj.enabled_sensors if not x.endswith('_rc')]
 

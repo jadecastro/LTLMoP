@@ -43,7 +43,7 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         """
         logging.debug("Initializing the local planner...") 
         self.numRobots              = []    # number of robots: number of agents in the specification, controlled by the local planner
-        self.numDynamicObstacles    = 6     # number of dynamic obstacles: obstacles whose velocities are internally- or externally-controlled and do NOT do collision avoidance
+        self.numDynamicObstacles    = 0     # number of dynamic obstacles: obstacles whose velocities are internally- or externally-controlled and do NOT do collision avoidance
         self.extDynamicObstacles    = False # externally defined pose?
         self.numExogenousRobots     = 0     # number of exogenous agents: robots that are controlled by another (unknown) specification, with collision avoidance
         self.robotType              = 2     # Set the robot type: quads (type 1) iCreate (type 2) and NAO (type 3)
@@ -145,24 +145,42 @@ class MultiRobotLocalPlannerHandler(handlerTemplates.MotionControlHandler):
         self.limitsMap = limitsMap
 
         # Generate a list of obstacle vertices for the local planner
+        #=======================================================================
+        # obstacles = []
+        # if self.scenario == 1 or self.scenario == 4:
+        #    obstacles.append([Point(540,490),Point(540,700),Point(700,490),Point(700,700)])
+        #    obstacles.append([Point(574,210),Point(574,280),Point(700,210),Point(700,280)])
+        #    obstacles.append([Point(385,210),Point(385,280),Point(465,210),Point(465,280)])
+        #    obstacles.append([Point(105,210),Point(105,490),Point(385,210),Point(385,490)])
+        # if self.scenario == 2:
+        #    obstacles.append([Point(280,105),Point(280,245),Point(385,105),Point(385,245)])
+        # if self.scenario == 3:
+        #    obstacles.append([Point(128,427),Point(220,181),Point(342,223),Point(459,329),Point(284,471)])
+        #    obstacles.append([Point(238,71),Point(430,79),Point(430,0),Point(238,0),Point(238,0)])
+        #    obstacles.append([Point(430,79),Point(549,231),Point(580,231),Point(580,0),Point(430,0)])
+        #    obstacles.append([Point(549,231),Point(507,373),Point(507,600),Point(580,600),Point(580,231)])
+        #    obstacles.append([Point(507,373),Point(315,532),Point(315,600),Point(507,600),Point(507,600)])
+        #    obstacles.append([Point(315,532),Point(97,576),Point(97,600),Point(315,600),Point(315,600)])
+        #    obstacles.append([Point(97,576),Point(12,477),Point(0,477),Point(0,600),Point(97,600)])
+        #    obstacles.append([Point(12,477),Point(49,76),Point(49,0),Point(0,0),Point(0,477)])
+        #    obstacles.append([Point(49,76),Point(238,71),Point(238,0),Point(49,0),Point(49,0)])
+        #=======================================================================
+        
+        obstacleRegion = [self.rfi.regions[i] for i in range(len(self.rfi.regions)) if self.rfi.regions[i].isObstacle]
+        print dir(self.rfi)
+        print "obstacleRegion: "+str(obstacleRegion)
+        print "isObstacle: "+str(self.rfi.regions[0].isObstacle)
+        print "num regions: "+str(len(self.rfi.regions))
+        
         obstacles = []
-        if self.scenario == 1 or self.scenario == 4:
-            obstacles.append([Point(540,490),Point(540,700),Point(700,490),Point(700,700)])
-            obstacles.append([Point(574,210),Point(574,280),Point(700,210),Point(700,280)])
-            obstacles.append([Point(385,210),Point(385,280),Point(465,210),Point(465,280)])
-            obstacles.append([Point(105,210),Point(105,490),Point(385,210),Point(385,490)])
-        if self.scenario == 2:
-            obstacles.append([Point(280,105),Point(280,245),Point(385,105),Point(385,245)])
-        if self.scenario == 3:
-            obstacles.append([Point(128,427),Point(220,181),Point(342,223),Point(459,329),Point(284,471)])
-            obstacles.append([Point(238,71),Point(430,79),Point(430,0),Point(238,0),Point(238,0)])
-            obstacles.append([Point(430,79),Point(549,231),Point(580,231),Point(580,0),Point(430,0)])
-            obstacles.append([Point(549,231),Point(507,373),Point(507,600),Point(580,600),Point(580,231)])
-            obstacles.append([Point(507,373),Point(315,532),Point(315,600),Point(507,600),Point(507,600)])
-            obstacles.append([Point(315,532),Point(97,576),Point(97,600),Point(315,600),Point(315,600)])
-            obstacles.append([Point(97,576),Point(12,477),Point(0,477),Point(0,600),Point(97,600)])
-            obstacles.append([Point(12,477),Point(49,76),Point(49,0),Point(0,0),Point(0,477)])
-            obstacles.append([Point(49,76),Point(238,71),Point(238,0),Point(49,0),Point(49,0)])
+        for i,reg in enumerate(obstacleRegion):
+            points = []
+            print "reg: "+str(reg)
+            for point in reg.getPoints():
+                print "point: "+str(point)
+                points.append(point)
+            obstacles.append(points)
+        
         # obstacles = [r for r in self.rfi.regions if r.name.startswith('o')]   # TODO: hard-coding. decomposed region file doesn't store obstacles.
         obstaclePoints = []
         for region in obstacles:
