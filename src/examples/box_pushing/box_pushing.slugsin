@@ -1,0 +1,93 @@
+[INPUT]
+rob1_A_rc
+rob1_B_rc
+rob1_C_rc
+rob1_D_rc
+rob1_E_rc
+moveToLeft
+moveToRight
+
+[OUTPUT]
+rob1_A
+rob1_B
+rob1_C
+rob1_D
+rob1_E
+pushingBox
+
+[ENV_TRANS]
+#restricts completion
+| ! & rob1_A_rc rob1_A rob1_A_rc'
+| ! & rob1_B_rc rob1_B rob1_B_rc'
+| ! & rob1_C_rc rob1_C rob1_C_rc'
+| ! & rob1_D_rc rob1_D rob1_D_rc'
+| ! & rob1_E_rc rob1_E rob1_E_rc'
+| ! & rob1_A_rc rob1_B | rob1_A_rc' rob1_B_rc'
+| ! & rob1_A_rc rob1_E | rob1_A_rc' rob1_E_rc'
+| ! & rob1_B_rc rob1_A | rob1_B_rc' rob1_A_rc'
+| ! & rob1_B_rc rob1_E | rob1_B_rc' rob1_E_rc'
+| ! & rob1_C_rc rob1_E | rob1_C_rc' rob1_E_rc'
+| ! & rob1_D_rc rob1_E | rob1_D_rc' rob1_E_rc'
+| ! & rob1_E_rc rob1_A | rob1_E_rc' rob1_A_rc'
+| ! & rob1_E_rc rob1_B | rob1_E_rc' rob1_B_rc'
+| ! & rob1_E_rc rob1_C | rob1_E_rc' rob1_C_rc'
+| ! & rob1_E_rc rob1_D | rob1_E_rc' rob1_D_rc'
+| ! rob1_A_rc' ! | | | rob1_B_rc' rob1_C_rc' rob1_D_rc' rob1_E_rc'
+| ! rob1_B_rc' ! | | | rob1_A_rc' rob1_C_rc' rob1_D_rc' rob1_E_rc'
+| ! rob1_C_rc' ! | | | rob1_A_rc' rob1_B_rc' rob1_D_rc' rob1_E_rc'
+| ! rob1_D_rc' ! | | | rob1_A_rc' rob1_B_rc' rob1_C_rc' rob1_E_rc'
+| ! rob1_E_rc' ! | | | rob1_A_rc' rob1_B_rc' rob1_C_rc' rob1_D_rc'
+| | | | rob1_A_rc' rob1_B_rc' rob1_C_rc' rob1_D_rc' rob1_E_rc'
+# manually define any conditions under which the user should not be allowed to direct the robot to a target
+| ! rob1_D_rc' ! moveToLeft'
+| ! rob1_C_rc' ! moveToRight'
+# mutex for the user input
+| ! moveToLeft' ! moveToRight'
+| ! moveToRight' ! moveToLeft'
+
+[ENV_INIT]
+& & & & & & ! rob1_A_rc ! rob1_B_rc ! rob1_C_rc ! rob1_D_rc rob1_E_rc ! moveToLeft ! moveToRight
+
+[SYS_TRANS]
+| ! rob1_A_rc' | | rob1_A' rob1_B' rob1_E'
+| ! rob1_B_rc' | | rob1_B' rob1_A' rob1_E'
+| ! rob1_C_rc' | rob1_C' rob1_E'
+| ! rob1_D_rc' | rob1_D' rob1_E'
+| ! rob1_E_rc' | | | | rob1_E' rob1_A' rob1_B' rob1_C' rob1_D'
+| ! rob1_A' ! | | | rob1_B' rob1_C' rob1_D' rob1_E'
+| ! rob1_B' ! | | | rob1_A' rob1_C' rob1_D' rob1_E'
+| ! rob1_C' ! | | | rob1_A' rob1_B' rob1_D' rob1_E'
+| ! rob1_D' ! | | | rob1_A' rob1_B' rob1_C' rob1_E'
+| ! rob1_E' ! | | | rob1_A' rob1_B' rob1_C' rob1_D'
+| | | | rob1_A' rob1_B' rob1_C' rob1_D' rob1_E'
+# prevent the robot from entering the wrong region
+| ! moveToLeft ! rob1_D_rc'
+| ! moveToRight ! rob1_C_rc'
+| ! & & pushingBox ! rob1_A_rc ! rob1_B_rc & ! rob1_A' ! rob1_B'
+| ! & & ! pushingBox ! rob1_C_rc ! rob1_D_rc & ! rob1_C' ! rob1_D'
+| ! rob1_A_rc ! rob1_E
+# to simplify the automaton, stay in place if none of the letters are set.
+| ! & ! moveToLeft ! moveToRight & & | ! rob1_C_rc rob1_C | ! rob1_D_rc rob1_D | ! rob1_E_rc rob1_E
+# activation rules for the memprops
+| ! rob1_B_rc pushingBox'
+| ! & ! pushingBox ! rob1_B_rc ! pushingBox'
+| ! & & pushingBox ! rob1_C_rc ! rob1_D_rc pushingBox'
+# deactivate the proposition only once the 'target' region(s) have been reached
+| ! | rob1_C_rc rob1_D_rc ! pushingBox'
+
+[SYS_INIT]
+& & & & & ! rob1_A ! rob1_B ! rob1_C ! rob1_D rob1_E ! pushingBox
+
+[ENV_LIVENESS]
+#fairness on completion
+| | | | | | | | | & rob1_A rob1_A_rc' & rob1_B rob1_B_rc' & rob1_C rob1_C_rc' & rob1_D rob1_D_rc' & rob1_E rob1_E_rc' & rob1_A ! rob1_A' & rob1_B ! rob1_B' & rob1_C ! rob1_C' & rob1_D ! rob1_D' & rob1_E ! rob1_E'
+#   modify conditions such that when activating R3 and innside/outside IC region, eventually complete.  Add conditions that we cannot wait in R3.
+#((R1 & R1_rc') | (R2 & R2_rc') | (R3 & R2IC3 & R3_rc' & !door') | (R3 & !R2IC3 & R2IC3' & !door') | (R1 & !R1') | (R2 & !R2' & !door') | (R3 & !R3' & !door') | (R3_rc & R3 & R3') )
+
+[SYS_LIVENESS]
+| ! & ! pushingBox | moveToLeft moveToRight & rob1_A_rc rob1_B_rc'
+| ! & pushingBox moveToLeft rob1_C_rc
+| ! & pushingBox moveToRight rob1_D_rc
+# uncomment only to check if realizability is due to rob1_Env == false
+#0
+
